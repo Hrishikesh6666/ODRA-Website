@@ -1,0 +1,25 @@
+# Environment
+.env
+.env.backup
+.env.production
+.env.testing
+
+# Dependencies
+/odra-sales-portal/vendor/
+/odra-sales-portal/node_modules/
+composer.phar
+
+# Storage & Private Quotation PDFs
+/odra-sales-portal/storage/app/private/quotes/
+/odra-sales-portal/storage/logs/
+/odra-sales-portal/storage/framework/cache/
+/odra-sales-portal/storage/framework/sessions/
+/odra-sales-portal/storage/framework/views/
+
+# Testing & IDE caches
+.phpunit.result.cache
+.phpunit.cache/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
