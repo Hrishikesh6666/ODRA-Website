@@ -14,6 +14,7 @@ class AdminPanelTest extends TestCase
     {
         parent::setUp();
         User::where('email', 'michael.scott@odrasweeper.com')->forceDelete();
+        User::where('email', 'dwight.schrute@odrasweeper.com')->forceDelete();
         Enhancement::where('description', '360 Bird-Eye Camera System')->forceDelete();
     }
 
@@ -148,5 +149,62 @@ class AdminPanelTest extends TestCase
             'rep_code' => 'MS',
             'is_active' => true,
         ]);
+    }
+
+    public function test_admin_can_register_new_administrator(): void
+    {
+        $admin = $this->getAdmin();
+
+        $response = $this->actingAs($admin)->post('/admin/users', [
+            'role_type' => 'admin',
+            'name' => 'Dwight Schrute',
+            'email' => 'dwight.schrute@odrasweeper.com',
+            'company_id' => 'ADMIN002',
+            'password' => 'BeetsBears2026!',
+        ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+        $this->assertDatabaseHas('users', [
+            'email' => 'dwight.schrute@odrasweeper.com',
+            'role_id' => 1,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_admin_cannot_deactivate_or_remove_themselves(): void
+    {
+        $admin = $this->getAdmin();
+
+        // Attempt to deactivate self
+        $toggleResponse = $this->actingAs($admin)->post("/admin/users/{$admin->id}/toggle");
+        $toggleResponse->assertRedirect(route('admin.users.index'));
+        $toggleResponse->assertSessionHas('error');
+        $admin->refresh();
+        $this->assertTrue($admin->is_active);
+
+        // Attempt to remove self
+        $deleteResponse = $this->actingAs($admin)->delete("/admin/users/{$admin->id}");
+        $deleteResponse->assertRedirect(route('admin.users.index'));
+        $deleteResponse->assertSessionHas('error');
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
+
+    public function test_admin_can_remove_another_administrator(): void
+    {
+        $admin = $this->getAdmin();
+
+        // Create second admin
+        $secondAdmin = User::create([
+            'name' => 'Dwight Schrute',
+            'email' => 'dwight.schrute@odrasweeper.com',
+            'role_id' => 1,
+            'is_active' => true,
+            'password' => bcrypt('password123'),
+        ]);
+
+        $deleteResponse = $this->actingAs($admin)->delete("/admin/users/{$secondAdmin->id}");
+        $deleteResponse->assertRedirect(route('admin.users.index'));
+        $deleteResponse->assertSessionHas('success');
+        $this->assertDatabaseMissing('users', ['id' => $secondAdmin->id]);
     }
 }

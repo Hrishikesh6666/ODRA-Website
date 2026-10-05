@@ -260,7 +260,7 @@
 
             <div class="nav-category">Administration</div>
             <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                Sales Representatives
+                Users &amp; Administrators
             </a>
             <a href="{{ route('admin.audit.index') }}" class="nav-item {{ request()->routeIs('admin.audit.*') ? 'active' : '' }}">
                 Security Audit Log

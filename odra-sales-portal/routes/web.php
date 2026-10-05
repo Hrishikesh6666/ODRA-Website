@@ -100,11 +100,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/freight', [FreightController::class, 'store'])->name('freight.store');
     Route::put('/freight/{freight}', [FreightController::class, 'update'])->name('freight.update');
 
-    // Sales Representatives
+    // Sales Representatives & Administrators
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::post('/users/{user}/toggle', [UserController::class, 'toggle'])->name('users.toggle');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Security Audit Log
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
