@@ -212,9 +212,22 @@ class QuoteService
 
         $path = "quotes/{$quote->user_id}/Q-{$quote->quote_number}_v{$versionNumber}.pdf";
 
-        // If base64, decode it
-        if (str_starts_with($pdfContent, 'data:application/pdf;base64,')) {
-            $pdfContent = base64_decode(substr($pdfContent, 28));
+        // If base64 data URI (e.g. data:application/pdf;filename=...;base64,...), decode it to raw PDF binary
+        if (preg_match('/^data:application\/pdf.*?;base64,(.+)$/s', $pdfContent, $matches)) {
+            $decoded = base64_decode($matches[1]);
+            if ($decoded !== false) {
+                $pdfContent = $decoded;
+            }
+        } elseif (str_starts_with($pdfContent, 'data:application/pdf;base64,')) {
+            $decoded = base64_decode(substr($pdfContent, 28));
+            if ($decoded !== false) {
+                $pdfContent = $decoded;
+            }
+        } elseif (! str_starts_with($pdfContent, '%PDF-')) {
+            $decoded = base64_decode(trim($pdfContent));
+            if ($decoded !== false && str_starts_with($decoded, '%PDF-')) {
+                $pdfContent = $decoded;
+            }
         }
 
         Storage::disk('local')->put("private/{$path}", $pdfContent);
@@ -248,7 +261,7 @@ class QuoteService
                 'model_description' => $data['model_description'] ?? '',
                 'chassis_configuration' => $state['chassis'] ?? '',
                 'pricing_basis' => $state['basis'] ?? 'MSRP (Commercial)',
-                'sales_rep_name' => $state['salesRep'] ?? auth()->user()->name,
+                'sales_rep_name' => $state['salesRep'] ?? auth()->user()?->name ?? $version->quote->user?->name ?? 'Sales Representative',
                 'rep_territory' => $state['repTerritory'] ?? null,
                 'po_number' => $state['po'] ?? null,
                 'customer_account' => $state['acct'] ?? null,

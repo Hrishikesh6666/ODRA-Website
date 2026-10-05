@@ -8,7 +8,6 @@ use App\Services\AuditService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PdfController extends Controller
 {
@@ -17,15 +16,40 @@ class PdfController extends Controller
     /**
      * Download or stream the generated quotation PDF.
      */
-    public function download(Quote $quote): StreamedResponse|Response
+    public function download(Quote $quote): Response
     {
         $this->authorize('downloadPdf', $quote);
 
         $version = $quote->latestVersion;
         $snapshot = $version?->snapshot;
 
-        if (! $snapshot || ! $snapshot->pdf_path || ! Storage::disk('local')->exists("private/{$snapshot->pdf_path}")) {
+        $storagePath = "private/{$snapshot?->pdf_path}";
+
+        if (! $snapshot || ! $snapshot->pdf_path || ! Storage::disk('local')->exists($storagePath)) {
             abort(404, 'Quotation PDF has not been generated yet. Please open the Quote Builder and finalize the quotation.');
+        }
+
+        $content = Storage::disk('local')->get($storagePath);
+
+        // Self-healing: if file on disk was stored as an un-decoded base64 string, decode and repair it
+        if (preg_match('/^data:application\/pdf.*?;base64,(.+)$/s', $content, $matches)) {
+            $decoded = base64_decode($matches[1]);
+            if ($decoded !== false) {
+                $content = $decoded;
+                Storage::disk('local')->put($storagePath, $content);
+            }
+        } elseif (str_starts_with($content, 'data:application/pdf;base64,')) {
+            $decoded = base64_decode(substr($content, 28));
+            if ($decoded !== false) {
+                $content = $decoded;
+                Storage::disk('local')->put($storagePath, $content);
+            }
+        } elseif (! str_starts_with($content, '%PDF-')) {
+            $decoded = base64_decode(trim($content));
+            if ($decoded !== false && str_starts_with($decoded, '%PDF-')) {
+                $content = $decoded;
+                Storage::disk('local')->put($storagePath, $content);
+            }
         }
 
         AuditService::log(
@@ -37,8 +61,12 @@ class PdfController extends Controller
 
         $filename = "ODRA_Quotation_Q-{$quote->quote_number}_v{$quote->current_version}.pdf";
 
-        return Storage::disk('local')->download("private/{$snapshot->pdf_path}", $filename, [
+        return response($content, 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+            'Content-Length' => strlen($content),
+            'Cache-Control' => 'private, must-revalidate, post-check=0, pre-check=0',
+            'Pragma' => 'public',
         ]);
     }
 }

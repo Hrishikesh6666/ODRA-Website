@@ -212,4 +212,45 @@ class QuoteBuilderTest extends TestCase
             'status' => 'Draft',
         ]);
     }
+
+    public function test_pdf_upload_and_download_serves_valid_binary_pdf(): void
+    {
+        $user = User::where('email', 'john.wells@odrasweeper.com')->first();
+        $quoteService = app(\App\Services\QuoteService::class);
+
+        $quote = $quoteService->createDraft($user, [
+            'quote_number' => '3009',
+            'customer' => 'PDF Verification Corp',
+            'state' => ['quoteSeq' => '3009'],
+        ]);
+
+        $finalized = $quoteService->finalizeQuote($quote, [
+            'customer' => 'PDF Verification Corp',
+            'base_msrp' => 257493,
+            'base_list_price' => 257493,
+            'base_unit_price' => 257493,
+            'subtotal' => 257493,
+            'total' => 257493,
+            'state' => ['quoteSeq' => '3009', 'model' => 'MT4H'],
+        ]);
+
+        // Upload a base64 Data URI with filename parameter (as sent by html2pdf/jsPDF)
+        $fakePdfBinary = "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF";
+        $dataUri = 'data:application/pdf;filename=generated.pdf;base64,' . base64_encode($fakePdfBinary);
+
+        $uploadResponse = $this->actingAs($user)->postJson("/api/quotes/{$quote->id}/pdf", [
+            'pdf' => $dataUri,
+        ]);
+        $uploadResponse->assertStatus(200);
+
+        // Download PDF
+        $downloadResponse = $this->actingAs($user)->get("/sales/quotes/{$quote->id}/pdf");
+        $downloadResponse->assertStatus(200);
+        $downloadResponse->assertHeader('Content-Type', 'application/pdf');
+
+        // Check that content begins with '%PDF-' and NOT with 'data:application/pdf'
+        $streamedContent = $downloadResponse->getContent();
+        $this->assertStringStartsWith('%PDF-', $streamedContent);
+        $this->assertStringNotContainsString('data:application/pdf', $streamedContent);
+    }
 }
