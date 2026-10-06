@@ -207,4 +207,15 @@ class AdminPanelTest extends TestCase
         $deleteResponse->assertSessionHas('success');
         $this->assertDatabaseMissing('users', ['id' => $secondAdmin->id]);
     }
+
+    public function test_enhancements_page_renders_clean_user_friendly_pagination(): void
+    {
+        $admin = $this->getAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/enhancements');
+        $response->assertStatus(200);
+        $response->assertSee('portal-pagination');
+        $response->assertSee('pagination-btn');
+        $response->assertDontSee('w-5 h-5');
+    }
 }

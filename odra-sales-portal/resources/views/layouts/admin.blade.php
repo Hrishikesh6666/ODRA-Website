@@ -230,6 +230,87 @@
         .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155; }
         .form-control { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
         .form-control:focus { outline: none; border-color: var(--red); }
+
+        /* User-Friendly Pagination */
+        .portal-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: #64748b;
+        }
+        .portal-pagination .pagination-info {
+            font-size: 13px;
+            color: #475569;
+        }
+        .portal-pagination .pagination-info span.font-medium {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .portal-pagination .pagination-buttons {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .portal-pagination .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+        .portal-pagination .pagination-btn:hover:not(.disabled):not(.active) {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+        .portal-pagination .pagination-btn.active {
+            background: var(--red);
+            border-color: var(--red);
+            color: white;
+            cursor: default;
+        }
+        .portal-pagination .pagination-btn.disabled {
+            color: #94a3b8;
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .portal-pagination .pagination-dots {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 34px;
+            color: #94a3b8;
+            font-weight: bold;
+        }
+
+        /* Hard guard against any unstyled Tailwind SVG chevron arrows blowing up */
+        nav[role="navigation"] svg,
+        .portal-pagination svg,
+        .w-5.h-5,
+        svg.w-5 {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
     </style>
     @stack('styles')
 </head>
