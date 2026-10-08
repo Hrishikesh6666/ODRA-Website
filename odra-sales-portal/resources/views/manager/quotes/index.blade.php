@@ -25,9 +25,9 @@
 
 <div class="card">
     @if ($quotes->count() > 0)
-        <div style="overflow-x: auto;">
+        <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); min-height: 250px; -webkit-overflow-scrolling: touch;">
             <table class="data-table">
-                <thead>
+                <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                     <tr>
                         <th>Quote #</th>
                         <th>Created</th>

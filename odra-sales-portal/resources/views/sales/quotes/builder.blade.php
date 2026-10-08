@@ -63,21 +63,54 @@
         border-radius: 8px;
         border: 1px solid var(--border);
         max-height: calc(100vh - 140px);
+        overflow-x: auto;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f8fafc;
     }
     .builder-preview-wrap {
         flex: 1;
         background: #e2e8f0;
         padding: 24px;
         border-radius: 8px;
+        max-height: calc(100vh - 140px);
         overflow-x: auto;
+        overflow-y: auto;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #e2e8f0;
+    }
+    .builder-form::-webkit-scrollbar,
+    .builder-preview-wrap::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .builder-form::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 4px;
+    }
+    .builder-preview-wrap::-webkit-scrollbar-track {
+        background: #e2e8f0;
+        border-radius: 4px;
+    }
+    .builder-form::-webkit-scrollbar-thumb,
+    .builder-preview-wrap::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 4px;
+    }
+    .builder-form::-webkit-scrollbar-thumb:hover,
+    .builder-preview-wrap::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
     }
     .quote-paper {
         background: white;
         width: 800px;
         min-height: 1050px;
+        margin: 0 auto;
+        flex-shrink: 0;
         padding: 40px;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
         box-sizing: border-box;

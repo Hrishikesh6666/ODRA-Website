@@ -164,8 +164,9 @@
 
 <div class="table-card">
     @if ($quotes->count() > 0)
-        <table class="data-table">
-            <thead>
+        <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); min-height: 250px; -webkit-overflow-scrolling: touch;">
+            <table class="data-table">
+                <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
                     <th>Quote #</th>
                     <th>Customer / Account</th>
@@ -216,6 +217,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         <div style="padding: 16px;">
             {{ $quotes->links() }}
         </div>

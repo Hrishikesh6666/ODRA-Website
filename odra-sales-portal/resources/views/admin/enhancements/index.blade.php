@@ -29,48 +29,50 @@
 </div>
 
 <div class="card">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Model</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>MSRP</th>
-                <th>SW List</th>
-                <th>SW Net</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($enhancements as $enh)
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); min-height: 250px; -webkit-overflow-scrolling: touch;">
+        <table class="data-table">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
-                    <td><strong>{{ $enh->model->code }}</strong></td>
-                    <td><span style="font-size: 11px; font-weight: bold; background: #e2e8f0; padding: 3px 6px; border-radius: 4px;">{{ $enh->category }}</span></td>
-                    <td>{{ $enh->description }}</td>
-                    <td>${{ number_format($enh->msrp, 0) }}</td>
-                    <td>${{ number_format($enh->sw_list, 0) }}</td>
-                    <td><strong>${{ number_format($enh->sw_net, 0) }}</strong></td>
-                    <td>
-                        <span class="badge {{ $enh->is_active ? 'badge-active' : 'badge-inactive' }}">
-                            {{ $enh->is_active ? 'Active' : 'Inactive' }}
-                        </span>
-                    </td>
-                    <td>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn-secondary" onclick="openEditModal({{ json_encode($enh) }})">Edit</button>
-                            <form action="{{ route('admin.enhancements.toggle', $enh) }}" method="POST" style="margin:0;">
-                                @csrf
-                                <button type="submit" class="btn-secondary" style="color: {{ $enh->is_active ? '#991b1b' : '#166534' }};">
-                                    {{ $enh->is_active ? 'Deactivate' : 'Activate' }}
-                                </button>
-                            </form>
-                        </div>
-                    </td>
+                    <th>Model</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>MSRP</th>
+                    <th>SW List</th>
+                    <th>SW Net</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach ($enhancements as $enh)
+                    <tr>
+                        <td><strong>{{ $enh->model->code }}</strong></td>
+                        <td><span style="font-size: 11px; font-weight: bold; background: #e2e8f0; padding: 3px 6px; border-radius: 4px;">{{ $enh->category }}</span></td>
+                        <td>{{ $enh->description }}</td>
+                        <td>${{ number_format($enh->msrp, 0) }}</td>
+                        <td>${{ number_format($enh->sw_list, 0) }}</td>
+                        <td><strong>${{ number_format($enh->sw_net, 0) }}</strong></td>
+                        <td>
+                            <span class="badge {{ $enh->is_active ? 'badge-active' : 'badge-inactive' }}">
+                                {{ $enh->is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-secondary" onclick="openEditModal({{ json_encode($enh) }})">Edit</button>
+                                <form action="{{ route('admin.enhancements.toggle', $enh) }}" method="POST" style="margin:0;">
+                                    @csrf
+                                    <button type="submit" class="btn-secondary" style="color: {{ $enh->is_active ? '#991b1b' : '#166534' }};">
+                                        {{ $enh->is_active ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
     <div style="padding: 16px;">
         {{ $enhancements->links() }}
     </div>

@@ -13,9 +13,9 @@
         </div>
     </div>
 
-    <div style="overflow-x: auto;">
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: 480px; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
-            <thead>
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
                     <th>Model Code</th>
                     <th>Category</th>
@@ -65,9 +65,9 @@
         </div>
     </div>
 
-    <div style="overflow-x: auto;">
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: 520px; -webkit-overflow-scrolling: touch;">
         <table class="data-table">
-            <thead>
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
                     <th>Model</th>
                     <th>Category</th>

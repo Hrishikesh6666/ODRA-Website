@@ -27,67 +27,69 @@
         </button>
     </div>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Administrator Name</th>
-                <th>Office Email</th>
-                <th>Company ID</th>
-                <th>Role Scope</th>
-                <th>Status</th>
-                <th>Last Login</th>
-                <th style="text-align: right;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($admins as $admin)
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: 480px; -webkit-overflow-scrolling: touch;">
+        <table class="data-table">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
-                    <td>
-                        <strong>{{ $admin->name }}</strong>
-                        @if ($admin->id === auth()->id())
-                            <span style="margin-left: 6px; font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 600;">You</span>
-                        @endif
-                    </td>
-                    <td>{{ $admin->email }}</td>
-                    <td>{{ $admin->company_id ?? '&mdash;' }}</td>
-                    <td>
-                        <span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                            Technical Admin
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge {{ $admin->is_active ? 'badge-active' : 'badge-inactive' }}">
-                            {{ $admin->is_active ? 'Active' : 'Deactivated' }}
-                        </span>
-                    </td>
-                    <td>{{ $admin->last_login_at ? $admin->last_login_at->diffForHumans() : 'Never' }}</td>
-                    <td style="text-align: right;">
-                        <div style="display: inline-flex; gap: 8px; align-items: center;">
-                            <button class="btn-secondary" onclick="openEditModal({{ json_encode($admin) }}, 'admin')">Edit</button>
-                            
-                            @if ($admin->id !== auth()->id())
-                                <form action="{{ route('admin.users.toggle', $admin) }}" method="POST" style="margin:0;">
-                                    @csrf
-                                    <button type="submit" class="btn-secondary" style="color: {{ $admin->is_active ? '#991b1b' : '#166534' }};">
-                                        {{ $admin->is_active ? 'Deactivate' : 'Activate' }}
-                                    </button>
-                                </form>
-                                <button type="button" class="btn-secondary" style="color: #991b1b; border-color: #fecaca;" onclick="confirmDeleteUser({{ $admin->id }}, '{{ addslashes($admin->name) }}', 'technical administrator')">
-                                    Remove
-                                </button>
-                            @else
-                                <span style="font-size: 12px; color: #94a3b8; font-style: italic; padding: 0 4px;">Current Session</span>
+                    <th>Administrator Name</th>
+                    <th>Office Email</th>
+                    <th>Company ID</th>
+                    <th>Role Scope</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($admins as $admin)
+                    <tr>
+                        <td>
+                            <strong>{{ $admin->name }}</strong>
+                            @if ($admin->id === auth()->id())
+                                <span style="margin-left: 6px; font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 600;">You</span>
                             @endif
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No technical administrators found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                        </td>
+                        <td>{{ $admin->email }}</td>
+                        <td>{{ $admin->company_id ?? '&mdash;' }}</td>
+                        <td>
+                            <span style="background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                Technical Admin
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ $admin->is_active ? 'badge-active' : 'badge-inactive' }}">
+                                {{ $admin->is_active ? 'Active' : 'Deactivated' }}
+                            </span>
+                        </td>
+                        <td>{{ $admin->last_login_at ? $admin->last_login_at->diffForHumans() : 'Never' }}</td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 8px; align-items: center;">
+                                <button class="btn-secondary" onclick="openEditModal({{ json_encode($admin) }}, 'admin')">Edit</button>
+                                
+                                @if ($admin->id !== auth()->id())
+                                    <form action="{{ route('admin.users.toggle', $admin) }}" method="POST" style="margin:0;">
+                                        @csrf
+                                        <button type="submit" class="btn-secondary" style="color: {{ $admin->is_active ? '#991b1b' : '#166534' }};">
+                                            {{ $admin->is_active ? 'Deactivate' : 'Activate' }}
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn-secondary" style="color: #991b1b; border-color: #fecaca;" onclick="confirmDeleteUser({{ $admin->id }}, '{{ addslashes($admin->name) }}', 'technical administrator')">
+                                        Remove
+                                    </button>
+                                @else
+                                    <span style="font-size: 12px; color: #94a3b8; font-style: italic; padding: 0 4px;">Current Session</span>
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No technical administrators found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- SECTION 2: COMMERCIAL MANAGERS -->
@@ -113,57 +115,59 @@
         </button>
     </div>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Manager Name</th>
-                <th>Office Email</th>
-                <th>Company ID</th>
-                <th>Scope / Title</th>
-                <th>Status</th>
-                <th>Last Login</th>
-                <th style="text-align: right;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($managers as $mgr)
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: 480px; -webkit-overflow-scrolling: touch;">
+        <table class="data-table">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
-                    <td><strong>{{ $mgr->name }}</strong></td>
-                    <td>{{ $mgr->email }}</td>
-                    <td>{{ $mgr->company_id ?? '&mdash;' }}</td>
-                    <td>
-                        <span style="background: #eff6ff; color: #1d4ed8; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                            {{ $mgr->territory ?? 'Commercial Management' }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge {{ $mgr->is_active ? 'badge-active' : 'badge-inactive' }}">
-                            {{ $mgr->is_active ? 'Active' : 'Deactivated' }}
-                        </span>
-                    </td>
-                    <td>{{ $mgr->last_login_at ? $mgr->last_login_at->diffForHumans() : 'Never' }}</td>
-                    <td style="text-align: right;">
-                        <div style="display: inline-flex; gap: 8px; align-items: center;">
-                            <button class="btn-secondary" onclick="openEditModal({{ json_encode($mgr) }}, 'manager')">Edit</button>
-                            <form action="{{ route('admin.users.toggle', $mgr) }}" method="POST" style="margin:0;">
-                                @csrf
-                                <button type="submit" class="btn-secondary" style="color: {{ $mgr->is_active ? '#991b1b' : '#166534' }};">
-                                    {{ $mgr->is_active ? 'Deactivate' : 'Activate' }}
+                    <th>Manager Name</th>
+                    <th>Office Email</th>
+                    <th>Company ID</th>
+                    <th>Scope / Title</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($managers as $mgr)
+                    <tr>
+                        <td><strong>{{ $mgr->name }}</strong></td>
+                        <td>{{ $mgr->email }}</td>
+                        <td>{{ $mgr->company_id ?? '&mdash;' }}</td>
+                        <td>
+                            <span style="background: #eff6ff; color: #1d4ed8; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                {{ $mgr->territory ?? 'Commercial Management' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ $mgr->is_active ? 'badge-active' : 'badge-inactive' }}">
+                                {{ $mgr->is_active ? 'Active' : 'Deactivated' }}
+                            </span>
+                        </td>
+                        <td>{{ $mgr->last_login_at ? $mgr->last_login_at->diffForHumans() : 'Never' }}</td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 8px; align-items: center;">
+                                <button class="btn-secondary" onclick="openEditModal({{ json_encode($mgr) }}, 'manager')">Edit</button>
+                                <form action="{{ route('admin.users.toggle', $mgr) }}" method="POST" style="margin:0;">
+                                    @csrf
+                                    <button type="submit" class="btn-secondary" style="color: {{ $mgr->is_active ? '#991b1b' : '#166534' }};">
+                                        {{ $mgr->is_active ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                </form>
+                                <button type="button" class="btn-secondary" style="color: #991b1b; border-color: #fecaca;" onclick="confirmDeleteUser({{ $mgr->id }}, '{{ addslashes($mgr->name) }}', 'commercial manager')">
+                                    Remove
                                 </button>
-                            </form>
-                            <button type="button" class="btn-secondary" style="color: #991b1b; border-color: #fecaca;" onclick="confirmDeleteUser({{ $mgr->id }}, '{{ addslashes($mgr->name) }}', 'commercial manager')">
-                                Remove
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No commercial managers configured.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No commercial managers configured.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- SECTION 3: SALES REPRESENTATIVES -->
@@ -211,55 +215,57 @@
         </form>
     </div>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Representative Name</th>
-                <th>Rep Code</th>
-                <th>Office Email</th>
-                <th>Company ID</th>
-                <th>Assigned Territory</th>
-                <th>Status</th>
-                <th>Last Login</th>
-                <th style="text-align: right;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($users as $u)
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: 480px; -webkit-overflow-scrolling: touch;">
+        <table class="data-table">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
-                    <td><strong>{{ $u->name }}</strong></td>
-                    <td><code>{{ $u->rep_code }}</code></td>
-                    <td>{{ $u->email }}</td>
-                    <td>{{ $u->company_id ?? '&mdash;' }}</td>
-                    <td>{{ $u->territory ?? 'Assigned Territories' }}</td>
-                    <td>
-                        <span class="badge {{ $u->is_active ? 'badge-active' : 'badge-inactive' }}">
-                            {{ $u->is_active ? 'Active' : 'Deactivated' }}
-                        </span>
-                    </td>
-                    <td>{{ $u->last_login_at ? $u->last_login_at->diffForHumans() : 'Never' }}</td>
-                    <td style="text-align: right;">
-                        <div style="display: inline-flex; gap: 8px; align-items: center;">
-                            <button class="btn-secondary" onclick="openEditModal({{ json_encode($u) }}, 'sales')">Edit</button>
-                            <form action="{{ route('admin.users.toggle', $u) }}" method="POST" style="margin:0;">
-                                @csrf
-                                <button type="submit" class="btn-secondary" style="color: {{ $u->is_active ? '#991b1b' : '#166534' }};">
-                                    {{ $u->is_active ? 'Deactivate' : 'Activate' }}
+                    <th>Representative Name</th>
+                    <th>Rep Code</th>
+                    <th>Office Email</th>
+                    <th>Company ID</th>
+                    <th>Assigned Territory</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($users as $u)
+                    <tr>
+                        <td><strong>{{ $u->name }}</strong></td>
+                        <td><code>{{ $u->rep_code }}</code></td>
+                        <td>{{ $u->email }}</td>
+                        <td>{{ $u->company_id ?? '&mdash;' }}</td>
+                        <td>{{ $u->territory ?? 'Assigned Territories' }}</td>
+                        <td>
+                            <span class="badge {{ $u->is_active ? 'badge-active' : 'badge-inactive' }}">
+                                {{ $u->is_active ? 'Active' : 'Deactivated' }}
+                            </span>
+                        </td>
+                        <td>{{ $u->last_login_at ? $u->last_login_at->diffForHumans() : 'Never' }}</td>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 8px; align-items: center;">
+                                <button class="btn-secondary" onclick="openEditModal({{ json_encode($u) }}, 'sales')">Edit</button>
+                                <form action="{{ route('admin.users.toggle', $u) }}" method="POST" style="margin:0;">
+                                    @csrf
+                                    <button type="submit" class="btn-secondary" style="color: {{ $u->is_active ? '#991b1b' : '#166534' }};">
+                                        {{ $u->is_active ? 'Deactivate' : 'Activate' }}
+                                    </button>
+                                </form>
+                                <button type="button" class="btn-secondary" style="color: #991b1b; border-color: #fecaca;" onclick="confirmDeleteUser({{ $u->id }}, '{{ addslashes($u->name) }}', 'sales representative')">
+                                    Remove
                                 </button>
-                            </form>
-                            <button type="button" class="btn-secondary" style="color: #991b1b; border-color: #fecaca;" onclick="confirmDeleteUser({{ $u->id }}, '{{ addslashes($u->name) }}', 'sales representative')">
-                                Remove
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="8" style="text-align: center; color: #64748b; padding: 24px;">No sales representatives found matching your search.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #64748b; padding: 24px;">No sales representatives found matching your search.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
     <div style="padding: 16px;">
         {{ $users->links() }}
     </div>

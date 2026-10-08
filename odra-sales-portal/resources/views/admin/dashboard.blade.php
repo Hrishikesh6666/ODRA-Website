@@ -114,32 +114,34 @@
             <a href="{{ route('sales.quotes.index') }}" style="font-size: 12px; color: var(--red); text-decoration: none; font-weight: 600;">View all &rarr;</a>
         </div>
         @if ($recentQuotes->count() > 0)
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Quote #</th>
-                        <th>Rep</th>
-                        <th>Customer</th>
-                        <th>Model</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($recentQuotes as $q)
-                        @php
-                            $snap = $q->latestVersion?->snapshot;
-                            $stClass = $q->status === 'Finalized' ? 'badge-active' : 'badge-inactive';
-                        @endphp
+            <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: 380px; -webkit-overflow-scrolling: touch;">
+                <table class="data-table">
+                    <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                         <tr>
-                            <td><strong>Q-{{ $q->quote_number }}</strong></td>
-                            <td>{{ $q->user->name }}</td>
-                            <td>{{ $snap?->customer_company ?? 'Untitled' }}</td>
-                            <td><span style="font-size: 12px; font-weight: 600; color: #475569;">{{ $snap?->model_code ?? 'MT4H' }}</span></td>
-                            <td><span class="badge {{ $stClass }}">{{ $q->status }}</span></td>
+                            <th>Quote #</th>
+                            <th>Rep</th>
+                            <th>Customer</th>
+                            <th>Model</th>
+                            <th>Status</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($recentQuotes as $q)
+                            @php
+                                $snap = $q->latestVersion?->snapshot;
+                                $stClass = $q->status === 'Finalized' ? 'badge-active' : 'badge-inactive';
+                            @endphp
+                            <tr>
+                                <td><strong>Q-{{ $q->quote_number }}</strong></td>
+                                <td>{{ $q->user->name }}</td>
+                                <td>{{ $snap?->customer_company ?? 'Untitled' }}</td>
+                                <td><span style="font-size: 12px; font-weight: 600; color: #475569;">{{ $snap?->model_code ?? 'MT4H' }}</span></td>
+                                <td><span class="badge {{ $stClass }}">{{ $q->status }}</span></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         @else
             <p style="color: var(--text-muted); font-size: 13px;">No quotations generated yet.</p>
         @endif
@@ -152,17 +154,19 @@
             <a href="{{ route('admin.audit.index') }}" style="font-size: 12px; color: var(--red); text-decoration: none; font-weight: 600;">Full log &rarr;</a>
         </div>
         @if ($recentAuditLogs->count() > 0)
-            @foreach ($recentAuditLogs as $log)
-                <div class="audit-item">
-                    <div>
-                        <div class="audit-action">{{ $log->action }}</div>
-                        <div style="font-size: 12px; color: #64748b;">{{ $log->notes ?? ($log->user?->name ?? 'System') }}</div>
+            <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: 380px; -webkit-overflow-scrolling: touch;">
+                @foreach ($recentAuditLogs as $log)
+                    <div class="audit-item">
+                        <div>
+                            <div class="audit-action">{{ $log->action }}</div>
+                            <div style="font-size: 12px; color: #64748b;">{{ $log->notes ?? ($log->user?->name ?? 'System') }}</div>
+                        </div>
+                        <div class="audit-meta">
+                            {{ $log->created_at->diffForHumans() }}
+                        </div>
                     </div>
-                    <div class="audit-meta">
-                        {{ $log->created_at->diffForHumans() }}
-                    </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         @else
             <p style="color: var(--text-muted); font-size: 13px;">No audit events recorded.</p>
         @endif

@@ -32,30 +32,32 @@
 </div>
 
 <div class="card">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>State</th>
-                <th>City / Delivery Destination</th>
-                <th>Customer Rate (Commercial)</th>
-                <th>Municipality Rate (Cooperative)</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($freightRules as $rule)
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); min-height: 250px; -webkit-overflow-scrolling: touch;">
+        <table class="data-table">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
-                    <td><strong>{{ $rule->state }}</strong></td>
-                    <td>{{ $rule->city }}</td>
-                    <td><strong>${{ number_format($rule->customer_rate, 0) }}</strong></td>
-                    <td><strong>${{ number_format($rule->municipality_rate, 0) }}</strong></td>
-                    <td>
-                        <button class="btn-secondary" onclick="openEditModal({{ json_encode($rule) }})">Edit Rate</button>
-                    </td>
+                    <th>State</th>
+                    <th>City / Delivery Destination</th>
+                    <th>Customer Rate (Commercial)</th>
+                    <th>Municipality Rate (Cooperative)</th>
+                    <th>Actions</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach ($freightRules as $rule)
+                    <tr>
+                        <td><strong>{{ $rule->state }}</strong></td>
+                        <td>{{ $rule->city }}</td>
+                        <td><strong>${{ number_format($rule->customer_rate, 0) }}</strong></td>
+                        <td><strong>${{ number_format($rule->municipality_rate, 0) }}</strong></td>
+                        <td>
+                            <button class="btn-secondary" onclick="openEditModal({{ json_encode($rule) }})">Edit Rate</button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
     <div style="padding: 16px;">
         {{ $freightRules->links() }}
     </div>

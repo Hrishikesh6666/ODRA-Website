@@ -34,58 +34,60 @@
 </div>
 
 <div class="card">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Timestamp</th>
-                <th>Action</th>
-                <th>User / Representative</th>
-                <th>IP Address</th>
-                <th>Session / Device</th>
-                <th>Notes / Event Payload</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($logs as $log)
+    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); min-height: 250px; -webkit-overflow-scrolling: touch;">
+        <table class="data-table">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
-                    <td style="white-space: nowrap; font-size: 12px;">
-                        <strong>{{ $log->created_at->format('Y-m-d H:i:s') }}</strong>
-                        <div style="color: #94a3b8; font-size: 11px;">{{ $log->created_at->diffForHumans() }}</div>
-                    </td>
-                    <td>
-                        <code style="background: #f1f5f9; padding: 3px 6px; border-radius: 4px; font-weight: bold; color: var(--red);">
-                            {{ $log->action }}
-                        </code>
-                    </td>
-                    <td>
-                        <strong>{{ $log->user?->name ?? 'System / Anonymous' }}</strong>
-                        @if ($log->user)
-                            <div style="font-size: 11px; color: var(--text-muted);">{{ $log->user->email }}</div>
-                        @endif
-                    </td>
-                    <td><span style="font-size: 12px; font-family: monospace;">{{ $log->ip_address ?? 'N/A' }}</span></td>
-                    <td style="font-size: 11px; color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        {{ $log->user_agent }}
-                    </td>
-                    <td>
-                        <div style="font-size: 13px;">{{ $log->notes }}</div>
-                        @if ($log->new_value)
-                            <details style="margin-top: 4px; font-size: 11px; color: #475569;">
-                                <summary style="cursor: pointer; color: var(--red);">View JSON payload</summary>
-                                <pre style="background: #f8fafc; padding: 8px; border-radius: 4px; overflow-x: auto;">{{ json_encode($log->new_value, JSON_PRETTY_PRINT) }}</pre>
-                            </details>
-                        @endif
-                    </td>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>User / Representative</th>
+                    <th>IP Address</th>
+                    <th>Session / Device</th>
+                    <th>Notes / Event Payload</th>
                 </tr>
-            @empty
-                <tr>
-                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">
-                        No audit records found matching criteria.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @forelse ($logs as $log)
+                    <tr>
+                        <td style="white-space: nowrap; font-size: 12px;">
+                            <strong>{{ $log->created_at->format('Y-m-d H:i:s') }}</strong>
+                            <div style="color: #94a3b8; font-size: 11px;">{{ $log->created_at->diffForHumans() }}</div>
+                        </td>
+                        <td>
+                            <code style="background: #f1f5f9; padding: 3px 6px; border-radius: 4px; font-weight: bold; color: var(--red);">
+                                {{ $log->action }}
+                            </code>
+                        </td>
+                        <td>
+                            <strong>{{ $log->user?->name ?? 'System / Anonymous' }}</strong>
+                            @if ($log->user)
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ $log->user->email }}</div>
+                            @endif
+                        </td>
+                        <td><span style="font-size: 12px; font-family: monospace;">{{ $log->ip_address ?? 'N/A' }}</span></td>
+                        <td style="font-size: 11px; color: var(--text-muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ $log->user_agent }}
+                        </td>
+                        <td>
+                            <div style="font-size: 13px;">{{ $log->notes }}</div>
+                            @if ($log->new_value)
+                                <details style="margin-top: 4px; font-size: 11px; color: #475569;">
+                                    <summary style="cursor: pointer; color: var(--red);">View JSON payload</summary>
+                                    <pre style="background: #f8fafc; padding: 8px; border-radius: 4px; overflow-x: auto;">{{ json_encode($log->new_value, JSON_PRETTY_PRINT) }}</pre>
+                                </details>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                            No audit records found matching criteria.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
     <div style="padding: 16px;">
         {{ $logs->links() }}
     </div>
