@@ -21,7 +21,7 @@ class Quote extends Model
     protected static function booted()
     {
         static::addGlobalScope('owned', function ($query) {
-            if (Auth::check() && !Auth::user()->isAdmin()) {
+            if (Auth::check() && !Auth::user()->isAdmin() && !Auth::user()->isManager()) {
                 $query->where('user_id', Auth::id());
             }
         });

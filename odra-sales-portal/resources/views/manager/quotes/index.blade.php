@@ -1,0 +1,85 @@
+@extends('layouts.manager')
+
+@section('title', 'All Company Quotations')
+@section('header-title', 'Team Quotations Oversight')
+
+@section('content')
+<div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+    <form action="{{ route('manager.quotes.index') }}" method="GET" style="display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+        <!-- Search -->
+        <div style="flex: 1; min-width: 260px;">
+            <input type="text" name="search" class="form-control" placeholder="Search by Quote #, Customer, or Rep Name..." value="{{ $search }}">
+        </div>
+
+        <!-- Status Filter Pills -->
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ route('manager.quotes.index') }}" class="btn-secondary" style="{{ empty($currentStatus) ? 'background: #0f172a; color: white;' : '' }}">All Quotes</a>
+            <a href="{{ route('manager.quotes.index', ['status' => 'Finalized']) }}" class="btn-secondary" style="{{ $currentStatus === 'Finalized' ? 'background: #059669; color: white;' : '' }}">Finalized</a>
+            <a href="{{ route('manager.quotes.index', ['status' => 'Draft']) }}" class="btn-secondary" style="{{ $currentStatus === 'Draft' ? 'background: #d97706; color: white;' : '' }}">Drafts</a>
+            <a href="{{ route('manager.quotes.index', ['status' => 'Revised']) }}" class="btn-secondary" style="{{ $currentStatus === 'Revised' ? 'background: #2563eb; color: white;' : '' }}">Revised</a>
+        </div>
+
+        <button type="submit" class="btn-primary" style="padding: 8px 16px;">Search</button>
+    </form>
+</div>
+
+<div class="card">
+    @if ($quotes->count() > 0)
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Quote #</th>
+                        <th>Created</th>
+                        <th>Sales Rep</th>
+                        <th>Customer Company</th>
+                        <th>Model</th>
+                        <th>Pricing Basis</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Total Quoted ($)</th>
+                        <th style="text-align: right; width: 130px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($quotes as $q)
+                        @php
+                            $snap = $q->latestVersion?->snapshot;
+                            $stClass = $q->status === 'Finalized' ? 'badge-active' : ($q->status === 'Draft' ? 'badge-draft' : 'badge-inactive');
+                        @endphp
+                        <tr>
+                            <td><strong>Q-{{ $q->quote_number }}</strong></td>
+                            <td>{{ $q->created_at->format('M d, Y') }}</td>
+                            <td>
+                                <strong>{{ $q->user->name }}</strong>
+                                <span style="font-size: 11px; color: #64748b; margin-left: 2px;">({{ $q->user->rep_code }})</span>
+                            </td>
+                            <td>{{ $snap?->customer_company ?? 'Draft Deal' }}</td>
+                            <td><code>{{ $snap?->model_code ?? 'MT4H' }}</code></td>
+                            <td><span style="font-size: 12px; color: #475569;">{{ $snap?->pricing_basis ?? 'MSRP' }}</span></td>
+                            <td><span class="badge {{ $stClass }}">{{ $q->status }}</span></td>
+                            <td style="text-align: right; font-weight: 700; color: #0f172a;">
+                                ${{ number_format($snap?->total ?? 0, 2) }}
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{{ route('sales.quotes.show', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Inspect</a>
+                                @if ($q->status === 'Finalized')
+                                    <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">PDF</a>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 20px;">
+            {{ $quotes->links() }}
+        </div>
+    @else
+        <div style="text-align: center; padding: 48px 24px; color: var(--text-muted);">
+            <div style="font-weight: 600; font-size: 16px; color: var(--text-dark);">No quotations found</div>
+            <p style="font-size: 13px; margin-top: 4px;">No quotations match your search criteria.</p>
+        </div>
+    @endif
+</div>
+@endsection

@@ -120,8 +120,8 @@
                         <th>Quote #</th>
                         <th>Rep</th>
                         <th>Customer</th>
+                        <th>Model</th>
                         <th>Status</th>
-                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -134,8 +134,8 @@
                             <td><strong>Q-{{ $q->quote_number }}</strong></td>
                             <td>{{ $q->user->name }}</td>
                             <td>{{ $snap?->customer_company ?? 'Untitled' }}</td>
+                            <td><span style="font-size: 12px; font-weight: 600; color: #475569;">{{ $snap?->model_code ?? 'MT4H' }}</span></td>
                             <td><span class="badge {{ $stClass }}">{{ $q->status }}</span></td>
-                            <td><strong>${{ number_format($snap?->total ?? 0, 0) }}</strong></td>
                         </tr>
                     @endforeach
                 </tbody>

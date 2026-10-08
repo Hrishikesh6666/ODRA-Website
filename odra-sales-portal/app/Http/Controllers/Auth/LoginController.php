@@ -178,6 +178,10 @@ class LoginController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         }
 
+        if ($user->isManager()) {
+            return redirect()->intended(route('manager.dashboard'));
+        }
+
         return redirect()->intended(route('sales.dashboard'));
     }
 }

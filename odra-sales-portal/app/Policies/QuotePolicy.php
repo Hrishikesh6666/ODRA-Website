@@ -8,11 +8,11 @@ use App\Models\User;
 class QuotePolicy
 {
     /**
-     * Perform pre-authorization checks. Admins have global permission.
+     * Perform pre-authorization checks. Managers have global commercial authority.
      */
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->isAdmin()) {
+        if ($user->isManager()) {
             return true;
         }
 
@@ -20,7 +20,7 @@ class QuotePolicy
     }
 
     /**
-     * Determine whether the user can view any quotes (sales reps only their own list).
+     * Determine whether the user can view any quotes.
      */
     public function viewAny(User $user): bool
     {
@@ -32,7 +32,7 @@ class QuotePolicy
      */
     public function view(User $user, Quote $quote): bool
     {
-        return $user->is_active && $quote->user_id === $user->id;
+        return $user->is_active && ($quote->user_id === $user->id || $user->isManager() || $user->isAdmin());
     }
 
     /**
@@ -48,12 +48,15 @@ class QuotePolicy
      */
     public function update(User $user, Quote $quote): bool
     {
-        // Only active owner can update, and only if not archived
-        if (! $user->is_active || $quote->user_id !== $user->id) {
+        if (! $user->is_active) {
             return false;
         }
 
-        return $quote->status !== 'Archived';
+        if ($user->isManager()) {
+            return true;
+        }
+
+        return $quote->user_id === $user->id && $quote->status !== 'Archived';
     }
 
     /**
@@ -61,7 +64,7 @@ class QuotePolicy
      */
     public function finalize(User $user, Quote $quote): bool
     {
-        return $user->is_active && $quote->user_id === $user->id && $quote->status === 'Draft';
+        return $user->is_active && ($quote->user_id === $user->id || $user->isManager()) && $quote->status === 'Draft';
     }
 
     /**
@@ -69,15 +72,16 @@ class QuotePolicy
      */
     public function revise(User $user, Quote $quote): bool
     {
-        return $user->is_active && $quote->user_id === $user->id && in_array($quote->status, ['Finalized', 'Revised']);
+        return $user->is_active && ($quote->user_id === $user->id || $user->isManager()) && in_array($quote->status, ['Finalized', 'Revised']);
     }
 
     /**
      * Determine whether the user can download the quote PDF.
+     * Note: Technical admins are barred from downloading financial quotation PDFs.
      */
     public function downloadPdf(User $user, Quote $quote): bool
     {
-        return $user->is_active && ($quote->user_id === $user->id || $user->isAdmin());
+        return $user->is_active && ($user->isManager() || $quote->user_id === $user->id);
     }
 
     /**
@@ -85,7 +89,14 @@ class QuotePolicy
      */
     public function delete(User $user, Quote $quote): bool
     {
-        // Only draft quotes can be deleted by sales reps; admins can delete any
-        return $user->is_active && $quote->user_id === $user->id && $quote->status === 'Draft';
+        if (! $user->is_active) {
+            return false;
+        }
+
+        if ($user->isManager()) {
+            return true;
+        }
+
+        return $quote->user_id === $user->id && $quote->status === 'Draft';
     }
 }

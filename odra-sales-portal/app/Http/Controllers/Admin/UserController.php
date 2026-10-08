@@ -21,12 +21,19 @@ class UserController extends Controller
     {
         $salesRole = Role::where('slug', 'sales')->first();
         $adminRole = Role::where('slug', 'admin')->first();
+        $managerRole = Role::where('slug', 'manager')->first();
 
-        // Get all system administrators
+        // Technical administrators (no financial data)
         $admins = User::with('role')
             ->where('role_id', $adminRole->id)
             ->orderBy('name')
             ->get();
+
+        // Commercial managers (exclusive financial visibility)
+        $managers = $managerRole ? User::with('role')
+            ->where('role_id', $managerRole->id)
+            ->orderBy('name')
+            ->get() : collect();
 
         // Query sales representatives
         $query = User::with('role')
@@ -49,11 +56,11 @@ class UserController extends Controller
 
         $users = $query->paginate(20)->withQueryString();
 
-        return view('admin.users.index', compact('users', 'admins'));
+        return view('admin.users.index', compact('users', 'admins', 'managers'));
     }
 
     /**
-     * Store a newly created sales representative or administrator.
+     * Store a newly created sales representative, manager, or administrator.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -74,7 +81,7 @@ class UserController extends Controller
                 'email' => strtolower($validated['email']),
                 'company_id' => $validated['company_id'] ?? null,
                 'rep_code' => null,
-                'territory' => 'Headquarters',
+                'territory' => 'Technical Operations',
                 'password' => Hash::make($validated['password']),
                 'role_id' => $adminRole->id,
                 'is_active' => true,
@@ -89,10 +96,47 @@ class UserController extends Controller
                     'email' => $user->email,
                     'role' => 'admin',
                 ],
-                notes: "Created administrator account for {$user->name} ({$user->email})"
+                notes: "Created technical administrator account for {$user->name} ({$user->email})"
             );
 
-            return redirect()->route('admin.users.index')->with('success', "Administrator {$user->name} created successfully.");
+            return redirect()->route('admin.users.index')->with('success', "Technical Administrator {$user->name} created successfully.");
+        }
+
+        if ($roleType === 'manager') {
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+                'company_id' => ['nullable', 'string', 'max:100', 'unique:users,company_id'],
+                'territory' => ['nullable', 'string', 'max:255'],
+                'password' => ['required', 'string', 'min:8'],
+            ]);
+
+            $managerRole = Role::where('slug', 'manager')->first();
+
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => strtolower($validated['email']),
+                'company_id' => $validated['company_id'] ?? null,
+                'rep_code' => null,
+                'territory' => $validated['territory'] ?? 'Commercial Management',
+                'password' => Hash::make($validated['password']),
+                'role_id' => $managerRole->id,
+                'is_active' => true,
+            ]);
+
+            AuditService::log(
+                action: 'USER_CREATED',
+                entityType: 'User',
+                entityId: $user->id,
+                newValue: [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => 'manager',
+                ],
+                notes: "Created commercial manager account for {$user->name} ({$user->email})"
+            );
+
+            return redirect()->route('admin.users.index')->with('success', "Commercial Manager {$user->name} created successfully.");
         }
 
         // Standard sales representative creation
@@ -135,11 +179,11 @@ class UserController extends Controller
     }
 
     /**
-     * Update a user (sales representative or administrator).
+     * Update a user (sales representative, manager, or administrator).
      */
     public function update(Request $request, User $user): RedirectResponse
     {
-        $isAdmin = $user->isAdmin();
+        $isRep = $user->isSalesRep();
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
@@ -149,7 +193,7 @@ class UserController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ];
 
-        if (! $isAdmin) {
+        if ($isRep) {
             $rules['rep_code'] = ['required', 'string', 'max:10'];
             $rules['territory'] = ['nullable', 'string', 'max:255'];
         } else {
@@ -166,12 +210,15 @@ class UserController extends Controller
             'company_id' => $validated['company_id'] ?? null,
         ];
 
-        if (! $isAdmin) {
+        if ($isRep) {
             $updateData['rep_code'] = strtoupper($validated['rep_code']);
             $updateData['territory'] = $validated['territory'] ?? null;
         } else {
             if (isset($validated['territory'])) {
                 $updateData['territory'] = $validated['territory'];
+            }
+            if (isset($validated['rep_code'])) {
+                $updateData['rep_code'] = !empty($validated['rep_code']) ? strtoupper($validated['rep_code']) : null;
             }
         }
 
@@ -185,16 +232,18 @@ class UserController extends Controller
 
         $user->update($updateData);
 
+        $roleTitle = $user->isAdmin() ? 'Administrator' : ($user->isManager() ? 'Manager' : 'Representative');
+
         AuditService::log(
             action: 'USER_UPDATED',
             entityType: 'User',
             entityId: $user->id,
             oldValue: $old,
             newValue: $updateData,
-            notes: "Updated details for " . ($isAdmin ? 'administrator' : 'representative') . " {$user->name}"
+            notes: "Updated details for {$roleTitle} {$user->name}"
         );
 
-        return redirect()->route('admin.users.index')->with('success', ($isAdmin ? 'Administrator ' : 'Sales representative ') . "{$user->name} updated.");
+        return redirect()->route('admin.users.index')->with('success', "{$roleTitle} {$user->name} updated.");
     }
 
     /**
@@ -208,7 +257,7 @@ class UserController extends Controller
 
         $user->update(['is_active' => ! $user->is_active]);
 
-        $roleTitle = $user->isAdmin() ? 'Administrator' : 'Representative';
+        $roleTitle = $user->isAdmin() ? 'Administrator' : ($user->isManager() ? 'Manager' : 'Representative');
 
         AuditService::log(
             action: 'USER_TOGGLED',
@@ -240,7 +289,7 @@ class UserController extends Controller
 
         $userName = $user->name;
         $userEmail = $user->email;
-        $isAdmin = $user->isAdmin();
+        $roleTitle = $user->isAdmin() ? 'Administrator' : ($user->isManager() ? 'Manager' : 'Representative');
 
         try {
             $user->delete();
@@ -249,10 +298,10 @@ class UserController extends Controller
                 action: 'USER_DELETED',
                 entityType: 'User',
                 entityId: $user->id,
-                notes: "Removed " . ($isAdmin ? 'administrator' : 'representative') . " account {$userName} ({$userEmail})"
+                notes: "Removed {$roleTitle} account {$userName} ({$userEmail})"
             );
 
-            return redirect()->route('admin.users.index')->with('success', ($isAdmin ? 'Administrator ' : 'User ') . "{$userName} has been removed successfully.");
+            return redirect()->route('admin.users.index')->with('success', "{$roleTitle} {$userName} has been removed successfully.");
         } catch (\Exception $e) {
             $user->update(['is_active' => false]);
 
@@ -260,7 +309,7 @@ class UserController extends Controller
                 action: 'USER_TOGGLED',
                 entityType: 'User',
                 entityId: $user->id,
-                notes: "Deactivated " . ($isAdmin ? 'administrator' : 'representative') . " account {$userName} due to attached database records"
+                notes: "Deactivated {$roleTitle} account {$userName} due to attached database records"
             );
 
             return redirect()->route('admin.users.index')->with('error', "{$userName} has associated quotes or database records, so the account was deactivated instead of deleted to protect data history.");

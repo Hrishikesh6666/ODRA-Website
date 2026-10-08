@@ -23,9 +23,13 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/', function () {
     if (Auth::check()) {
-        return Auth::user()->isAdmin()
-            ? redirect()->route('admin.dashboard')
-            : redirect()->route('sales.dashboard');
+        if (Auth::user()->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+        if (Auth::user()->isManager()) {
+            return redirect()->route('manager.dashboard');
+        }
+        return redirect()->route('sales.dashboard');
     }
 
     return redirect()->route('login');
@@ -110,3 +114,25 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Security Audit Log
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Manager Routes (Protected by auth & role:manager) - The Financial Authority
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
+
+    // Reports & Excel Export
+    Route::get('/reports', [\App\Http\Controllers\Manager\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/export', [\App\Http\Controllers\Manager\ReportController::class, 'export'])->name('reports.export');
+
+    // All Team Quotations
+    Route::get('/quotes', [\App\Http\Controllers\Manager\QuoteController::class, 'index'])->name('quotes.index');
+
+    // Commercial Master Pricing
+    Route::get('/pricing', [\App\Http\Controllers\Manager\PricingController::class, 'index'])->name('pricing.index');
+    Route::put('/pricing/models/{model}', [\App\Http\Controllers\Manager\PricingController::class, 'updateModelPrice'])->name('pricing.models.update');
+    Route::put('/pricing/enhancements/{enhancement}', [\App\Http\Controllers\Manager\PricingController::class, 'updateEnhancementPrice'])->name('pricing.enhancements.update');
+});
+

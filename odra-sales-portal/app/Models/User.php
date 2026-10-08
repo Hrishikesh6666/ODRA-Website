@@ -63,9 +63,23 @@ class User extends Authenticatable
         return $this->hasRole('admin');
     }
 
+    public function isManager(): bool
+    {
+        return $this->hasRole('manager');
+    }
+
     public function isSalesRep(): bool
     {
         return $this->hasRole('sales');
+    }
+
+    /**
+     * Strict Financial Shielding: ONLY Managers are permitted to see financial numbers,
+     * sales revenue, quote amounts, and commercial totals.
+     */
+    public function canSeeFinancials(): bool
+    {
+        return $this->isManager();
     }
 
     public function isLocked(): bool

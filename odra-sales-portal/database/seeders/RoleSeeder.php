@@ -11,5 +11,6 @@ class RoleSeeder extends Seeder
     {
         DB::table('roles')->updateOrInsert(['id' => 1], ['name' => 'Administrator', 'slug' => 'admin']);
         DB::table('roles')->updateOrInsert(['id' => 2], ['name' => 'Sales Representative', 'slug' => 'sales']);
+        DB::table('roles')->updateOrInsert(['id' => 3], ['name' => 'Manager', 'slug' => 'manager']);
     }
 }
