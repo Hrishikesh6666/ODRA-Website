@@ -65,6 +65,12 @@ class QuoteController extends Controller
         $catalog = $this->catalogService->getCatalogPayload();
         $user = Auth::user();
 
+        $salesReps = \App\Models\User::whereHas('role', function ($q) {
+            $q->whereIn('slug', ['sales', 'manager']);
+        })->where('is_active', true)->orderBy('name')->get();
+
+        $defaultRep = $user->isSalesRep() ? $user->name : '';
+
         return view('sales.quotes.builder', [
             'quote' => null,
             'quoteNumber' => $nextQuoteNumber,
@@ -72,15 +78,25 @@ class QuoteController extends Controller
             'isReadonly' => false,
             'catalog' => $catalog,
             'user' => $user,
+            'salesReps' => $salesReps,
             'initialState' => [
-                'quoteSeq' => $nextQuoteNumber,
-                'salesRep' => $user->name,
+                'quoteSeq' => (string) $nextQuoteNumber,
+                'salesRep' => $defaultRep,
                 'date' => now()->format('Y-m-d'),
                 'model' => $catalog['items'][0]['model'] ?? 'MT4H',
                 'basis' => 'MSRP (Commercial)',
+                'chassis' => $catalog['chassis'][0] ?? '',
+                'toCompany' => '',
+                'toContact' => '',
+                'toAddr1' => '',
+                'toAddr2' => '',
+                'po' => '',
+                'acct' => '',
+                'fob' => 'Transport, estimate only noted in quote',
                 'baseQty' => 1,
                 'freight' => 0,
                 'baseShowDiscount' => 0,
+                'repTerritory' => '',
                 'enh' => array_fill(0, 13, ['desc' => '', 'qty' => 1]),
             ],
         ]);
@@ -99,26 +115,55 @@ class QuoteController extends Controller
         $catalog = $this->catalogService->getCatalogPayload();
         $user = Auth::user();
 
-        $state = $snapshot?->full_state ?? [
-            'quoteSeq' => $quote->quote_number,
-            'salesRep' => $quote->user->name,
-            'date' => $quote->created_at->format('Y-m-d'),
-            'model' => $snapshot?->model_code ?? 'MT4H',
-            'basis' => $snapshot?->pricing_basis ?? 'MSRP (Commercial)',
-            'chassis' => $snapshot?->chassis_configuration ?? '',
-            'toCompany' => $snapshot?->customer_company ?? '',
-            'toContact' => $snapshot?->customer_contact ?? '',
-            'toAddr1' => $snapshot?->customer_address_1 ?? '',
-            'toAddr2' => $snapshot?->customer_address_2 ?? '',
-            'po' => $snapshot?->po_number ?? '',
-            'acct' => $snapshot?->customer_account ?? '',
-            'fob' => $snapshot?->fob_terms ?? 'Transport, estimate only noted in quote',
-            'baseQty' => $snapshot?->base_qty ?? 1,
-            'freight' => $snapshot?->freight_amount ?? 0,
-            'baseShowDiscount' => $snapshot?->show_discount_amount ?? 0,
-            'repTerritory' => $snapshot?->rep_territory ?? '',
-            'enh' => $snapshot?->enhancements_snapshot ?? array_fill(0, 13, ['desc' => '', 'qty' => 1]),
+        $salesReps = \App\Models\User::whereHas('role', function ($q) {
+            $q->whereIn('slug', ['sales', 'manager']);
+        })->where('is_active', true)->orderBy('name')->get();
+
+        $savedState = is_array($snapshot?->full_state) ? $snapshot->full_state : [];
+
+        $defaultState = [
+            'quoteSeq' => (string) $quote->quote_number,
+            'salesRep' => $snapshot?->sales_rep_name ?: $quote->user->name,
+            'date' => $snapshot?->created_at ? $snapshot->created_at->format('Y-m-d') : $quote->created_at->format('Y-m-d'),
+            'model' => $snapshot?->model_code ?: 'MT4H',
+            'basis' => $snapshot?->pricing_basis ?: 'MSRP (Commercial)',
+            'chassis' => $snapshot?->chassis_configuration ?: ($catalog['chassis'][0] ?? ''),
+            'toCompany' => $snapshot?->customer_company ?: '',
+            'toContact' => $snapshot?->customer_contact ?: '',
+            'toAddr1' => $snapshot?->customer_address_1 ?: '',
+            'toAddr2' => $snapshot?->customer_address_2 ?: '',
+            'po' => $snapshot?->po_number ?: '',
+            'acct' => $snapshot?->customer_account ?: '',
+            'fob' => $snapshot?->fob_terms ?: 'Transport, estimate only noted in quote',
+            'baseQty' => $snapshot?->base_qty ?: 1,
+            'freight' => $snapshot?->freight_amount ? (float) $snapshot->freight_amount : 0,
+            'baseShowDiscount' => $snapshot?->show_discount_amount ? (float) $snapshot->show_discount_amount : 0,
+            'repTerritory' => $snapshot?->rep_territory ?: '',
+            'enh' => !empty($snapshot?->enhancements_snapshot) && is_array($snapshot->enhancements_snapshot)
+                ? $snapshot->enhancements_snapshot
+                : array_fill(0, 13, ['desc' => '', 'qty' => 1]),
         ];
+
+        $state = array_merge($defaultState, $savedState);
+
+        // Guarantee enh is always an array of 13 rows
+        if (empty($state['enh']) || !is_array($state['enh'])) {
+            $state['enh'] = array_fill(0, 13, ['desc' => '', 'qty' => 1]);
+        } else {
+            $enhList = [];
+            foreach ($state['enh'] as $row) {
+                if (is_array($row)) {
+                    $enhList[] = [
+                        'desc' => $row['desc'] ?? '',
+                        'qty' => isset($row['qty']) ? (int) $row['qty'] : 1,
+                    ];
+                }
+            }
+            while (count($enhList) < 13) {
+                $enhList[] = ['desc' => '', 'qty' => 1];
+            }
+            $state['enh'] = array_slice($enhList, 0, 13);
+        }
 
         return view('sales.quotes.builder', [
             'quote' => $quote,
@@ -127,7 +172,9 @@ class QuoteController extends Controller
             'isReadonly' => $isReadonly,
             'catalog' => $catalog,
             'user' => $user,
+            'salesReps' => $salesReps,
             'initialState' => $state,
         ]);
     }
 }
+
