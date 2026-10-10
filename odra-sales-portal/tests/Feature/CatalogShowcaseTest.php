@@ -71,4 +71,57 @@ class CatalogShowcaseTest extends TestCase
         $response->assertSee('ODRA Sales Portal');
         $response->assertSee('urlParams.has(\'model\')', false);
     }
+
+    public function test_showcase_renders_interactive_configurators_and_upgrades(): void
+    {
+        $rep = User::where('email', 'john.wells@odrasweeper.com')->first();
+
+        $response = $this->actingAs($rep)->get(route('sales.models'));
+
+        $response->assertStatus(200);
+        // Interactive chassis selection
+        $response->assertSee('selectChassis(\'MT4H\'', false);
+        $response->assertSee('selectChassis(\'MS5H\'', false);
+        $response->assertSee('Isuzu NRR Cabover 19,500 GVWR');
+        $response->assertSee('Conventional Class 6');
+        
+        // Interactive procurement basis
+        $response->assertSee('selectPricingBasis(\'MT4H\'', false);
+        $response->assertSee('MSRP Commercial');
+        $response->assertSee('Sourcewell (#093021)');
+        $response->assertSee('BuyBoard');
+
+        // Interactive factory upgrades
+        $response->assertSee('toggleOption(\'MT4H\'', false);
+        $response->assertSee('toggleOption(\'MS5H\'', false);
+        $response->assertSee('Stainless Steel 304 Hopper Body');
+        $response->assertSee('Dualized Steering Conversion');
+        $response->assertSee('Elevator System High-Volume Flush');
+
+        // Dynamic pricing & CTA buttons
+        $response->assertSee('id="mt4hPriceAmount"', false);
+        $response->assertSee('id="ms5hPriceAmount"', false);
+        $response->assertSee('id="mt4hConfigureBtn"', false);
+        $response->assertSee('id="ms5hConfigureBtn"', false);
+        $response->assertSee('CARD_CONFIGS', false);
+        $response->assertSee('recalculateCardPrice', false);
+    }
+
+    public function test_quote_builder_handles_full_configured_query_params(): void
+    {
+        $rep = User::where('email', 'john.wells@odrasweeper.com')->first();
+
+        $response = $this->actingAs($rep)->get(route('sales.quotes.create', [
+            'model' => 'MT4H',
+            'chassis' => 'MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - LEFT side dumping hopper',
+            'basis' => 'Sourcewell',
+            'enhancements' => 'Stainless Steel Hopper ILO Standard||Rear Mounted LED Light Bar'
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('ODRA Sales Portal');
+        $response->assertSee('urlParams.has(\'chassis\')', false);
+        $response->assertSee('urlParams.has(\'basis\')', false);
+        $response->assertSee('urlParams.has(\'enhancements\')', false);
+    }
 }

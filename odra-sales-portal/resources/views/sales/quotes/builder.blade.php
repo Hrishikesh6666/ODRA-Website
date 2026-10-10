@@ -571,7 +571,7 @@ if (INITIAL_STATE && typeof INITIAL_STATE === 'object') {
   Object.assign(state, INITIAL_STATE);
 }
 
-// Support pre-selecting model or chassis from Catalog showcase URL (?model=MT4H / ?model=MS5H)
+// Support pre-selecting model, chassis, pricing basis, and enhancements from Catalog showcase URL
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has('model') && (!INITIAL_STATE || !INITIAL_STATE.model)) {
   const paramModel = urlParams.get('model').toUpperCase();
@@ -581,6 +581,18 @@ if (urlParams.has('model') && (!INITIAL_STATE || !INITIAL_STATE.model)) {
 }
 if (urlParams.has('chassis') && (!INITIAL_STATE || !INITIAL_STATE.chassis)) {
   state.chassis = urlParams.get('chassis');
+}
+if (urlParams.has('basis') && (!INITIAL_STATE || !INITIAL_STATE.basis)) {
+  state.basis = urlParams.get('basis');
+}
+if (urlParams.has('enhancements') && (!INITIAL_STATE || !INITIAL_STATE.enh)) {
+  const optionsList = urlParams.get('enhancements').split('||').map(s => s.trim()).filter(Boolean);
+  state.enh = Array.from({length: 13}, () => ({desc: '', qty: 1}));
+  optionsList.forEach((opt, idx) => {
+    if (idx < 13) {
+      state.enh[idx] = { desc: opt, qty: 1 };
+    }
+  });
 }
 
 // Guarantee enh is always an array of 13 rows

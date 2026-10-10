@@ -398,11 +398,14 @@
   margin-top: 2px;
 }
 
-/* Chassis Configs Tag Cloud */
+/* Chassis Configs Selector */
 .chassis-tags-section {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 .chassis-tags-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -410,24 +413,296 @@
   font-weight: 700;
   margin-bottom: 8px;
 }
-.chassis-tag-list {
+.chassis-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.chassis-chip-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #cbd5e1;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+.chassis-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+.chassis-chip-btn.active {
+  background: linear-gradient(90deg, rgba(172, 37, 41, 0.22) 0%, rgba(26, 32, 46, 0.6) 100%);
+  border-color: var(--odra-red-bright);
+  color: white;
+  box-shadow: 0 0 12px rgba(172, 37, 41, 0.25);
+}
+.chassis-btn-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+.chassis-radio-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.chassis-chip-btn.active .chassis-radio-indicator {
+  border-color: var(--odra-red-bright);
+  background: var(--odra-red-bright);
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+}
+.chassis-chip-btn.active .chassis-radio-indicator::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: white;
+}
+.chassis-label-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11.8px;
+}
+.chassis-badge-included {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  flex-shrink: 0;
+}
+
+/* Procurement / Pricing Basis Selector */
+.basis-selector-section {
+  margin-bottom: 16px;
+}
+.basis-selector-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--amg-text-muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.basis-pills-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-.chassis-chip {
-  background: rgba(255, 255, 255, 0.05);
+.basis-pill-btn {
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  color: #94a3b8;
   font-size: 11.5px;
-  padding: 4px 10px;
+  font-weight: 600;
+  padding: 5px 11px;
   border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+.basis-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: white;
+}
+.basis-pill-btn.active {
+  background: white;
+  color: #0f172a;
+  border-color: white;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.25);
+}
+
+/* Upgrades & Factory Enhancements Configurator */
+.upgrades-configurator-section {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s ease;
+}
+.upgrades-configurator-section:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.upgrades-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.upgrades-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #e2e8f0;
+  font-weight: 700;
+}
+.upgrades-count-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
+}
+.upgrades-toggle-chevron {
+  color: #94a3b8;
+  font-size: 11px;
+  transition: transform 0.2s ease;
+}
+.upgrades-header-bar.collapsed .upgrades-toggle-chevron {
+  transform: rotate(-90deg);
+}
+.upgrades-body {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.upgrade-option-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+.upgrade-option-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.upgrade-option-card.selected {
+  background: rgba(16, 185, 129, 0.09);
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+}
+.upgrade-card-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  flex: 1;
+}
+.upgrade-checkbox {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.upgrade-option-card.selected .upgrade-checkbox {
+  background: #10b981;
+  border-color: #10b981;
+}
+.upgrade-checkbox::after {
+  content: '';
+  display: none;
+  width: 4px;
+  height: 7px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+.upgrade-option-card.selected .upgrade-checkbox::after {
+  display: block;
+}
+.upgrade-cat-tag {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.upgrade-name {
+  font-size: 11.5px;
+  color: #e2e8f0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.upgrade-price-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #34d399;
+  flex-shrink: 0;
+  letter-spacing: -0.2px;
+}
+.show-more-options-btn {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  margin-top: 2px;
+}
+.show-more-options-btn:hover {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+}
+.more-upgrades-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 /* Pricing & Cooperative Section */
 .pricing-coop-bar {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 14px 16px;
   margin-bottom: 24px;
@@ -449,15 +724,50 @@
   font-weight: 600;
 }
 .price-amount {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: white;
   letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  transition: color 0.25s ease;
 }
 .price-note {
   font-size: 11px;
   color: #10b981;
   font-weight: 500;
+  margin-top: 3px;
+}
+.price-breakdown-row {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.breakdown-pill {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10.5px;
+}
+.reset-specs-btn {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: auto;
+}
+.reset-specs-btn:hover {
+  color: #ef4444;
 }
 .coop-logos-row {
   display: flex;
@@ -470,6 +780,13 @@
   padding: 2px 6px;
   border-radius: 4px;
   object-fit: contain;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+.coop-badge-logo:hover, .coop-badge-logo.active-coop {
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
 }
 
 /* Action CTA Buttons (Mercedes AMG Format) */
@@ -846,13 +1163,167 @@
           </div>
         </div>
 
-        <!-- Available Chassis Configurations -->
+        <!-- Interactive Chassis Configurations Selector -->
         <div class="chassis-tags-section">
-          <div class="chassis-tags-label">Standard Chassis Configurations</div>
-          <div class="chassis-tag-list">
-            <span class="chassis-chip">&#10003; Isuzu NRR Cabover 19,500 GVWR &middot; Left-Side Dump</span>
-            <span class="chassis-chip">&#10003; Isuzu NRR Cabover 19,500 GVWR &middot; Right-Side Dump</span>
-            <span class="chassis-chip">&#10003; Ford F-550XL Conventional 19,000 GVWR &middot; Left-Side Dump</span>
+          <div class="chassis-tags-label">
+            <span>Select Chassis Specification</span>
+            <span style="font-size: 10px; color: #10b981; font-weight: 600;">Standard &middot; $0 Surcharge</span>
+          </div>
+          <div class="chassis-selector-list" data-model="MT4H">
+            <button type="button" class="chassis-chip-btn active" data-model="MT4H" data-chassis="MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - LEFT side dumping hopper" onclick="selectChassis('MT4H', this)">
+              <div class="chassis-btn-left">
+                <span class="chassis-radio-indicator"></span>
+                <span class="chassis-label-text">Isuzu NRR Cabover 19,500 GVWR &middot; Left-Side Dump</span>
+              </div>
+              <span class="chassis-badge-included">Selected</span>
+            </button>
+            <button type="button" class="chassis-chip-btn" data-model="MT4H" data-chassis="MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - RIGHT side dumping hopper" onclick="selectChassis('MT4H', this)">
+              <div class="chassis-btn-left">
+                <span class="chassis-radio-indicator"></span>
+                <span class="chassis-label-text">Isuzu NRR Cabover 19,500 GVWR &middot; Right-Side Dump</span>
+              </div>
+              <span class="chassis-badge-included" style="display:none;">Selected</span>
+            </button>
+            <button type="button" class="chassis-chip-btn" data-model="MT4H" data-chassis="MT4H - Ford F-550XL conventional, 19,000 GVWR, non-CDL - LEFT side dumping hopper" onclick="selectChassis('MT4H', this)">
+              <div class="chassis-btn-left">
+                <span class="chassis-radio-indicator"></span>
+                <span class="chassis-label-text">Ford F-550XL Conventional 19,000 GVWR &middot; Left-Side Dump</span>
+              </div>
+              <span class="chassis-badge-included" style="display:none;">Selected</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Procurement / Pricing Contract Selector -->
+        <div class="basis-selector-section">
+          <div class="basis-selector-label">
+            <span>Procurement Pricing Basis</span>
+            <span id="mt4hBasisBadge" style="font-size:10px;color:#94a3b8;font-weight:600;">Commercial Baseline</span>
+          </div>
+          <div class="basis-pills-row" data-model="MT4H">
+            <button type="button" class="basis-pill-btn active" data-basis="msrp" data-basis-label="MSRP (Commercial)" onclick="selectPricingBasis('MT4H', 'msrp', this)">
+              MSRP Commercial
+            </button>
+            <button type="button" class="basis-pill-btn" data-basis="sourcewell" data-basis-label="Sourcewell" onclick="selectPricingBasis('MT4H', 'sourcewell', this)">
+              Sourcewell (#093021)
+            </button>
+            <button type="button" class="basis-pill-btn" data-basis="hgac" data-basis-label="H-GAC / HGACBuy" onclick="selectPricingBasis('MT4H', 'hgac', this)">
+              H-GAC Buy
+            </button>
+            <button type="button" class="basis-pill-btn" data-basis="buyboard" data-basis-label="BuyBoard" onclick="selectPricingBasis('MT4H', 'buyboard', this)">
+              BuyBoard
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Equipment & Factory Upgrades Configurator -->
+        <div class="upgrades-configurator-section" id="mt4hUpgradesSection">
+          <div class="upgrades-header-bar" onclick="toggleUpgradesSection('MT4H')">
+            <div class="upgrades-title-wrap">
+              <span>&#9889; Factory Options &amp; Upgrades</span>
+              <span class="upgrades-count-pill" id="mt4hUpgradesCount">0 Selected</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button type="button" class="reset-specs-btn" onclick="event.stopPropagation(); resetCardConfig('MT4H');" title="Reset all upgrades to baseline">Reset</button>
+              <span class="upgrades-toggle-chevron" id="mt4hUpgradesChevron">&#9660;</span>
+            </div>
+          </div>
+          <div class="upgrades-body" id="mt4hUpgradesBody">
+            <label class="upgrade-option-card" data-enh-id="6" data-msrp="13000" data-swnet="13650" data-swlist="13929" data-desc="Stainless Steel Hopper ILO Standard">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">HOPPER</span>
+                <span class="upgrade-name" title="Stainless Steel Hopper ILO Standard">Stainless Steel 304 Hopper Body</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="13000">+$13,000</span>
+            </label>
+
+            <label class="upgrade-option-card" data-enh-id="10" data-msrp="20400" data-swnet="20400" data-swlist="20816" data-desc="Dualization for MT4H Chassis">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">STEERING</span>
+                <span class="upgrade-name" title="Dualization for MT4H Chassis">Dualized Steering Conversion</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="20400">+$20,400</span>
+            </label>
+
+            <label class="upgrade-option-card" data-enh-id="2" data-msrp="2293" data-swnet="2454" data-swlist="2504" data-desc="Rear Mounted LED Light Bar">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">LIGHTS</span>
+                <span class="upgrade-name" title="Rear Mounted LED Light Bar">Rear Mounted LED Light Bar</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="2293">+$2,293</span>
+            </label>
+
+            <label class="upgrade-option-card" data-enh-id="5" data-msrp="1405" data-swnet="1475" data-swlist="1505" data-desc="Elevator System Flush">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">WATER</span>
+                <span class="upgrade-name" title="Elevator System Flush">Elevator System High-Volume Flush</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="1405">+$1,405</span>
+            </label>
+
+            <div class="more-upgrades-drawer" id="mt4hMoreUpgrades" style="display:none;">
+              <label class="upgrade-option-card" data-enh-id="1" data-msrp="529" data-swnet="556" data-swlist="567" data-desc="Front LED Strobe Light (behind cab, visible from front)">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">LIGHTS</span>
+                  <span class="upgrade-name">Front LED Safety Strobe Light</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="529">+$529</span>
+              </label>
+
+              <label class="upgrade-option-card" data-enh-id="4" data-msrp="746" data-swnet="746" data-swlist="761" data-desc="Strip Main Broom ILO Standard">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">BROOMS</span>
+                  <span class="upgrade-name">Strip Main Broom ILO Standard</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="746">+$746</span>
+              </label>
+
+              <label class="upgrade-option-card" data-enh-id="13" data-msrp="998" data-swnet="998" data-swlist="1018" data-desc="Pivot Drag Shoe Arms ILO Standard">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">DRAG SHOES</span>
+                  <span class="upgrade-name">Pivot Drag Shoe Arms ILO Standard</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="998">+$998</span>
+              </label>
+
+              <label class="upgrade-option-card" data-enh-id="11" data-msrp="6106" data-swnet="6106" data-swlist="6231" data-desc="2nd Year Warranty Parts/Labor - Module Only (excl. aux engine)">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">WARRANTY</span>
+                  <span class="upgrade-name">2nd Year Extended Warranty (Module)</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="6106">+$6,106</span>
+              </label>
+
+              <label class="upgrade-option-card" data-enh-id="12" data-msrp="11554" data-swnet="11554" data-swlist="11790" data-desc="3rd Year Warranty Parts/Labor - Module Only (excl. aux engine)">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MT4H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">WARRANTY</span>
+                  <span class="upgrade-name">3rd Year Extended Warranty (Module)</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="11554">+$11,554</span>
+              </label>
+            </div>
+
+            <button type="button" class="show-more-options-btn" id="mt4hShowMoreBtn" onclick="toggleMoreUpgrades('MT4H')">
+              + View 5 More Factory Upgrades
+            </button>
           </div>
         </div>
 
@@ -860,30 +1331,36 @@
         <div class="pricing-coop-bar">
           <div class="price-display-wrap">
             @if ($isManager)
-              <span class="price-caption">Starting Commercial Pricing</span>
-              <span class="price-amount">$257,493 <span style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
-              <span class="price-note">&bull; Sourcewell List: $307,378 &bull; Net: $270,493</span>
+              <span class="price-caption" id="mt4hPriceCaption">Configured Pricing &middot; MSRP Commercial</span>
+              <span class="price-amount" id="mt4hPriceAmount">$257,493 <span id="mt4hPriceSuffix" style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
+              <div class="price-breakdown-row" id="mt4hBreakdownRow">
+                <span class="breakdown-pill" id="mt4hBreakdownPill">Base: $257,493 &bull; Upgrades: $0</span>
+              </div>
+              <span class="price-note" id="mt4hManagerBreakdown">&bull; Sourcewell List: $307,378 &bull; Net: $270,493</span>
             @elseif ($isAdmin)
               <span class="price-caption">Master Model Code</span>
               <span class="price-amount" style="font-size: 18px; color: #cbd5e1;">MT4H-SERIES</span>
               <span style="font-size: 11px; color: #94a3b8;">Technical Admin Master &middot; Financials Restricted</span>
             @else
-              <span class="price-caption">Starting Baseline Price</span>
-              <span class="price-amount">$257,493 <span style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
-              <span class="price-note">&#10003; Pre-approved Cooperative Pricing Available</span>
+              <span class="price-caption" id="mt4hPriceCaption">Configured Price</span>
+              <span class="price-amount" id="mt4hPriceAmount">$257,493 <span id="mt4hPriceSuffix" style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
+              <div class="price-breakdown-row" id="mt4hBreakdownRow">
+                <span class="breakdown-pill" id="mt4hBreakdownPill">Base: $257,493 &bull; Upgrades: $0</span>
+              </div>
+              <span class="price-note" id="mt4hPriceNote">&#10003; Pre-approved Cooperative Pricing Available</span>
             @endif
           </div>
 
-          <div class="coop-logos-row">
-            <img src="{{ asset('images/logo-sourcewell.png') }}" alt="Sourcewell" class="coop-badge-logo" title="Sourcewell Contract #093021-ODR">
-            <img src="{{ asset('images/logo-hgac.png') }}" alt="H-GAC" class="coop-badge-logo" title="H-GAC Pre-Approved">
-            <img src="{{ asset('images/logo-buyboard.png') }}" alt="BuyBoard" class="coop-badge-logo" title="BuyBoard National Cooperative">
+          <div class="coop-logos-row" id="mt4hCoopLogos">
+            <img src="{{ asset('images/logo-sourcewell.png') }}" alt="Sourcewell" class="coop-badge-logo" id="mt4hLogoSourcewell" title="Sourcewell Contract #093021-ODR">
+            <img src="{{ asset('images/logo-hgac.png') }}" alt="H-GAC" class="coop-badge-logo" id="mt4hLogoHgac" title="H-GAC Pre-Approved">
+            <img src="{{ asset('images/logo-buyboard.png') }}" alt="BuyBoard" class="coop-badge-logo" id="mt4hLogoBuyboard" title="BuyBoard National Cooperative">
           </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="card-cta-bar">
-          <a href="{{ route('sales.quotes.create') }}?model=MT4H" class="btn-amg-primary">
+          <a id="mt4hConfigureBtn" href="{{ route('sales.quotes.create') }}?model=MT4H" class="btn-amg-primary">
             <span>Configure in Quote Builder</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </a>
@@ -950,12 +1427,150 @@
           </div>
         </div>
 
-        <!-- Available Chassis Configurations -->
+        <!-- Interactive Chassis Configurations Selector -->
         <div class="chassis-tags-section">
-          <div class="chassis-tags-label">Standard Chassis Configurations</div>
-          <div class="chassis-tag-list">
-            <span class="chassis-chip">&#10003; Conventional Class 6 &middot; 25,500 GVWR &middot; Non-CDL Operation</span>
-            <span class="chassis-chip">&#10003; Conventional Class 7 &middot; 26,000+ GVWR &middot; CDL-Required Heavy Duty</span>
+          <div class="chassis-tags-label">
+            <span>Select Chassis Specification</span>
+            <span style="font-size: 10px; color: #10b981; font-weight: 600;">Standard &middot; $0 Surcharge</span>
+          </div>
+          <div class="chassis-selector-list" data-model="MS5H">
+            <button type="button" class="chassis-chip-btn active" data-model="MS5H" data-chassis="MS5H - Conventional Class 6, 25,500 GVWR, 148&quot; WB, 300HP Cummins, non-CDL" onclick="selectChassis('MS5H', this)">
+              <div class="chassis-btn-left">
+                <span class="chassis-radio-indicator"></span>
+                <span class="chassis-label-text">Conventional Class 6 &middot; 25,500 GVWR &middot; Non-CDL Operation</span>
+              </div>
+              <span class="chassis-badge-included">Selected</span>
+            </button>
+            <button type="button" class="chassis-chip-btn" data-model="MS5H" data-chassis="MS5H - Conventional Class 7, CDL-required configuration, 300HP Cummins - no price difference" onclick="selectChassis('MS5H', this)">
+              <div class="chassis-btn-left">
+                <span class="chassis-radio-indicator"></span>
+                <span class="chassis-label-text">Conventional Class 7 &middot; 26,000+ GVWR &middot; CDL-Required Heavy Duty</span>
+              </div>
+              <span class="chassis-badge-included" style="display:none;">Selected</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Procurement / Pricing Contract Selector -->
+        <div class="basis-selector-section">
+          <div class="basis-selector-label">
+            <span>Procurement Pricing Basis</span>
+            <span id="ms5hBasisBadge" style="font-size:10px;color:#94a3b8;font-weight:600;">Commercial Baseline</span>
+          </div>
+          <div class="basis-pills-row" data-model="MS5H">
+            <button type="button" class="basis-pill-btn active" data-basis="msrp" data-basis-label="MSRP (Commercial)" onclick="selectPricingBasis('MS5H', 'msrp', this)">
+              MSRP Commercial
+            </button>
+            <button type="button" class="basis-pill-btn" data-basis="sourcewell" data-basis-label="Sourcewell" onclick="selectPricingBasis('MS5H', 'sourcewell', this)">
+              Sourcewell (#093021)
+            </button>
+            <button type="button" class="basis-pill-btn" data-basis="hgac" data-basis-label="H-GAC / HGACBuy" onclick="selectPricingBasis('MS5H', 'hgac', this)">
+              H-GAC Buy
+            </button>
+            <button type="button" class="basis-pill-btn" data-basis="buyboard" data-basis-label="BuyBoard" onclick="selectPricingBasis('MS5H', 'buyboard', this)">
+              BuyBoard
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Equipment & Factory Upgrades Configurator -->
+        <div class="upgrades-configurator-section" id="ms5hUpgradesSection">
+          <div class="upgrades-header-bar" onclick="toggleUpgradesSection('MS5H')">
+            <div class="upgrades-title-wrap">
+              <span>&#9889; Factory Options &amp; Upgrades</span>
+              <span class="upgrades-count-pill" id="ms5hUpgradesCount">0 Selected</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button type="button" class="reset-specs-btn" onclick="event.stopPropagation(); resetCardConfig('MS5H');" title="Reset all upgrades to baseline">Reset</button>
+              <span class="upgrades-toggle-chevron" id="ms5hUpgradesChevron">&#9660;</span>
+            </div>
+          </div>
+          <div class="upgrades-body" id="ms5hUpgradesBody">
+            <label class="upgrade-option-card" data-enh-id="20" data-msrp="19519" data-swnet="19519" data-swlist="19918" data-desc="Dualized Conversion on Chassis">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">STEERING</span>
+                <span class="upgrade-name" title="Dualized Conversion on Chassis">Dualized Steering Conversion (Freightliner)</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="19519">+$19,519</span>
+            </label>
+
+            <label class="upgrade-option-card" data-enh-id="15" data-msrp="2293" data-swnet="2454" data-swlist="2504" data-desc="Rear Mounted LED Light Bar">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">LIGHTS</span>
+                <span class="upgrade-name" title="Rear Mounted LED Light Bar">Rear Mounted LED Light Bar</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="2293">+$2,293</span>
+            </label>
+
+            <label class="upgrade-option-card" data-enh-id="18" data-msrp="1405" data-swnet="1475" data-swlist="1505" data-desc="Elevator System Flush">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">WATER</span>
+                <span class="upgrade-name" title="Elevator System Flush">Elevator System High-Volume Flush</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="1405">+$1,405</span>
+            </label>
+
+            <label class="upgrade-option-card" data-enh-id="14" data-msrp="529" data-swnet="556" data-swlist="567" data-desc="Front LED Strobe Light (behind cab, visible from front)">
+              <div class="upgrade-card-left">
+                <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                <span class="upgrade-checkbox"></span>
+                <span class="upgrade-cat-tag">LIGHTS</span>
+                <span class="upgrade-name">Front LED Safety Strobe Light</span>
+              </div>
+              <span class="upgrade-price-tag" data-base-msrp="529">+$529</span>
+            </label>
+
+            <div class="more-upgrades-drawer" id="ms5hMoreUpgrades" style="display:none;">
+              <label class="upgrade-option-card" data-enh-id="17" data-msrp="746" data-swnet="746" data-swlist="761" data-desc="Strip Main Broom ILO Standard">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">BROOMS</span>
+                  <span class="upgrade-name">Strip Main Broom ILO Standard</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="746">+$746</span>
+              </label>
+
+              <label class="upgrade-option-card" data-enh-id="23" data-msrp="998" data-swnet="998" data-swlist="1018" data-desc="Pivot Drag Shoe Arms ILO Standard">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">DRAG SHOES</span>
+                  <span class="upgrade-name">Pivot Drag Shoe Arms ILO Standard</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="998">+$998</span>
+              </label>
+
+              <label class="upgrade-option-card" data-enh-id="21" data-msrp="6106" data-swnet="6106" data-swlist="6231" data-desc="2nd Year Warranty Parts/Labor - Module Only (excl. chassis)">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">WARRANTY</span>
+                  <span class="upgrade-name">2nd Year Extended Warranty (Module)</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="6106">+$6,106</span>
+              </label>
+
+              <label class="upgrade-option-card" data-enh-id="22" data-msrp="11554" data-swnet="11554" data-swlist="11790" data-desc="3rd Year Warranty Parts/Labor - Module Only (excl. chassis)">
+                <div class="upgrade-card-left">
+                  <input type="checkbox" style="display:none;" onchange="toggleOption('MS5H', this)">
+                  <span class="upgrade-checkbox"></span>
+                  <span class="upgrade-cat-tag">WARRANTY</span>
+                  <span class="upgrade-name">3rd Year Extended Warranty (Module)</span>
+                </div>
+                <span class="upgrade-price-tag" data-base-msrp="11554">+$11,554</span>
+              </label>
+            </div>
+
+            <button type="button" class="show-more-options-btn" id="ms5hShowMoreBtn" onclick="toggleMoreUpgrades('MS5H')">
+              + View 4 More Factory Upgrades
+            </button>
           </div>
         </div>
 
@@ -963,30 +1578,36 @@
         <div class="pricing-coop-bar">
           <div class="price-display-wrap">
             @if ($isManager)
-              <span class="price-caption">Starting Commercial Pricing</span>
-              <span class="price-amount">$349,149 <span style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
-              <span class="price-note">&bull; Sourcewell List: $411,533 &bull; Net: $362,149</span>
+              <span class="price-caption" id="ms5hPriceCaption">Configured Pricing &middot; MSRP Commercial</span>
+              <span class="price-amount" id="ms5hPriceAmount">$349,149 <span id="ms5hPriceSuffix" style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
+              <div class="price-breakdown-row" id="ms5hBreakdownRow">
+                <span class="breakdown-pill" id="ms5hBreakdownPill">Base: $349,149 &bull; Upgrades: $0</span>
+              </div>
+              <span class="price-note" id="ms5hManagerBreakdown">&bull; Sourcewell List: $411,533 &bull; Net: $362,149</span>
             @elseif ($isAdmin)
               <span class="price-caption">Master Model Code</span>
               <span class="price-amount" style="font-size: 18px; color: #cbd5e1;">MS5H-SERIES</span>
               <span style="font-size: 11px; color: #94a3b8;">Technical Admin Master &middot; Financials Restricted</span>
             @else
-              <span class="price-caption">Starting Baseline Price</span>
-              <span class="price-amount">$349,149 <span style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
-              <span class="price-note">&#10003; Pre-approved Cooperative Pricing Available</span>
+              <span class="price-caption" id="ms5hPriceCaption">Configured Price</span>
+              <span class="price-amount" id="ms5hPriceAmount">$349,149 <span id="ms5hPriceSuffix" style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
+              <div class="price-breakdown-row" id="ms5hBreakdownRow">
+                <span class="breakdown-pill" id="ms5hBreakdownPill">Base: $349,149 &bull; Upgrades: $0</span>
+              </div>
+              <span class="price-note" id="ms5hPriceNote">&#10003; Pre-approved Cooperative Pricing Available</span>
             @endif
           </div>
 
-          <div class="coop-logos-row">
-            <img src="{{ asset('images/logo-sourcewell.png') }}" alt="Sourcewell" class="coop-badge-logo" title="Sourcewell Contract #093021-ODR">
-            <img src="{{ asset('images/logo-hgac.png') }}" alt="H-GAC" class="coop-badge-logo" title="H-GAC Pre-Approved">
-            <img src="{{ asset('images/logo-buyboard.png') }}" alt="BuyBoard" class="coop-badge-logo" title="BuyBoard National Cooperative">
+          <div class="coop-logos-row" id="ms5hCoopLogos">
+            <img src="{{ asset('images/logo-sourcewell.png') }}" alt="Sourcewell" class="coop-badge-logo" id="ms5hLogoSourcewell" title="Sourcewell Contract #093021-ODR">
+            <img src="{{ asset('images/logo-hgac.png') }}" alt="H-GAC" class="coop-badge-logo" id="ms5hLogoHgac" title="H-GAC Pre-Approved">
+            <img src="{{ asset('images/logo-buyboard.png') }}" alt="BuyBoard" class="coop-badge-logo" id="ms5hLogoBuyboard" title="BuyBoard National Cooperative">
           </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="card-cta-bar">
-          <a href="{{ route('sales.quotes.create') }}?model=MS5H" class="btn-amg-primary">
+          <a id="ms5hConfigureBtn" href="{{ route('sales.quotes.create') }}?model=MS5H" class="btn-amg-primary">
             <span>Configure in Quote Builder</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </a>
@@ -1181,6 +1802,307 @@
 
 @push('scripts')
 <script>
+// Configurator State Store
+const CARD_CONFIGS = {
+  MT4H: {
+    bases: {
+      msrp: { amount: 257493, list: 257493, label: 'MSRP Commercial' },
+      sourcewell: { amount: 270493, list: 307378, label: 'Sourcewell' },
+      hgac: { amount: 270493, list: 307378, label: 'H-GAC / HGACBuy' },
+      buyboard: { amount: 270493, list: 307378, label: 'BuyBoard' }
+    },
+    basis: 'msrp',
+    chassis: 'MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - LEFT side dumping hopper',
+    selected: new Map(),
+    currentTotal: 257493
+  },
+  MS5H: {
+    bases: {
+      msrp: { amount: 349149, list: 349149, label: 'MSRP Commercial' },
+      sourcewell: { amount: 362149, list: 411533, label: 'Sourcewell' },
+      hgac: { amount: 362149, list: 411533, label: 'H-GAC / HGACBuy' },
+      buyboard: { amount: 362149, list: 411533, label: 'BuyBoard' }
+    },
+    basis: 'msrp',
+    chassis: 'MS5H - Conventional Class 6, 25,500 GVWR, 148" WB, 300HP Cummins, non-CDL',
+    selected: new Map(),
+    currentTotal: 349149
+  }
+};
+
+const IS_MANAGER = {{ $isManager ? 'true' : 'false' }};
+const IS_ADMIN = {{ $isAdmin ? 'true' : 'false' }};
+
+function fmtPrice(n) {
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+
+// Select Chassis Specification
+function selectChassis(modelCode, btnEl) {
+  const container = document.querySelector(`.chassis-selector-list[data-model="${modelCode}"]`);
+  if (!container) return;
+  container.querySelectorAll('.chassis-chip-btn').forEach(b => {
+    b.classList.remove('active');
+    const badge = b.querySelector('.chassis-badge-included');
+    if (badge) badge.style.display = 'none';
+  });
+
+  btnEl.classList.add('active');
+  const badge = btnEl.querySelector('.chassis-badge-included');
+  if (badge) badge.style.display = '';
+
+  CARD_CONFIGS[modelCode].chassis = btnEl.getAttribute('data-chassis');
+  updateConfigureUrl(modelCode);
+}
+
+// Select Procurement / Pricing Contract Basis
+function selectPricingBasis(modelCode, basisKey, btnEl) {
+  const cfg = CARD_CONFIGS[modelCode];
+  cfg.basis = basisKey;
+
+  const row = document.querySelector(`.basis-pills-row[data-model="${modelCode}"]`);
+  if (row) {
+    row.querySelectorAll('.basis-pill-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+
+  // Update basis badge
+  const basisBadge = document.getElementById(modelCode.toLowerCase() + 'BasisBadge');
+  if (basisBadge) {
+    basisBadge.textContent = cfg.bases[basisKey].label;
+  }
+
+  // Update coop logos active glow
+  const logosWrap = document.getElementById(modelCode.toLowerCase() + 'CoopLogos');
+  if (logosWrap) {
+    logosWrap.querySelectorAll('.coop-badge-logo').forEach(l => l.classList.remove('active-coop'));
+    if (basisKey === 'sourcewell') document.getElementById(modelCode.toLowerCase() + 'LogoSourcewell')?.classList.add('active-coop');
+    if (basisKey === 'hgac') document.getElementById(modelCode.toLowerCase() + 'LogoHgac')?.classList.add('active-coop');
+    if (basisKey === 'buyboard') document.getElementById(modelCode.toLowerCase() + 'LogoBuyboard')?.classList.add('active-coop');
+  }
+
+  // Update visible upgrade price tags based on basis
+  const cardSection = document.getElementById(modelCode.toLowerCase() + 'UpgradesSection');
+  if (cardSection) {
+    const isCoop = basisKey !== 'msrp';
+    cardSection.querySelectorAll('.upgrade-option-card').forEach(card => {
+      const msrp = parseFloat(card.getAttribute('data-msrp')) || 0;
+      const swnet = parseFloat(card.getAttribute('data-swnet')) || msrp;
+      const priceTag = card.querySelector('.upgrade-price-tag');
+      if (priceTag) {
+        priceTag.textContent = '+' + fmtPrice(isCoop ? swnet : msrp);
+      }
+    });
+  }
+
+  recalculateCardPrice(modelCode);
+}
+
+// Toggle Factory Upgrade Option
+function toggleOption(modelCode, inputEl) {
+  const card = inputEl.closest('.upgrade-option-card');
+  if (!card) return;
+
+  const desc = card.getAttribute('data-desc');
+  const msrp = parseFloat(card.getAttribute('data-msrp')) || 0;
+  const swNet = parseFloat(card.getAttribute('data-swnet')) || msrp;
+  const swList = parseFloat(card.getAttribute('data-swlist')) || msrp;
+
+  if (inputEl.checked) {
+    card.classList.add('selected');
+    CARD_CONFIGS[modelCode].selected.set(desc, { msrp, swNet, swList });
+  } else {
+    card.classList.remove('selected');
+    CARD_CONFIGS[modelCode].selected.delete(desc);
+  }
+
+  recalculateCardPrice(modelCode);
+}
+
+// Direct toggle by clicking anywhere on upgrade-option-card
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('.upgrade-option-card');
+  if (!card) return;
+  if (e.target.tagName === 'INPUT') return; // Handled by change event
+
+  const input = card.querySelector('input[type="checkbox"]');
+  if (input) {
+    input.checked = !input.checked;
+    const model = card.closest('[data-model]')?.getAttribute('data-model') ||
+                 (card.closest('#mt4hUpgradesSection') ? 'MT4H' : 'MS5H');
+    toggleOption(model, input);
+  }
+});
+
+// Toggle Section Accordion
+function toggleUpgradesSection(modelCode) {
+  const body = document.getElementById(modelCode.toLowerCase() + 'UpgradesBody');
+  const chevron = document.getElementById(modelCode.toLowerCase() + 'UpgradesChevron');
+  if (!body) return;
+  if (body.style.display === 'none') {
+    body.style.display = 'flex';
+    if (chevron) chevron.innerHTML = '&#9660;';
+  } else {
+    body.style.display = 'none';
+    if (chevron) chevron.innerHTML = '&#9654;';
+  }
+}
+
+// Toggle More Upgrades Drawer
+function toggleMoreUpgrades(modelCode) {
+  const drawer = document.getElementById(modelCode.toLowerCase() + 'MoreUpgrades');
+  const btn = document.getElementById(modelCode.toLowerCase() + 'ShowMoreBtn');
+  if (!drawer || !btn) return;
+
+  if (drawer.style.display === 'none') {
+    drawer.style.display = 'flex';
+    btn.textContent = '- Collapse Additional Upgrades';
+  } else {
+    drawer.style.display = 'none';
+    const totalCount = modelCode === 'MT4H' ? '5' : '4';
+    btn.textContent = `+ View ${totalCount} More Factory Upgrades`;
+  }
+}
+
+// Reset Card Configuration to Baseline
+function resetCardConfig(modelCode) {
+  const cfg = CARD_CONFIGS[modelCode];
+  cfg.selected.clear();
+
+  // Reset checkboxes and card styling
+  const section = document.getElementById(modelCode.toLowerCase() + 'UpgradesSection');
+  if (section) {
+    section.querySelectorAll('.upgrade-option-card').forEach(c => {
+      c.classList.remove('selected');
+      const chk = c.querySelector('input[type="checkbox"]');
+      if (chk) chk.checked = false;
+    });
+  }
+
+  // Reset basis to msrp
+  const firstBasisBtn = document.querySelector(`.basis-pills-row[data-model="${modelCode}"] .basis-pill-btn`);
+  if (firstBasisBtn) selectPricingBasis(modelCode, 'msrp', firstBasisBtn);
+
+  // Reset chassis to first
+  const firstChassisBtn = document.querySelector(`.chassis-selector-list[data-model="${modelCode}"] .chassis-chip-btn`);
+  if (firstChassisBtn) selectChassis(modelCode, firstChassisBtn);
+
+  recalculateCardPrice(modelCode);
+}
+
+// Recalculate Card Price with Animated CountUp
+function recalculateCardPrice(modelCode) {
+  const cfg = CARD_CONFIGS[modelCode];
+  const basisData = cfg.bases[cfg.basis];
+  const isCoop = cfg.basis !== 'msrp';
+
+  // Calculate sum of active enhancements
+  let enhMSRP = 0;
+  let enhSWNet = 0;
+  let enhSWList = 0;
+
+  cfg.selected.forEach(val => {
+    enhMSRP += val.msrp;
+    enhSWNet += val.swNet;
+    enhSWList += val.swList;
+  });
+
+  const selectedCount = cfg.selected.size;
+  const activeEnhSum = isCoop ? enhSWNet : enhMSRP;
+  const newTargetTotal = basisData.amount + activeEnhSum;
+
+  // Update Upgrades count pill
+  const countPill = document.getElementById(modelCode.toLowerCase() + 'UpgradesCount');
+  if (countPill) {
+    countPill.textContent = selectedCount === 0 
+      ? '0 Selected' 
+      : `${selectedCount} Selected (+${fmtPrice(activeEnhSum)})`;
+  }
+
+  // Update Breakdown pill
+  const breakdownPill = document.getElementById(modelCode.toLowerCase() + 'BreakdownPill');
+  if (breakdownPill) {
+    const basisName = isCoop ? cfg.bases[cfg.basis].label : 'Base';
+    breakdownPill.innerHTML = `${basisName}: <strong>${fmtPrice(basisData.amount)}</strong> &bull; Upgrades (${selectedCount}): <strong>${fmtPrice(activeEnhSum)}</strong>`;
+  }
+
+  // Update Price Caption
+  const priceCaption = document.getElementById(modelCode.toLowerCase() + 'PriceCaption');
+  if (priceCaption) {
+    priceCaption.textContent = isCoop 
+      ? `Configured ${basisData.label} Price` 
+      : 'Configured MSRP Price';
+  }
+
+  // Animate main price amount
+  const priceAmountEl = document.getElementById(modelCode.toLowerCase() + 'PriceAmount');
+  if (priceAmountEl && !IS_ADMIN) {
+    animateCount(priceAmountEl, cfg.currentTotal, newTargetTotal, isCoop ? 'NET' : 'MSRP');
+  }
+  cfg.currentTotal = newTargetTotal;
+
+  // Update Manager cooperative breakdown if present
+  if (IS_MANAGER) {
+    const mgrBreakdownEl = document.getElementById(modelCode.toLowerCase() + 'ManagerBreakdown');
+    if (mgrBreakdownEl) {
+      const swListTotal = fmtPrice(cfg.bases.sourcewell.list + enhSWList);
+      const swNetTotal = fmtPrice(cfg.bases.sourcewell.amount + enhSWNet);
+      mgrBreakdownEl.innerHTML = `&bull; Sourcewell List: ${swListTotal} &bull; Net: ${swNetTotal}`;
+    }
+  }
+
+  updateConfigureUrl(modelCode);
+}
+
+// Smooth number counting animation
+function animateCount(targetEl, startVal, endVal, suffix) {
+  if (startVal === endVal) return;
+  const duration = 400; // 0.4s quick responsive count
+  const startTime = performance.now();
+
+  function step(time) {
+    const elapsed = time - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easeOut = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(startVal + (endVal - startVal) * easeOut);
+
+    targetEl.innerHTML = `${fmtPrice(current)} <span style="font-size:13px;font-weight:normal;color:#94a3b8;">${suffix}</span>`;
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      targetEl.innerHTML = `${fmtPrice(endVal)} <span style="font-size:13px;font-weight:normal;color:#94a3b8;">${suffix}</span>`;
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+// Update Configure in Quote Builder link URL
+function updateConfigureUrl(modelCode) {
+  const cfg = CARD_CONFIGS[modelCode];
+  const btn = document.getElementById(modelCode.toLowerCase() + 'ConfigureBtn');
+  if (!btn) return;
+
+  const params = new URLSearchParams();
+  params.set('model', modelCode);
+  if (cfg.chassis) params.set('chassis', cfg.chassis);
+  if (cfg.bases[cfg.basis]) params.set('basis', cfg.bases[cfg.basis].label);
+
+  const selectedArr = Array.from(cfg.selected.keys());
+  if (selectedArr.length > 0) {
+    params.set('enhancements', selectedArr.join('||'));
+  }
+
+  btn.href = `{{ route('sales.quotes.create') }}?${params.toString()}`;
+
+  // Also update modal configure button if modal is open for this model
+  const modalBtn = document.getElementById('modalConfigureBtn');
+  if (modalBtn && document.getElementById('specModal')?.classList.contains('open')) {
+    modalBtn.href = btn.href;
+  }
+}
+
 // Technical Specifications Data Repository
 const SPEC_DATA = {
   MT4H: {
@@ -1222,13 +2144,13 @@ const SPEC_DATA = {
       { label: 'Elevator Flush System', val: 'Optional high-volume elevator washout manifold' }
     ],
     enhancements: [
-      { label: 'Front LED Strobe Light', val: 'Mounted behind cab, visible from front ($529 MSRP)' },
-      { label: 'Rear Mounted LED Light Bar', val: 'High-intensity multi-pattern traffic director ($2,293 MSRP)' },
-      { label: 'Strip Main Broom ILO Standard', val: 'Heavy-duty chevron strip broom ($746 MSRP)' },
-      { label: 'Elevator System Flush', val: 'Quick-connect water purge system ($1,405 MSRP)' },
-      { label: 'Stainless Steel Hopper', val: '304 stainless steel hopper body replacement ($13,000 MSRP)' },
-      { label: 'Dualization for MT4H Chassis', val: 'Dual steering column, pedals & gauge cluster ($20,400 MSRP)' },
-      { label: 'Extended Warranty', val: '2nd Year ($6,106) / 3rd Year ($11,554) Module Parts & Labor' }
+      { label: 'Front LED Strobe Light', val: 'Mounted behind cab, visible from front ($529 MSRP)', desc: 'Front LED Strobe Light (behind cab, visible from front)' },
+      { label: 'Rear Mounted LED Light Bar', val: 'High-intensity multi-pattern traffic director ($2,293 MSRP)', desc: 'Rear Mounted LED Light Bar' },
+      { label: 'Strip Main Broom ILO Standard', val: 'Heavy-duty chevron strip broom ($746 MSRP)', desc: 'Strip Main Broom ILO Standard' },
+      { label: 'Elevator System Flush', val: 'Quick-connect water purge system ($1,405 MSRP)', desc: 'Elevator System Flush' },
+      { label: 'Stainless Steel Hopper', val: '304 stainless steel hopper body replacement ($13,000 MSRP)', desc: 'Stainless Steel Hopper ILO Standard' },
+      { label: 'Dualization for MT4H Chassis', val: 'Dual steering column, pedals & gauge cluster ($20,400 MSRP)', desc: 'Dualization for MT4H Chassis' },
+      { label: 'Extended Warranty', val: '2nd Year ($6,106) / 3rd Year ($11,554) Module Parts & Labor', desc: '2nd Year Warranty Parts/Labor - Module Only (excl. aux engine)' }
     ]
   },
   MS5H: {
@@ -1270,16 +2192,18 @@ const SPEC_DATA = {
       { label: 'Hydrant Fill System', val: '2.5-inch quick-connect hydrant fill hose with air gap' }
     ],
     enhancements: [
-      { label: 'Front LED Strobe Light', val: 'Mounted behind cab, visible from front ($529 MSRP)' },
-      { label: 'Rear Mounted LED Light Bar', val: 'High-intensity multi-pattern traffic director ($2,293 MSRP)' },
-      { label: 'Strip Main Broom ILO Standard', val: 'Chevron pattern high-density sweeping core ($746 MSRP)' },
-      { label: 'Elevator System Flush', val: 'Quick-connect water purge manifold ($1,405 MSRP)' },
-      { label: 'Dualized Conversion on Chassis', val: 'Dual steering column & pedals on Freightliner ($19,519 MSRP)' },
-      { label: 'Drag Shoes Pivot Arms', val: 'Pivot drag shoe arms ILO standard ($998 MSRP)' },
-      { label: 'Extended Warranty', val: '2nd Year ($6,106) / 3rd Year ($11,554) Module Parts & Labor' }
+      { label: 'Front LED Strobe Light', val: 'Mounted behind cab, visible from front ($529 MSRP)', desc: 'Front LED Strobe Light (behind cab, visible from front)' },
+      { label: 'Rear Mounted LED Light Bar', val: 'High-intensity multi-pattern traffic director ($2,293 MSRP)', desc: 'Rear Mounted LED Light Bar' },
+      { label: 'Strip Main Broom ILO Standard', val: 'Chevron pattern high-density sweeping core ($746 MSRP)', desc: 'Strip Main Broom ILO Standard' },
+      { label: 'Elevator System Flush', val: 'Quick-connect water purge manifold ($1,405 MSRP)', desc: 'Elevator System Flush' },
+      { label: 'Dualized Conversion on Chassis', val: 'Dual steering column & pedals on Freightliner ($19,519 MSRP)', desc: 'Dualized Conversion on Chassis' },
+      { label: 'Drag Shoes Pivot Arms', val: 'Pivot drag shoe arms ILO standard ($998 MSRP)', desc: 'Pivot Drag Shoe Arms ILO Standard' },
+      { label: 'Extended Warranty', val: '2nd Year ($6,106) / 3rd Year ($11,554) Module Parts & Labor', desc: '2nd Year Warranty Parts/Labor - Module Only (excl. chassis)' }
     ]
   }
 };
+
+let currentModalModel = 'MT4H';
 
 // Switch Hero vehicle image with active button state
 function switchImage(modelCode, imageSrc, btnElement) {
@@ -1347,17 +2271,18 @@ if (jumpBtn) {
 
 // Open Tech Specs Modal
 function openSpecModal(modelCode) {
+  currentModalModel = modelCode;
   const data = SPEC_DATA[modelCode];
   if (!data) return;
 
   document.getElementById('modalTitle').innerHTML = data.title;
-  document.getElementById('modalConfigureBtn').href = data.configureUrl;
+  updateConfigureUrl(modelCode);
 
   renderSpecsTable('specsDimensionsTable', data.dimensions);
   renderSpecsTable('specsPowertrainTable', data.powertrain);
   renderSpecsTable('specsSweepingTable', data.sweeping);
   renderSpecsTable('specsWaterTable', data.water);
-  renderSpecsTable('specsEnhancementsTable', data.enhancements);
+  renderModalEnhancements(modelCode, data.enhancements);
 
   document.getElementById('specModal').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -1377,6 +2302,60 @@ function renderSpecsTable(tableId, rows) {
       <td>${r.val}</td>
     </tr>
   `).join('');
+}
+
+function renderModalEnhancements(modelCode, enhancements) {
+  const tbody = document.getElementById('specsEnhancementsTable');
+  if (!tbody) return;
+
+  const cfg = CARD_CONFIGS[modelCode];
+
+  tbody.innerHTML = enhancements.map(enh => {
+    const isChecked = cfg.selected.has(enh.desc);
+    return `
+      <tr>
+        <td style="width:50%;">
+          <strong>${enh.label}</strong>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${enh.val}</div>
+        </td>
+        <td style="text-align:right;">
+          <button type="button" 
+                  class="btn-amg-secondary" 
+                  style="padding:5px 12px;font-size:11.5px;${isChecked ? 'background:#10b981;border-color:#10b981;color:#fff;' : ''}" 
+                  onclick="toggleModalEnhancement('${modelCode}', '${enh.desc.replace(/'/g, "\\'")}', this)">
+            ${isChecked ? '&#10003; Added in Config' : '+ Add to Config'}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function toggleModalEnhancement(modelCode, desc, btnEl) {
+  const cfg = CARD_CONFIGS[modelCode];
+  const section = document.getElementById(modelCode.toLowerCase() + 'UpgradesSection');
+  const card = section?.querySelector(`.upgrade-option-card[data-desc="${desc}"]`);
+  const input = card?.querySelector('input[type="checkbox"]');
+
+  if (input) {
+    input.checked = !input.checked;
+    toggleOption(modelCode, input);
+  } else {
+    // If not directly in card DOM
+    if (cfg.selected.has(desc)) {
+      cfg.selected.delete(desc);
+    } else {
+      cfg.selected.set(desc, { msrp: 1000, swNet: 1000, swList: 1000 });
+    }
+    recalculateCardPrice(modelCode);
+  }
+
+  // Refresh button state
+  const isChecked = cfg.selected.has(desc);
+  btnEl.innerHTML = isChecked ? '&#10003; Added in Config' : '+ Add to Config';
+  btnEl.style.background = isChecked ? '#10b981' : '';
+  btnEl.style.borderColor = isChecked ? '#10b981' : '';
+  btnEl.style.color = isChecked ? '#fff' : '';
 }
 
 function switchModalTab(evt, tabId) {
