@@ -1,0 +1,364 @@
+/* ==========================================================================
+   Mercedes-Benz AMG Inspired Luxury Automotive Styling & Animation Engine
+   Designed for ODRA Mechanical Sweepers Portal
+   ========================================================================== */
+
+:root {
+  --amg-dark-bg: #090d16;
+  --amg-surface: #101726;
+  --amg-surface-hover: #162035;
+  --amg-border: rgba(255, 255, 255, 0.08);
+  --amg-border-glow: rgba(172, 37, 41, 0.4);
+  --amg-border-hover: rgba(255, 255, 255, 0.18);
+  --amg-red: #ac2529;
+  --amg-red-bright: #dc2626;
+  --amg-red-glow: 0 0 25px rgba(220, 38, 38, 0.45);
+  --amg-emerald: #10b981;
+  --amg-amber: #f59e0b;
+  --amg-text-white: #ffffff;
+  --amg-text-silver: #e2e8f0;
+  --amg-text-muted: #94a3b8;
+  --amg-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------------
+   Keyframe Animations
+   -------------------------------------------------------------------------- */
+@keyframes amgFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes amgSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes amgSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes amgScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes amgShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes amgPulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(172, 37, 41, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(172, 37, 41, 0);
+  }
+}
+
+@keyframes amgPulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+@keyframes amgFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* --------------------------------------------------------------------------
+   Animation Utility Classes
+   -------------------------------------------------------------------------- */
+.amg-fade-in {
+  animation: amgFadeIn 0.6s var(--amg-ease) forwards;
+}
+
+.amg-slide-up {
+  opacity: 0;
+  animation: amgSlideUp 0.7s var(--amg-ease) forwards;
+}
+
+.amg-scale-in {
+  opacity: 0;
+  animation: amgScaleIn 0.5s var(--amg-ease) forwards;
+}
+
+/* Stagger Delays */
+.amg-delay-1 { animation-delay: 0.08s; }
+.amg-delay-2 { animation-delay: 0.16s; }
+.amg-delay-3 { animation-delay: 0.24s; }
+.amg-delay-4 { animation-delay: 0.32s; }
+.amg-delay-5 { animation-delay: 0.40s; }
+
+/* --------------------------------------------------------------------------
+   Navbar & Brand Styling (Fixing logo white box issue)
+   -------------------------------------------------------------------------- */
+.portal-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  text-decoration: none !important;
+  color: white !important;
+  background: transparent !important;
+  padding: 0 !important;
+  width: auto !important;
+}
+
+.portal-brand-img {
+  height: 38px;
+  background: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s var(--amg-ease), box-shadow 0.25s ease;
+  object-fit: contain;
+}
+
+.portal-brand:hover .portal-brand-img {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(172, 37, 41, 0.3);
+}
+
+.portal-brand-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.portal-brand-tag {
+  font-size: 10px;
+  background: rgba(172, 37, 41, 0.25);
+  color: #fca5a5;
+  border: 1px solid rgba(172, 37, 41, 0.5);
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+/* Animated Nav Links */
+.portal-header .nav-link {
+  position: relative;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.portal-header .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--amg-red-bright);
+  transition: all 0.25s var(--amg-ease);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.portal-header .nav-link:hover::after,
+.portal-header .nav-link.active::after {
+  width: 80%;
+  box-shadow: 0 0 8px var(--amg-red-glow);
+}
+
+.portal-header .nav-link.active {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Mercedes-AMG Luxury Card Interactive Hover & Glow
+   -------------------------------------------------------------------------- */
+.amg-card-interactive {
+  transition: transform 0.3s var(--amg-ease), box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.amg-card-interactive:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(172, 37, 41, 0.12) !important;
+}
+
+/* Button Shimmer Effect (Metallic Reflection Sweep) */
+.amg-btn-shimmer {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s var(--amg-ease);
+}
+
+.amg-btn-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg) translateX(-150%);
+  transition: none;
+}
+
+.amg-btn-shimmer:hover::before {
+  animation: amgShimmer 0.85s ease forwards;
+}
+
+/* Glowing Pulsing Status Dot */
+.amg-pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  animation: amgPulseDot 2s infinite ease-in-out;
+}
+
+.pulse-emerald {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.pulse-amber {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+
+.pulse-red {
+  background: #dc2626;
+  box-shadow: 0 0 8px #dc2626;
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Counter Animations
+   -------------------------------------------------------------------------- */
+.amg-counter {
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+  transition: color 0.2s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Filter Pills & Tabs
+   -------------------------------------------------------------------------- */
+.amg-filter-pill {
+  transition: all 0.2s var(--amg-ease);
+  cursor: pointer;
+  user-select: none;
+}
+
+.amg-filter-pill:hover {
+  transform: translateY(-1px);
+}
+
+.amg-filter-pill.active {
+  box-shadow: 0 0 12px var(--amg-red-glow);
+}
+
+/* --------------------------------------------------------------------------
+   Vehicle Showcase Card Micro-Interactions
+   -------------------------------------------------------------------------- */
+.amg-sweeper-mini {
+  border-radius: 12px;
+  border: 1px solid var(--amg-border);
+  background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
+  padding: 16px;
+  color: white;
+  transition: all 0.3s var(--amg-ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.amg-sweeper-mini:hover {
+  transform: translateY(-3px);
+  border-color: rgba(172, 37, 41, 0.4);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 16px rgba(172, 37, 41, 0.15);
+}
+
+.amg-sweeper-mini img {
+  transition: transform 0.4s var(--amg-ease);
+}
+
+.amg-sweeper-mini:hover img {
+  transform: scale(1.06);
+}
+
+/* --------------------------------------------------------------------------
+   Quick Preview Drawer / Modal
+   -------------------------------------------------------------------------- */
+.amg-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.amg-drawer-backdrop.open {
+  display: flex;
+  animation: amgFadeIn 0.2s ease;
+}
+
+.amg-drawer-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(172, 37, 41, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: amgScaleIn 0.25s var(--amg-ease);
+}
+
+/* Custom Sleek Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--amg-red);
+}

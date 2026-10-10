@@ -7,6 +7,7 @@
     <title>{{ config('app.name', 'ODRA Sales Portal') }} - @yield('title', 'Sales Portal')</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/amg-luxury.css') }}">
     <style>
         :root {
             --red: #ac2529;
@@ -126,9 +127,12 @@
 </head>
 <body>
     <header class="portal-header">
-        <a href="{{ route('sales.dashboard') }}" class="brand">
-            <img src="{{ asset('images/logo.jpg') }}" alt="ODRA Road Sweepers">
-            <span class="brand-title">ODRA Sales Portal</span>
+        <a href="{{ route('sales.dashboard') }}" class="portal-brand">
+            <img src="{{ asset('images/logo.jpg') }}" alt="ODRA Road Sweepers" class="portal-brand-img">
+            <div style="display:flex;flex-direction:column;gap:1px;">
+                <span class="portal-brand-title">ODRA Sweepers</span>
+                <span class="portal-brand-tag">Sales Command Portal</span>
+            </div>
         </a>
 
         <nav class="nav-links">
@@ -180,6 +184,7 @@
             setTimeout(() => { t.style.display = 'none'; }, duration);
         }
     </script>
+    <script src="{{ asset('js/amg-animations.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

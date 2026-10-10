@@ -132,17 +132,17 @@
 @endpush
 
 @section('content')
-<div class="page-header">
+<div class="page-header amg-fade-in">
     <div class="page-title">
         <h1>My Quotations</h1>
         <p>Manage your saved commercial and cooperative sweeper quotations.</p>
     </div>
-    <a href="{{ route('sales.quotes.create') }}" class="btn-primary">
+    <a href="{{ route('sales.quotes.create') }}" class="btn-primary amg-btn-shimmer">
         + Create New Quotation
     </a>
 </div>
 
-<form method="GET" action="{{ route('sales.quotes.index') }}" class="filters-card">
+<form method="GET" action="{{ route('sales.quotes.index') }}" class="filters-card amg-slide-up amg-delay-1">
     <input 
         type="text" 
         name="search" 
@@ -162,7 +162,7 @@
     @endif
 </form>
 
-<div class="table-card">
+<div class="table-card amg-slide-up amg-delay-2">
     @if ($quotes->count() > 0)
         <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 280px); min-height: 250px; -webkit-overflow-scrolling: touch;">
             <table class="data-table">

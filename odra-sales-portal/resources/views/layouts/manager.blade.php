@@ -7,6 +7,7 @@
     <title>{{ config('app.name', 'ODRA Sales Portal') }} - Manager - @yield('title', 'Executive Overview')</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/amg-luxury.css') }}">
     <style>
         :root {
             --red: #ac2529;
@@ -381,6 +382,7 @@
         </main>
     </div>
 
+    <script src="{{ asset('js/amg-animations.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
