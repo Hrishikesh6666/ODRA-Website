@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\CatalogApiController;
 use App\Http\Controllers\Api\QuoteApiController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
+use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\Sales\DashboardController as SalesDashboardController;
 use App\Http\Controllers\Sales\PdfController;
 use App\Http\Controllers\Sales\QuoteController;
@@ -44,6 +45,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/microsoft/callback', [MicrosoftAuthController::class, 'handleMicrosoftCallback'])->name('auth.microsoft.callback');
 });
 
+Route::get('/models', [CatalogController::class, 'index'])->name('models.catalog');
+
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 /*
@@ -53,6 +56,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 */
 Route::middleware(['auth'])->prefix('sales')->name('sales.')->group(function () {
     Route::get('/dashboard', [SalesDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/models', [CatalogController::class, 'index'])->name('models');
     Route::get('/quotes', [QuoteController::class, 'index'])->name('quotes.index');
     Route::get('/quotes/create', [QuoteController::class, 'create'])->name('quotes.create');
     Route::get('/quotes/{quote}', [QuoteController::class, 'show'])->name('quotes.show');
@@ -122,6 +126,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 */
 Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/models', [CatalogController::class, 'index'])->name('models');
 
     // Reports & Excel Export
     Route::get('/reports', [\App\Http\Controllers\Manager\ReportController::class, 'index'])->name('reports.index');

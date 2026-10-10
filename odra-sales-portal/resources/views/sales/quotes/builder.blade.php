@@ -571,6 +571,18 @@ if (INITIAL_STATE && typeof INITIAL_STATE === 'object') {
   Object.assign(state, INITIAL_STATE);
 }
 
+// Support pre-selecting model or chassis from Catalog showcase URL (?model=MT4H / ?model=MS5H)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('model') && (!INITIAL_STATE || !INITIAL_STATE.model)) {
+  const paramModel = urlParams.get('model').toUpperCase();
+  if (['MT4H', 'MS5H'].includes(paramModel)) {
+    state.model = paramModel;
+  }
+}
+if (urlParams.has('chassis') && (!INITIAL_STATE || !INITIAL_STATE.chassis)) {
+  state.chassis = urlParams.get('chassis');
+}
+
 // Guarantee enh is always an array of 13 rows
 if (!state.enh || !Array.isArray(state.enh)) {
   state.enh = Array.from({length: 13}, () => ({desc: '', qty: 1}));

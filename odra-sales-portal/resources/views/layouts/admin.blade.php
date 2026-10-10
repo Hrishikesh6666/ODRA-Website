@@ -329,8 +329,11 @@
             </a>
 
             <div class="nav-category">Catalogue Management</div>
+            <a href="{{ route('models.catalog') }}" class="nav-item" target="_blank" style="color: #6ee7b7;">
+                &#9654; Sweeper Showcase (AMG View)
+            </a>
             <a href="{{ route('admin.models.index') }}" class="nav-item {{ request()->routeIs('admin.models.*') ? 'active' : '' }}">
-                Models &amp; Pricing
+                Models &amp; Master Setup
             </a>
             <a href="{{ route('admin.enhancements.index') }}" class="nav-item {{ request()->routeIs('admin.enhancements.*') ? 'active' : '' }}">
                 Enhancements &amp; Parts

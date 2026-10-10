@@ -119,9 +119,14 @@
         <h1>Welcome back, {{ $user->name }}</h1>
         <p>Representative Code: <strong>{{ $user->rep_code ?? 'N/A' }}</strong> &middot; Territory: {{ $user->territory ?? 'Assigned Regions' }}</p>
     </div>
-    <a href="{{ route('sales.quotes.create') }}" class="btn-create-quote">
-        + Launch Quote Builder
-    </a>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ route('sales.models') }}" class="btn-create-quote" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);">
+            Explore Sweeper Models &rarr;
+        </a>
+        <a href="{{ route('sales.quotes.create') }}" class="btn-create-quote">
+            + Launch Quote Builder
+        </a>
+    </div>
 </div>
 
 <!-- Stats -->
@@ -218,13 +223,20 @@
 
         <div class="card">
             <div class="card-title">
-                <span>Active Product Masters</span>
+                <span>Active Sweeper Lines</span>
+                <a href="{{ route('sales.models') }}" style="font-size: 12px; color: var(--red); text-decoration: none; font-weight: 600;">View Showcase &rarr;</a>
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 @foreach ($models as $m)
-                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
-                        <strong>{{ $m->code }} Sweeper</strong>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">{{ $m->category }}</div>
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong style="color: #0f172a;">{{ $m->code }} Mechanical Sweeper</strong>
+                            <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">{{ $m->code === 'MT4H' ? '4 yd³ · 220 Gal · Non-CDL Cabover' : '5 yd³ · 355 Gal · 300HP Cummins Single-Engine' }}</div>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <a href="{{ route('sales.models') }}" class="btn-action" style="font-size: 11px; padding: 4px 8px;">Specs</a>
+                            <a href="{{ route('sales.quotes.create') }}?model={{ $m->code }}" class="btn-action" style="font-size: 11px; padding: 4px 8px; background: var(--red); color: white; border-color: var(--red);">Quote</a>
+                        </div>
                     </div>
                 @endforeach
             </div>

@@ -132,23 +132,36 @@
         </a>
 
         <nav class="nav-links">
-            <a href="{{ route('sales.dashboard') }}" class="nav-link {{ request()->routeIs('sales.dashboard') ? 'active' : '' }}">Dashboard</a>
-            <a href="{{ route('sales.quotes.index') }}" class="nav-link {{ request()->routeIs('sales.quotes.index') ? 'active' : '' }}">My Quotations</a>
-            <a href="{{ route('sales.quotes.create') }}" class="nav-link {{ request()->routeIs('sales.quotes.create') ? 'active' : '' }}">+ New Quotation</a>
-            @if (auth()->user()->isAdmin())
-                <a href="{{ route('admin.dashboard') }}" class="nav-link" style="color: #fca5a5;">Admin Console</a>
-            @endif
+            @auth
+                <a href="{{ route('sales.dashboard') }}" class="nav-link {{ request()->routeIs('sales.dashboard') ? 'active' : '' }}">Dashboard</a>
+                <a href="{{ route('sales.models') }}" class="nav-link {{ request()->routeIs('sales.models') || request()->routeIs('models.catalog') ? 'active' : '' }}">Sweeper Models</a>
+                <a href="{{ route('sales.quotes.index') }}" class="nav-link {{ request()->routeIs('sales.quotes.index') ? 'active' : '' }}">My Quotations</a>
+                <a href="{{ route('sales.quotes.create') }}" class="nav-link {{ request()->routeIs('sales.quotes.create') ? 'active' : '' }}">+ New Quotation</a>
+                @if (auth()->user()->isManager())
+                    <a href="{{ route('manager.dashboard') }}" class="nav-link" style="color: #6ee7b7; font-weight: 600;">Manager HQ</a>
+                @endif
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link" style="color: #fca5a5;">Admin Console</a>
+                @endif
+            @else
+                <a href="{{ route('models.catalog') }}" class="nav-link active">Sweeper Models</a>
+                <a href="{{ route('login') }}" class="nav-link">Sales Login</a>
+            @endauth
         </nav>
 
         <div class="user-menu">
-            <div class="user-badge">
-                <span class="user-name">{{ auth()->user()->name }}</span>
-                <span class="user-role">{{ auth()->user()->role->name }}</span>
-            </div>
-            <form action="{{ route('logout') }}" method="POST" style="margin:0;">
-                @csrf
-                <button type="submit" class="btn-logout">Sign Out</button>
-            </form>
+            @auth
+                <div class="user-badge">
+                    <span class="user-name">{{ auth()->user()->name }}</span>
+                    <span class="user-role">{{ auth()->user()->role->name }}</span>
+                </div>
+                <form action="{{ route('logout') }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn-logout">Sign Out</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="btn-primary" style="padding: 6px 16px; font-size: 13px; text-decoration: none; border-radius: 6px; background: var(--red); color: white;">Sign In</a>
+            @endauth
         </div>
     </header>
 
