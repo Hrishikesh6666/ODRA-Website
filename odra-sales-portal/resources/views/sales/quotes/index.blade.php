@@ -206,6 +206,9 @@
                                 <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action">
                                     {{ $quote->status === 'Finalized' ? 'View Quote' : 'Edit Draft' }}
                                 </a>
+                                <a href="{{ route('sales.quotes.show', $quote) }}?print=1" class="btn-action" target="_blank" title="Print Quotation">
+                                    Print
+                                </a>
                                 @if ($snapshot?->pdf_path)
                                     <a href="{{ route('sales.quotes.pdf', $quote) }}" class="btn-action btn-pdf" target="_blank">
                                         Download PDF

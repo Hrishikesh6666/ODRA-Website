@@ -312,6 +312,7 @@
                             </td>
                             <td style="text-align: right;">
                                 <a href="{{ route('sales.quotes.show', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Inspect</a>
+                                <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">Print</a>
                                 @if ($q->status === 'Finalized')
                                     <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">PDF</a>
                                 @endif

@@ -183,6 +183,11 @@ window.openQuickQuoteModal = function(quoteData) {
   const viewBtn = document.getElementById('modalQuoteViewBtn');
   if (viewBtn && quoteData.viewUrl) viewBtn.href = quoteData.viewUrl;
 
+  const printBtn = document.getElementById('modalQuotePrintBtn');
+  if (printBtn && quoteData.viewUrl) {
+    printBtn.href = quoteData.viewUrl + '?print=1';
+  }
+
   const pdfBtn = document.getElementById('modalQuotePdfBtn');
   if (pdfBtn && quoteData.pdfUrl) {
     pdfBtn.href = quoteData.pdfUrl;

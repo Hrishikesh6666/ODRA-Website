@@ -707,6 +707,10 @@
                                             <button type="button" class="btn-table-action" onclick="openQuickQuoteModal({{ $quoteDataJson }})" title="Quick Inspect">
                                                 <span>Inspect</span>
                                             </button>
+                                            <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-table-action" target="_blank" title="Print Quotation" style="background:#f8fafc;color:#0f172a;border-color:#cbd5e1;">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                                <span>Print</span>
+                                            </a>
                                             <a href="{{ route('sales.quotes.show', $q) }}" class="btn-table-action btn-table-primary" title="Open in Quote Builder">
                                                 <span>Open</span>
                                             </a>
@@ -898,6 +902,10 @@
 
         <div style="padding: 16px 24px; border-top: 1px solid #334155; background: #111827; display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" class="btn-table-action" onclick="closeQuickQuoteModal()">Close</button>
+            <a id="modalQuotePrintBtn" href="#" class="btn-table-action" target="_blank" style="background:#f1f5f9;color:#0f172a;border-color:#cbd5e1;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>Print</span>
+            </a>
             <a id="modalQuotePdfBtn" href="#" class="btn-table-action" target="_blank" style="background:#0284c7;color:white;border-color:#0284c7;">
                 <span>Download PDF &darr;</span>
             </a>

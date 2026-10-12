@@ -358,8 +358,10 @@ table.items td {
   vertical-align: top;
 }
 table.items tr.baseRow td {
-  font-weight: bold;
-  background: #faf6f6;
+  font-weight: 700;
+  color: #1a1a1a;
+  background: #ffffff;
+  line-height: 1.45;
 }
 table.items tr.sectionRow td {
   font-weight: bold;
@@ -419,6 +421,11 @@ table.items tr.subtotalRow td, table.items tr.totalRow td {
             <a href="{{ route('sales.quotes.index') }}" class="btn-nav">&larr; My Quotations</a>
         @endif
 
+        <button type="button" class="btn-nav" onclick="window.print()" title="Print Quotation">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print
+        </button>
+
         @if ($isReadonly)
             <button type="button" id="btnRevise" class="btn-nav">Create Revision</button>
             <a href="{{ route('sales.quotes.pdf', $quote) }}" class="btn-nav" style="background:var(--red);color:white;border-color:var(--red);" target="_blank">Download PDF</a>
@@ -469,6 +476,29 @@ table.items tr.subtotalRow td, table.items tr.totalRow td {
 
     <label>Chassis / Discharge Configuration</label>
     <select id="chassis" {{ $isReadonly ? 'disabled' : '' }}></select>
+
+    <label style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+      <span>Machine Description</span>
+      @if(auth()->user()?->isAdmin())
+        <span style="font-size: 10px; color: #ffffff; background: var(--red); padding: 1px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px;">ADMIN EDITABLE</span>
+      @else
+        <span class="smallnote" style="color: #64748b; font-weight: 500;">(Admin Controlled &mdash; Read-only)</span>
+      @endif
+    </label>
+    <textarea 
+      id="machineDescription" 
+      rows="4" 
+      {{ (auth()->user()?->isAdmin() && !$isReadonly) ? '' : 'readonly' }} 
+      style="width:100%; border:1px solid {{ (auth()->user()?->isAdmin() && !$isReadonly) ? 'var(--red)' : '#cbd5e1' }}; border-radius:6px; padding:7px 10px; font-size:12px; line-height:1.45; font-family:inherit; resize:vertical; {{ (!auth()->user()?->isAdmin() || $isReadonly) ? 'background:#f8fafc; color:#475569; cursor:not-allowed;' : 'background:#ffffff;' }}"
+      placeholder="Machine specifications and body description..."
+    ></textarea>
+    @if(auth()->user()?->isAdmin() && !$isReadonly)
+      <div style="display:flex; justify-content:flex-end; margin-top:3px;">
+        <button type="button" id="btnResetDesc" style="font-size:11px; color:var(--red); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;">
+          Reset to Standard Description
+        </button>
+      </div>
+    @endif
 
     <h2 class="sec">Customer &amp; Order Info</h2>
     <div class="row2">
@@ -524,10 +554,7 @@ table.items tr.subtotalRow td, table.items tr.totalRow td {
     <input type="number" id="freight" value="0" min="0" readonly>
     <div id="exwFreightNote" style="display:none;color:#666;font-size:11px;margin-top:4px;font-style:italic;">FOB is set to EXW, Factory pick-up &mdash; freight is $0.</div>
 
-    <div class="btnrow">
-      <button type="button" class="btn-primary" id="downloadBtn">Download PDF</button>
-      <button type="button" class="btn-secondary" id="printBtn">Print</button>
-    </div>
+
   </div>
 
   <!-- Right Quotation Paper Preview Panel -->
@@ -550,6 +577,8 @@ let state = {
   model: 'MT4H',
   basis: 'MSRP (Commercial)',
   chassis: '',
+  machineDescription: '',
+  isCustomDesc: false,
   po: '',
   fob: 'Transport, estimate only noted in quote',
   acct: '',
@@ -569,6 +598,9 @@ let state = {
 // Safely merge initial state
 if (INITIAL_STATE && typeof INITIAL_STATE === 'object') {
   Object.assign(state, INITIAL_STATE);
+  if (INITIAL_STATE.machineDescription) {
+    state.isCustomDesc = true;
+  }
 }
 
 // Support pre-selecting model, chassis, pricing basis, and enhancements from Catalog showcase URL
@@ -771,6 +803,14 @@ function dynamicBaseDesc(base, chassisStr, model) {
     return base.desc || '';
   }
   return base.desc || '';
+}
+
+function effectiveDescription() {
+  if (state.machineDescription && state.machineDescription.trim()) {
+    return state.machineDescription.trim();
+  }
+  const base = baseItem(state.model);
+  return dynamicBaseDesc(base, state.chassis, state.model);
 }
 
 function populateChassis() {
@@ -1074,7 +1114,7 @@ function renderPreview() {
       </thead>
       <tbody>
         <tr class="baseRow">
-          <td>${esc(dynamicBaseDesc(base, state.chassis, state.model))}</td>
+          <td style="font-weight:700; color:#1a1a1a; background:#ffffff;">${esc(effectiveDescription())}</td>
           <td class="num">${state.baseQty}</td>
           <td class="num">${fmt(displayBaseList)}</td>
           ${anyDisc ? `<td class="num">${pctFmt(baseDisc)}</td>` : ''}
@@ -1144,6 +1184,12 @@ function initForm() {
     modelEl.value = state.model || 'MT4H';
     modelEl.addEventListener('change', e => {
       state.model = e.target.value;
+      populateChassis();
+      if (!state.isCustomDesc) {
+        state.machineDescription = dynamicBaseDesc(baseItem(state.model), state.chassis, state.model);
+        const descEl = document.getElementById('machineDescription');
+        if (descEl) descEl.value = state.machineDescription;
+      }
       render();
     });
   }
@@ -1162,7 +1208,32 @@ function initForm() {
   if (chassisEl) {
     chassisEl.addEventListener('change', e => {
       state.chassis = e.target.value;
+      if (!state.isCustomDesc) {
+        state.machineDescription = dynamicBaseDesc(baseItem(state.model), state.chassis, state.model);
+        const descEl = document.getElementById('machineDescription');
+        if (descEl) descEl.value = state.machineDescription;
+      }
       render();
+    });
+  }
+
+  const descEl = document.getElementById('machineDescription');
+  if (descEl) {
+    descEl.value = effectiveDescription();
+    descEl.addEventListener('input', e => {
+      state.machineDescription = e.target.value;
+      state.isCustomDesc = true;
+      renderPreview();
+    });
+  }
+
+  const btnResetDesc = document.getElementById('btnResetDesc');
+  if (btnResetDesc) {
+    btnResetDesc.addEventListener('click', () => {
+      state.machineDescription = dynamicBaseDesc(baseItem(state.model), state.chassis, state.model);
+      state.isCustomDesc = false;
+      if (descEl) descEl.value = state.machineDescription;
+      renderPreview();
     });
   }
 
@@ -1209,24 +1280,14 @@ function initForm() {
   const fobEl = document.getElementById('fob');
   if (fobEl && state.fob) fobEl.value = state.fob;
 
-  // Print button
-  document.getElementById('printBtn')?.addEventListener('click', () => window.print());
-
-  // Download PDF button
-  document.getElementById('downloadBtn')?.addEventListener('click', () => {
-    const el = document.getElementById('preview');
-    const opt = {
-      margin: [10, 8, 10, 8],
-      filename: `ODRA_Quote_${currentQuoteCode()}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0 },
-      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-    html2pdf().set(opt).from(el).save();
-  });
-
   render();
+
+  // Automatic Print if URL contains ?print=1
+  if (urlParams.get('print') === '1') {
+    setTimeout(() => {
+      window.print();
+    }, 600);
+  }
 }
 
 // API Interactions for Save Draft & Finalize Quote
@@ -1245,7 +1306,7 @@ async function saveQuote(isFinalize = false) {
   const payload = {
     quote_number: state.quoteSeq,
     customer: state.toCompany,
-    model_description: baseItem(state.model).desc,
+    model_description: effectiveDescription(),
     base_msrp: snap.base_msrp,
     base_list_price: snap.base_list_price,
     base_unit_price: snap.base_unit_price,

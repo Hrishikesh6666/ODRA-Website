@@ -253,4 +253,71 @@ class QuoteBuilderTest extends TestCase
         $this->assertStringStartsWith('%PDF-', $streamedContent);
         $this->assertStringNotContainsString('data:application/pdf', $streamedContent);
     }
+
+    public function test_custom_machine_description_persists_in_snapshot(): void
+    {
+        $admin = User::whereHas('role', fn ($q) => $q->where('slug', 'admin'))->first();
+
+        $customDesc = 'SPECIAL ADMIN CUSTOMIZATION: MT4H Sweeper with reinforced chassis, customized dual brooms, and stainless steel high-durability body.';
+
+        $payload = [
+            'quote_number' => '3015',
+            'customer' => 'Custom City Works',
+            'model_description' => $customDesc,
+            'base_msrp' => 257493,
+            'base_list_price' => 257493,
+            'base_unit_price' => 257493,
+            'subtotal' => 257493,
+            'total' => 257493,
+            'state' => [
+                'quoteSeq' => '3015',
+                'model' => 'MT4H',
+                'basis' => 'MSRP (Commercial)',
+                'chassis' => 'MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - LEFT side dumping hopper',
+                'machineDescription' => $customDesc,
+                'isCustomDesc' => true,
+                'toCompany' => 'Custom City Works',
+                'baseQty' => 1,
+                'freight' => 0,
+                'enh' => [],
+            ],
+        ];
+
+        $response = $this->actingAs($admin)->postJson('/api/quotes', $payload);
+        $response->assertStatus(201);
+
+        $quote = Quote::where('quote_number', '3015')->first();
+        $this->assertNotNull($quote);
+        $this->assertEquals($customDesc, $quote->latestVersion->snapshot->model_description);
+
+        // Check that builder view provides the custom description in initialState
+        $viewResponse = $this->actingAs($admin)->get("/sales/quotes/{$quote->id}");
+        $viewResponse->assertStatus(200);
+        $viewResponse->assertSee('Machine Description');
+        $viewResponse->assertSee('ADMIN EDITABLE');
+        $viewResponse->assertSee($customDesc);
+    }
+
+    public function test_dashboard_renders_print_button_for_quote_rows(): void
+    {
+        $user = User::where('email', 'john.wells@odrasweeper.com')->first();
+        $quoteService = app(\App\Services\QuoteService::class);
+
+        $quote = $quoteService->createDraft($user, [
+            'quote_number' => '3016',
+            'customer' => 'Miami Public Works Dept',
+            'state' => [
+                'quoteSeq' => '3016',
+                'toCompany' => 'Miami Public Works Dept',
+                'model' => 'MT4H',
+                'salesRep' => 'John Wells',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->get('/sales/dashboard');
+        $response->assertStatus(200);
+        $response->assertSee('?print=1');
+        $response->assertSee('Print');
+        $response->assertSee('modalQuotePrintBtn');
+    }
 }
