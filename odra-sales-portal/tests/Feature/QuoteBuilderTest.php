@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Quote;
+use App\Models\SweeperModel;
 use App\Models\User;
 use App\Services\QuoteService;
 use Tests\TestCase;
@@ -254,16 +255,52 @@ class QuoteBuilderTest extends TestCase
         $this->assertStringNotContainsString('data:application/pdf', $streamedContent);
     }
 
-    public function test_custom_machine_description_persists_in_snapshot(): void
+    public function test_admin_updated_model_description_propagates_to_quotes_and_sidebar_is_clean(): void
     {
         $admin = User::whereHas('role', fn ($q) => $q->where('slug', 'admin'))->first();
+        $salesRep = User::where('email', 'john.wells@odrasweeper.com')->first();
 
-        $customDesc = 'SPECIAL ADMIN CUSTOMIZATION: MT4H Sweeper with reinforced chassis, customized dual brooms, and stainless steel high-durability body.';
+        // 1. Verify Builder form does NOT contain the removed Machine Description textarea or reset button
+        $builderResponse = $this->actingAs($salesRep)->get('/sales/quotes/create');
+        $builderResponse->assertStatus(200);
+        $builderResponse->assertDontSee('id="machineDescription"', false);
+        $builderResponse->assertDontSee('id="btnResetDesc"', false);
 
+        // 2. Admin updates the description for MT4H via admin portal
+        $mt4h = SweeperModel::where('code', 'MT4H')->first();
+        $updatedDesc = '2027 REVISED SPECIFICATION: MT4H Mechanical Broom Sweeper with heavy duty package and dual engine Tier 4-Final.';
+        
+        $updateResponse = $this->actingAs($admin)->put("/admin/models/{$mt4h->id}", [
+            'code' => 'MT4H',
+            'category' => 'MECHANICAL BROOM SWEEPER',
+            'description' => $updatedDesc,
+            'is_active' => '1',
+            'msrp' => 257493,
+            'sw_list' => 307378,
+            'sw_net' => 270493,
+        ]);
+        $updateResponse->assertRedirect('/admin/models');
+        $this->assertDatabaseHas('sweeper_models', [
+            'id' => $mt4h->id,
+            'description' => $updatedDesc,
+        ]);
+
+        // 3. Admin models index shows the description with quotation badge
+        $indexResponse = $this->actingAs($admin)->get('/admin/models');
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee('Quotation Body Description (Shared)');
+        $indexResponse->assertSee($updatedDesc);
+
+        // 4. Sales rep opens quote builder - the catalog payload contains the new description
+        $repBuilderResponse = $this->actingAs($salesRep)->get('/sales/quotes/create');
+        $repBuilderResponse->assertStatus(200);
+        $repBuilderResponse->assertSee($updatedDesc);
+
+        // 5. Sales rep saves quote with updated description in snapshot
         $payload = [
             'quote_number' => '3015',
-            'customer' => 'Custom City Works',
-            'model_description' => $customDesc,
+            'customer' => 'City of Tampa',
+            'model_description' => $updatedDesc,
             'base_msrp' => 257493,
             'base_list_price' => 257493,
             'base_unit_price' => 257493,
@@ -274,28 +311,19 @@ class QuoteBuilderTest extends TestCase
                 'model' => 'MT4H',
                 'basis' => 'MSRP (Commercial)',
                 'chassis' => 'MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - LEFT side dumping hopper',
-                'machineDescription' => $customDesc,
-                'isCustomDesc' => true,
-                'toCompany' => 'Custom City Works',
+                'toCompany' => 'City of Tampa',
                 'baseQty' => 1,
                 'freight' => 0,
                 'enh' => [],
             ],
         ];
 
-        $response = $this->actingAs($admin)->postJson('/api/quotes', $payload);
-        $response->assertStatus(201);
+        $saveResponse = $this->actingAs($salesRep)->postJson('/api/quotes', $payload);
+        $saveResponse->assertStatus(201);
 
         $quote = Quote::where('quote_number', '3015')->first();
         $this->assertNotNull($quote);
-        $this->assertEquals($customDesc, $quote->latestVersion->snapshot->model_description);
-
-        // Check that builder view provides the custom description in initialState
-        $viewResponse = $this->actingAs($admin)->get("/sales/quotes/{$quote->id}");
-        $viewResponse->assertStatus(200);
-        $viewResponse->assertSee('Machine Description');
-        $viewResponse->assertSee('ADMIN EDITABLE');
-        $viewResponse->assertSee($customDesc);
+        $this->assertStringContainsString($updatedDesc, $quote->latestVersion->snapshot->model_description);
     }
 
     public function test_dashboard_renders_print_button_for_quote_rows(): void

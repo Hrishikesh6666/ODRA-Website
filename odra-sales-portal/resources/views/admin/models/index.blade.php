@@ -18,14 +18,14 @@
         <table class="data-table">
             <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc;">
                 <tr>
-                    <th>Model Code</th>
-                    <th>Category</th>
+                    <th style="min-width: 100px;">Model Code</th>
+                    <th style="min-width: 320px;">Quotation Body Description (Shared)</th>
                     <th>MSRP (Commercial)</th>
                     <th>Sourcewell List</th>
                     <th>Sourcewell Net</th>
                     <th>Configurations</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th style="text-align: right; min-width: 180px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -34,8 +34,18 @@
                         $p = $m->prices->first();
                     @endphp
                     <tr>
-                        <td><strong>{{ $m->code }}</strong></td>
-                        <td>{{ $m->category }}</td>
+                        <td>
+                            <strong style="font-size: 15px; color: #0f172a;">{{ $m->code }}</strong>
+                            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">{{ $m->category }}</div>
+                        </td>
+                        <td>
+                            <div style="font-size: 12.5px; color: #1e293b; line-height: 1.45; max-height: 58px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;" title="{{ $m->description }}">
+                                {{ $m->description }}
+                            </div>
+                            <div style="font-size: 10.5px; color: #ac2529; font-weight: 700; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                <span>&bull; Rendered in bold on all Sales Rep Quotations</span>
+                            </div>
+                        </td>
                         <td><strong>${{ number_format($p?->msrp ?? 0, 0) }}</strong></td>
                         <td>${{ number_format($p?->sw_list ?? 0, 0) }}</td>
                         <td><strong>${{ number_format($p?->sw_net ?? 0, 0) }}</strong></td>
@@ -45,12 +55,14 @@
                                 {{ $m->is_active ? 'Active' : 'Inactive' }}
                             </span>
                         </td>
-                        <td>
-                            <div style="display: flex; gap: 8px;">
-                                <a href="{{ route('admin.models.edit', $m) }}" class="btn-secondary">Edit &amp; Prices</a>
+                        <td style="text-align: right;">
+                            <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
+                                <a href="{{ route('admin.models.edit', $m) }}" class="btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
+                                    Edit Description &amp; Prices
+                                </a>
                                 <form action="{{ route('admin.models.toggle', $m) }}" method="POST" style="margin:0;">
                                     @csrf
-                                    <button type="submit" class="btn-secondary" style="color: {{ $m->is_active ? '#991b1b' : '#166534' }};">
+                                    <button type="submit" class="btn-secondary" style="padding: 6px 8px; font-size: 12px; color: {{ $m->is_active ? '#991b1b' : '#166534' }};">
                                         {{ $m->is_active ? 'Deactivate' : 'Activate' }}
                                     </button>
                                 </form>

@@ -477,29 +477,6 @@ table.items tr.subtotalRow td, table.items tr.totalRow td {
     <label>Chassis / Discharge Configuration</label>
     <select id="chassis" {{ $isReadonly ? 'disabled' : '' }}></select>
 
-    <label style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-      <span>Machine Description</span>
-      @if(auth()->user()?->isAdmin())
-        <span style="font-size: 10px; color: #ffffff; background: var(--red); padding: 1px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px;">ADMIN EDITABLE</span>
-      @else
-        <span class="smallnote" style="color: #64748b; font-weight: 500;">(Admin Controlled &mdash; Read-only)</span>
-      @endif
-    </label>
-    <textarea 
-      id="machineDescription" 
-      rows="4" 
-      {{ (auth()->user()?->isAdmin() && !$isReadonly) ? '' : 'readonly' }} 
-      style="width:100%; border:1px solid {{ (auth()->user()?->isAdmin() && !$isReadonly) ? 'var(--red)' : '#cbd5e1' }}; border-radius:6px; padding:7px 10px; font-size:12px; line-height:1.45; font-family:inherit; resize:vertical; {{ (!auth()->user()?->isAdmin() || $isReadonly) ? 'background:#f8fafc; color:#475569; cursor:not-allowed;' : 'background:#ffffff;' }}"
-      placeholder="Machine specifications and body description..."
-    ></textarea>
-    @if(auth()->user()?->isAdmin() && !$isReadonly)
-      <div style="display:flex; justify-content:flex-end; margin-top:3px;">
-        <button type="button" id="btnResetDesc" style="font-size:11px; color:var(--red); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;">
-          Reset to Standard Description
-        </button>
-      </div>
-    @endif
-
     <h2 class="sec">Customer &amp; Order Info</h2>
     <div class="row2">
       <div>
@@ -577,8 +554,6 @@ let state = {
   model: 'MT4H',
   basis: 'MSRP (Commercial)',
   chassis: '',
-  machineDescription: '',
-  isCustomDesc: false,
   po: '',
   fob: 'Transport, estimate only noted in quote',
   acct: '',
@@ -598,9 +573,6 @@ let state = {
 // Safely merge initial state
 if (INITIAL_STATE && typeof INITIAL_STATE === 'object') {
   Object.assign(state, INITIAL_STATE);
-  if (INITIAL_STATE.machineDescription) {
-    state.isCustomDesc = true;
-  }
 }
 
 // Support pre-selecting model, chassis, pricing basis, and enhancements from Catalog showcase URL
@@ -785,32 +757,27 @@ function priceForItem(item) {
 }
 
 function dynamicBaseDesc(base, chassisStr, model) {
-  if (model === 'MT4H') {
-    const s = chassisStr || '';
-    const brand = /Ford F-550XL/.test(s) ? 'Ford F-550XL' : 'Isuzu NRR';
-    const gvwrMatch = s.match(/([\d,]+)\s*GVWR/);
-    const gvwr = gvwrMatch ? gvwrMatch[1] : '19,500';
-    const sideMatch = s.match(/(LEFT|RIGHT) side dumping hopper/i);
-    const side = (sideMatch && /RIGHT/i.test(sideMatch[1])) ? 'Right' : 'Left';
-    return `MT4H Mechanical Broom Sweeper is a dual engine Tier 4-Final, 65HP auxiliary engine sweeper with a 4-cubic yard hopper, mounted on a non-CDL, 109" WB Class 6 cabover commercial truck chassis with 4-wheel disc brakes, and full LED chassis lighting. The water spray system features a 220-gallon tank and 4 spray bars. The hopper features a variable height discharge up to 10-ft. Standard paint color is white with ODRA branding and fully built with standard features noted below. ${side}-side dump sweeper. Chassis is a brand new 2027MY ${brand}, ${gvwr} GVWR.`;
+  let desc = (base && base.desc) ? base.desc : '';
+  if (!desc) {
+    return '';
   }
-  if (model === 'MS5H') {
-    const s = chassisStr || '';
-    const isCDL = /Class 7|CDL-required/i.test(s);
-    if (isCDL && base.desc) {
-      return base.desc.replace(/non-CDL,\s*148"\s*WB\s*Class\s*6/i, 'CDL-required, 148" WB Class 7');
+  if (chassisStr) {
+    const sideMatch = chassisStr.match(/(LEFT|RIGHT) side dumping hopper/i);
+    if (sideMatch) {
+      const side = /RIGHT/i.test(sideMatch[1]) ? 'Right' : 'Left';
+      desc = desc.replace(/(Left|Right)-side dump sweeper/i, `${side}-side dump sweeper`);
     }
-    return base.desc || '';
+    if (/Ford F-550XL/i.test(chassisStr)) {
+      desc = desc.replace(/Isuzu NRR/gi, 'Ford F-550XL');
+      desc = desc.replace(/19,500/gi, '19,000');
+    } else if (/Isuzu NRR/i.test(chassisStr)) {
+      desc = desc.replace(/Ford F-550XL/gi, 'Isuzu NRR');
+    }
+    if (/Class 7|CDL-required/i.test(chassisStr)) {
+      desc = desc.replace(/non-CDL,\s*148"\s*WB\s*Class\s*6/i, 'CDL-required, 148" WB Class 7');
+    }
   }
-  return base.desc || '';
-}
-
-function effectiveDescription() {
-  if (state.machineDescription && state.machineDescription.trim()) {
-    return state.machineDescription.trim();
-  }
-  const base = baseItem(state.model);
-  return dynamicBaseDesc(base, state.chassis, state.model);
+  return desc;
 }
 
 function populateChassis() {
@@ -1114,7 +1081,7 @@ function renderPreview() {
       </thead>
       <tbody>
         <tr class="baseRow">
-          <td style="font-weight:700; color:#1a1a1a; background:#ffffff;">${esc(effectiveDescription())}</td>
+          <td style="font-weight:700; color:#1a1a1a; background:#ffffff;">${esc(dynamicBaseDesc(base, state.chassis, state.model))}</td>
           <td class="num">${state.baseQty}</td>
           <td class="num">${fmt(displayBaseList)}</td>
           ${anyDisc ? `<td class="num">${pctFmt(baseDisc)}</td>` : ''}
@@ -1185,11 +1152,6 @@ function initForm() {
     modelEl.addEventListener('change', e => {
       state.model = e.target.value;
       populateChassis();
-      if (!state.isCustomDesc) {
-        state.machineDescription = dynamicBaseDesc(baseItem(state.model), state.chassis, state.model);
-        const descEl = document.getElementById('machineDescription');
-        if (descEl) descEl.value = state.machineDescription;
-      }
       render();
     });
   }
@@ -1208,32 +1170,7 @@ function initForm() {
   if (chassisEl) {
     chassisEl.addEventListener('change', e => {
       state.chassis = e.target.value;
-      if (!state.isCustomDesc) {
-        state.machineDescription = dynamicBaseDesc(baseItem(state.model), state.chassis, state.model);
-        const descEl = document.getElementById('machineDescription');
-        if (descEl) descEl.value = state.machineDescription;
-      }
       render();
-    });
-  }
-
-  const descEl = document.getElementById('machineDescription');
-  if (descEl) {
-    descEl.value = effectiveDescription();
-    descEl.addEventListener('input', e => {
-      state.machineDescription = e.target.value;
-      state.isCustomDesc = true;
-      renderPreview();
-    });
-  }
-
-  const btnResetDesc = document.getElementById('btnResetDesc');
-  if (btnResetDesc) {
-    btnResetDesc.addEventListener('click', () => {
-      state.machineDescription = dynamicBaseDesc(baseItem(state.model), state.chassis, state.model);
-      state.isCustomDesc = false;
-      if (descEl) descEl.value = state.machineDescription;
-      renderPreview();
     });
   }
 
@@ -1303,10 +1240,11 @@ async function saveQuote(isFinalize = false) {
   }
 
   const snap = calculateSnapshotData();
+  const base = baseItem(state.model);
   const payload = {
     quote_number: state.quoteSeq,
     customer: state.toCompany,
-    model_description: effectiveDescription(),
+    model_description: dynamicBaseDesc(base, state.chassis, state.model),
     base_msrp: snap.base_msrp,
     base_list_price: snap.base_list_price,
     base_unit_price: snap.base_unit_price,
