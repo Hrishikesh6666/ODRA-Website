@@ -240,39 +240,41 @@ h2.sec:first-of-type {
   -webkit-overflow-scrolling: touch;
   background: #e2e8f0;
   border-radius: 10px;
-  padding: 24px 16px;
-  display: flex;
-  justify-content: flex-start;
+  padding: 24px 20px;
+  display: block; /* Avoid flexbox negative centering offset */
+  box-sizing: border-box;
 }
 
 #preview {
-  background: #fff;
+  background: #ffffff;
   padding: 34px 38px;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.45;
   color: #1a1a1a;
   min-height: 400px;
   width: 100%;
-  min-width: 780px;
   max-width: 820px;
   margin: 0 auto;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  border-radius: 4px;
-  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border-radius: 6px;
+  box-sizing: border-box;
+  overflow: hidden; /* Guarantee nothing bleeds outside sheet */
 }
 
+/* Document Header */
 .docHeaderTop {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   border-bottom: 3px solid var(--red);
   padding-bottom: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 .docHeaderTop .co img {
-  height: 46px;
+  height: 48px;
   display: block;
   margin-bottom: 4px;
+  object-fit: contain;
 }
 .docHeaderTop .co .addr {
   font-size: 11px;
@@ -283,10 +285,10 @@ h2.sec:first-of-type {
   text-align: right;
 }
 .docHeaderTop .qbox .ttl {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 21px;
+  font-weight: 800;
   color: var(--red);
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
 }
 .docHeaderTop .qbox table {
   margin-left: auto;
@@ -294,13 +296,16 @@ h2.sec:first-of-type {
   border-collapse: collapse;
 }
 .docHeaderTop .qbox td {
-  padding: 1px 0 1px 10px;
-  text-align: right;
+  padding: 1px 0 1px 10px !important;
+  text-align: right !important;
+  border: none !important;
+  white-space: nowrap !important;
 }
 .docHeaderTop .qbox td.k {
   color: var(--gray);
   text-align: right;
-  padding-left: 14px;
+  padding-left: 14px !important;
+  font-weight: 600;
 }
 .disclaimerLine {
   font-size: 11px;
@@ -319,13 +324,13 @@ h2.sec:first-of-type {
   min-width: 0;
 }
 .infoGrid .col>div {
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 .infoGrid .k {
   color: var(--gray);
-  font-weight: bold;
+  font-weight: 700;
   display: inline-block;
-  min-width: 110px;
+  min-width: 120px;
 }
 .infoGrid .toBlock .toLines {
   display: inline-block;
@@ -335,75 +340,128 @@ h2.sec:first-of-type {
   margin-bottom: 2px;
 }
 
+/* Strict Table Items Styling - Column & Row Format */
 table.items {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 4px;
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed !important; /* Critical: strict column widths, prevents horizontal blowing out */
+  border-collapse: collapse !important;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  box-sizing: border-box !important;
 }
-table.items th {
-  background: var(--red);
-  color: #fff;
-  font-size: 10.5px;
-  text-transform: uppercase;
-  padding: 7px 8px;
-  text-align: left;
-}
-table.items th.num, table.items td.num {
-  text-align: right;
-}
+
+table.items th,
 table.items td {
-  padding: 6px 8px;
-  border-bottom: 1px solid #eee;
-  font-size: 11.5px;
-  vertical-align: top;
+  white-space: normal !important; /* Critical: overrides portal.css global td/th nowrap */
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  box-sizing: border-box !important;
 }
+
+table.items th {
+  background: var(--red) !important;
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 10px !important;
+  text-align: left !important;
+  border: none !important;
+}
+table.items th.num {
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+table.items td {
+  padding: 7px 10px !important;
+  border-bottom: 1px solid #eeeeee !important;
+  font-size: 11.5px !important;
+  vertical-align: top !important;
+  color: #1a1a1a !important;
+  line-height: 1.45 !important;
+}
+table.items td.num {
+  text-align: right !important;
+  white-space: nowrap !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
 table.items tr.baseRow td {
-  font-weight: 700;
-  color: #1a1a1a;
-  background: #ffffff;
-  line-height: 1.45;
+  background: #ffffff !important;
+  vertical-align: top !important;
 }
+table.items tr.baseRow td:first-child,
+table.items tr.baseRow td.descCol {
+  font-weight: 700 !important;
+  color: #1a1a1a !important;
+  line-height: 1.45 !important;
+  padding-right: 14px !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+}
+table.items tr.baseRow td.num {
+  font-weight: 700 !important;
+}
+
 table.items tr.sectionRow td {
-  font-weight: bold;
-  color: var(--red);
-  border-bottom: 1px solid #eee;
-  padding-top: 10px;
+  font-weight: 700 !important;
+  color: var(--red) !important;
+  font-size: 11.5px !important;
+  border-bottom: 1px solid #eeeeee !important;
+  padding-top: 14px !important;
+  padding-bottom: 6px !important;
+  background: transparent !important;
 }
+
 table.items tr.subtotalRow td {
-  border-top: 2px solid var(--ink);
-  font-weight: bold;
-  padding-top: 8px;
+  border-top: 2px solid #1a1a1a !important;
+  font-weight: 700 !important;
+  padding-top: 10px !important;
+  padding-bottom: 6px !important;
+  white-space: nowrap !important;
 }
+
 table.items tr.totalRow td {
-  font-weight: bold;
-  font-size: 13.5px;
-  color: var(--red);
-  border-top: 1px solid #ccc;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  color: var(--red) !important;
+  border-top: 1px solid #cccccc !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  white-space: nowrap !important;
 }
-table.items tr.subtotalRow td, table.items tr.totalRow td {
-  white-space: nowrap;
-}
+
 .legal {
-  margin-top: 16px;
+  margin-top: 18px;
   border-top: 1px solid var(--line);
-  padding-top: 10px;
+  padding-top: 12px;
 }
 .legal p {
-  font-size: 9.7px;
+  font-size: 9.8px;
   color: var(--gray);
   margin: 0 0 6px;
-  line-height: 1.35;
+  line-height: 1.4;
+  white-space: normal !important;
+  word-wrap: break-word !important;
 }
 .legal p b {
   color: #1a1a1a;
 }
 
 @media print {
-  body { background: #fff; }
+  body { background: #fff !important; }
   .portal-header, .builder-topbar, .builder, .btnrow { display: none !important; }
-  .app-builder-layout { display: block; padding: 0; max-width: none; }
-  .previewWrap { background: transparent; padding: 0; max-height: none; overflow: visible; }
-  #preview { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+  .app-builder-layout { display: block !important; padding: 0 !important; max-width: none !important; }
+  .previewWrap { background: transparent !important; padding: 0 !important; max-height: none !important; overflow: visible !important; display: block !important; }
+  #preview { box-shadow: none !important; border: none !important; padding: 0 !important; max-width: 100% !important; width: 100% !important; }
+  table.items { width: 100% !important; table-layout: fixed !important; }
+  table.items td, table.items th { white-space: normal !important; }
+  table.items td.num, table.items th.num { white-space: nowrap !important; }
 }
 </style>
 @endpush
@@ -995,11 +1053,11 @@ function renderPreview() {
 
   const anyDisc = Math.abs(baseDisc) >= 0.0005 || enhRowData.some(r => Math.abs(r.disc) >= 0.0005);
   const cols = anyDisc ? 6 : 5;
-  const discTh = anyDisc ? '<th class="num">Discount</th>' : '';
+  const discTh = anyDisc ? '<th class="num">DISCOUNT</th>' : '';
 
   const enhRowsHtml = enhRowData.map(r => `
     <tr>
-      <td>${esc(r.desc)}</td>
+      <td class="descCol">${esc(r.desc)}</td>
       <td class="num">${r.qty}</td>
       <td class="num">${fmt(r.list)}</td>
       ${anyDisc ? `<td class="num">${pctFmt(r.disc)}</td>` : ''}
@@ -1069,19 +1127,35 @@ function renderPreview() {
     </div>
 
     <table class="items">
+      <colgroup>
+        ${anyDisc ? `
+          <col style="width: 48%;">
+          <col style="width: 7%;">
+          <col style="width: 11%;">
+          <col style="width: 10%;">
+          <col style="width: 12%;">
+          <col style="width: 12%;">
+        ` : `
+          <col style="width: 54%;">
+          <col style="width: 8%;">
+          <col style="width: 12%;">
+          <col style="width: 13%;">
+          <col style="width: 13%;">
+        `}
+      </colgroup>
       <thead>
         <tr>
-          <th>Description</th>
-          <th class="num">Qty</th>
+          <th>DESCRIPTION</th>
+          <th class="num">QTY</th>
           <th class="num">MSRP</th>
           ${discTh}
-          <th class="num">Unit Price</th>
-          <th class="num">Extended</th>
+          <th class="num">UNIT PRICE</th>
+          <th class="num">EXTENDED</th>
         </tr>
       </thead>
       <tbody>
         <tr class="baseRow">
-          <td style="font-weight:700; color:#1a1a1a; background:#ffffff;">${esc(dynamicBaseDesc(base, state.chassis, state.model))}</td>
+          <td class="descCol">${esc(dynamicBaseDesc(base, state.chassis, state.model))}</td>
           <td class="num">${state.baseQty}</td>
           <td class="num">${fmt(displayBaseList)}</td>
           ${anyDisc ? `<td class="num">${pctFmt(baseDisc)}</td>` : ''}
@@ -1099,7 +1173,7 @@ function renderPreview() {
           <td class="num">${fmt(subtotal)}</td>
         </tr>
         <tr>
-          <td>Sweeper Transport / Freight</td>
+          <td class="descCol">Sweeper Transport / Freight</td>
           <td class="num">${state.fob === 'EXW, Factory pick-up' ? 0 : 1}</td>
           <td class="num"></td>
           ${anyDisc ? '<td class="num"></td>' : ''}
