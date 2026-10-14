@@ -1,0 +1,12 @@
+.git
+.github
+odra-sales-portal/vendor
+odra-sales-portal/node_modules
+odra-sales-portal/.env
+odra-sales-portal/.env.backup
+odra-sales-portal/.env.testing
+odra-sales-portal/tests
+phpunit.xml
+*.log
+composer.phar
+composer-setup.php
