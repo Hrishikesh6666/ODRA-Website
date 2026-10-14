@@ -122,6 +122,42 @@
             animation: slideIn 0.2s ease;
         }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .portal-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            .portal-brand {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                text-decoration: none;
+            }
+            .nav-links {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 4px;
+                -webkit-overflow-scrolling: touch;
+                gap: 6px;
+            }
+            .nav-link {
+                padding: 8px 12px;
+                font-size: 13px;
+                flex-shrink: 0;
+            }
+            .user-menu {
+                justify-content: space-between;
+                border-top: 1px solid rgba(255,255,255,0.12);
+                padding-top: 10px;
+                width: 100%;
+            }
+            .main-container {
+                padding: 14px 10px;
+            }
+        }
     </style>
     @stack('styles')
 </head>

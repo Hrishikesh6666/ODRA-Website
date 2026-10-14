@@ -13,11 +13,13 @@ class ModelConfiguration extends Model
         'sweeper_model_id',
         'label',
         'short_label',
+        'price',
         'sort_order',
         'is_active',
     ];
 
     protected $casts = [
+        'price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

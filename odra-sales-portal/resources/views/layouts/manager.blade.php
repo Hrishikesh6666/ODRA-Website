@@ -290,8 +290,12 @@
         @media (max-width: 900px) {
             body { flex-direction: column; }
             .sidebar { width: 100%; height: auto; position: static; }
-            .topbar { padding: 0 16px; }
-            .content { padding: 16px; }
+            .sidebar-nav { flex-direction: row; overflow-x: auto; white-space: nowrap; padding: 8px 12px; -webkit-overflow-scrolling: touch; gap: 6px; }
+            .sidebar-nav .nav-heading { display: none; }
+            .sidebar-nav .nav-link { flex-shrink: 0; padding: 8px 12px; font-size: 13px; }
+            .sidebar-footer { display: none; }
+            .topbar { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
+            .content { padding: 16px 12px; }
         }
     </style>
     @stack('styles')

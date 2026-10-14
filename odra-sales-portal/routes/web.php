@@ -102,6 +102,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/enhancements', [EnhancementController::class, 'store'])->name('enhancements.store');
     Route::put('/enhancements/{enhancement}', [EnhancementController::class, 'update'])->name('enhancements.update');
     Route::post('/enhancements/{enhancement}/toggle', [EnhancementController::class, 'toggle'])->name('enhancements.toggle');
+    Route::delete('/enhancements/{enhancement}', [EnhancementController::class, 'destroy'])->name('enhancements.destroy');
 
     // Freight Matrix
     Route::get('/freight', [FreightController::class, 'index'])->name('freight.index');
@@ -117,27 +118,37 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Security Audit Log
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+
+    // Quotation Page & Pricing Basis Master Settings
+    Route::get('/quotation-settings', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'index'])->name('quotation-settings.index');
+    Route::put('/quotation-settings', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'update'])->name('quotation-settings.update');
+    Route::post('/quotation-settings/reset', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'reset'])->name('quotation-settings.reset');
+    Route::post('/quotation-settings/reset-model/{model}', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'resetModel'])->name('quotation-settings.reset-model');
+    // Master Pricing shortcut in Admin
+    Route::get('/pricing', fn () => redirect()->route('manager.pricing.index'))->name('pricing.index');
 });
 
 /*
 |--------------------------------------------------------------------------
-| Manager Routes (Protected by auth & role:manager) - The Financial Authority
+| Manager Routes - The Financial Authority & Commercial Master Pricing
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/models', [CatalogController::class, 'index'])->name('models');
+Route::middleware(['auth'])->prefix('manager')->name('manager.')->group(function () {
+    // Commercial Master Pricing (Accessible by Manager and Admin)
+    Route::middleware('role:manager,admin')->group(function () {
+        Route::get('/pricing', [\App\Http\Controllers\Manager\PricingController::class, 'index'])->name('pricing.index');
+        Route::put('/pricing/models/{model}', [\App\Http\Controllers\Manager\PricingController::class, 'updateModelPrice'])->name('pricing.models.update');
+        Route::put('/pricing/enhancements/{enhancement}', [\App\Http\Controllers\Manager\PricingController::class, 'updateEnhancementPrice'])->name('pricing.enhancements.update');
+        Route::put('/pricing/freight/{freight}', [\App\Http\Controllers\Manager\PricingController::class, 'updateFreightPrice'])->name('pricing.freight.update');
+    });
 
-    // Reports & Excel Export
-    Route::get('/reports', [\App\Http\Controllers\Manager\ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/export', [\App\Http\Controllers\Manager\ReportController::class, 'export'])->name('reports.export');
-
-    // All Team Quotations
-    Route::get('/quotes', [\App\Http\Controllers\Manager\QuoteController::class, 'index'])->name('quotes.index');
-
-    // Commercial Master Pricing
-    Route::get('/pricing', [\App\Http\Controllers\Manager\PricingController::class, 'index'])->name('pricing.index');
-    Route::put('/pricing/models/{model}', [\App\Http\Controllers\Manager\PricingController::class, 'updateModelPrice'])->name('pricing.models.update');
-    Route::put('/pricing/enhancements/{enhancement}', [\App\Http\Controllers\Manager\PricingController::class, 'updateEnhancementPrice'])->name('pricing.enhancements.update');
+    // Executive Dashboard, Sales Reports & Team Quotes (Manager ONLY - Financial Shielding)
+    Route::middleware('role:manager')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/models', [CatalogController::class, 'index'])->name('models');
+        Route::get('/reports', [\App\Http\Controllers\Manager\ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export', [\App\Http\Controllers\Manager\ReportController::class, 'export'])->name('reports.export');
+        Route::get('/quotes', [\App\Http\Controllers\Manager\QuoteController::class, 'index'])->name('quotes.index');
+    });
 });
 

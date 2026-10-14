@@ -348,4 +348,75 @@ class QuoteBuilderTest extends TestCase
         $response->assertSee('Print');
         $response->assertSee('modalQuotePrintBtn');
     }
+
+    public function test_admin_can_create_new_model_and_edit_all_quotation_sections_and_pricing_bases(): void
+    {
+        $admin = User::whereHas('role', fn ($q) => $q->where('slug', 'admin'))->first();
+        $salesRep = User::where('email', 'john.wells@odrasweeper.com')->first();
+
+        // Clean up any existing MS6H test model first
+        $existingTestModel = SweeperModel::withTrashed()->where('code', 'MS6H')->first();
+        if ($existingTestModel) {
+            $existingTestModel->configurations()->delete();
+            $existingTestModel->prices()->delete();
+            $existingTestModel->enhancements()->delete();
+            $existingTestModel->forceDelete();
+        }
+
+        // 1. Admin creates a brand new model (MS6H) with custom chassis configurations
+        $createResponse = $this->actingAs($admin)->post('/admin/models', [
+            'code' => 'MS6H',
+            'category' => 'MECHANICAL BROOM SWEEPER',
+            'description' => 'MS6H Heavy-Duty 6-Cubic Yard Highway Mechanical Broom Sweeper with 350HP Cummins.',
+            'msrp' => 385000,
+            'sw_list' => 445000,
+            'sw_net' => 398000,
+            'configurations' => [
+                [
+                    'label' => 'MS6H - Freightliner 114SD, 33,000 GVWR, CDL - Dual Dump',
+                    'short_label' => 'MS6H Freightliner 114SD, CDL',
+                ],
+            ],
+        ]);
+        $createResponse->assertRedirect('/admin/models');
+
+        // 2. Verify new model MS6H immediately reflects on the Quotation Builder page and Catalog page
+        $builderResponse = $this->actingAs($salesRep)->get('/sales/quotes/create');
+        $builderResponse->assertStatus(200);
+        $builderResponse->assertSee('<option value="MS6H">MS6H</option>', false);
+        $builderResponse->assertSee('MS6H Heavy-Duty 6-Cubic Yard Highway Mechanical Broom Sweeper with 350HP Cummins.');
+        $builderResponse->assertSee('MS6H - Freightliner 114SD, 33,000 GVWR, CDL - Dual Dump');
+        $builderResponse->assertSee('385000');
+        $builderResponse->assertSee('445000');
+        $builderResponse->assertSee('398000');
+
+        $catalogResponse = $this->actingAs($salesRep)->get('/sales/models');
+        $catalogResponse->assertStatus(200);
+        $catalogResponse->assertSee('ODRA MS6H');
+
+        // 3. Admin updates Quotation Page sections & Pricing Basis rules
+        $settingsPage = $this->actingAs($admin)->get('/admin/quotation-settings');
+        $settingsPage->assertStatus(200);
+
+        $defaultSettings = app(\App\Services\QuoteTemplateService::class)->getDefaultSettings();
+        $customSettings = $defaultSettings;
+        $customSettings['header']['address_line_1'] = '705 South 48th Street, Suite B, Grand Forks, ND 58201';
+        $customSettings['legal']['legal_p4'] = 'This quote is <b>BUDGETARY ONLY</b>, valid 30 days from date of quote.';
+
+        $updateSettingsResp = $this->actingAs($admin)->put('/admin/quotation-settings', $customSettings);
+        $updateSettingsResp->assertRedirect('/admin/quotation-settings');
+
+        // 4. Verify updated Quotation Page sections and Pricing Bases reflect on the Quotation Builder page
+        $builderAfterEdit = $this->actingAs($salesRep)->get('/sales/quotes/create');
+        $builderAfterEdit->assertStatus(200);
+        $builderAfterEdit->assertSee('705 South 48th Street, Suite B, Grand Forks, ND 58201');
+        $builderAfterEdit->assertSee('valid 30 days from date of quote');
+        $builderAfterEdit->assertSee('Sourcewell Contract Price');
+        $builderAfterEdit->assertSee('Minnesota Contract Price');
+
+        // Reset settings & clean up test model
+        $this->actingAs($admin)->post('/admin/quotation-settings/reset');
+        SweeperModel::where('code', 'MS6H')->delete();
+    }
 }
+

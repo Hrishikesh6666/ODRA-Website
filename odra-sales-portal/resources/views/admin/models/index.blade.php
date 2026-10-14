@@ -4,13 +4,18 @@
 @section('header-title', 'Sweeper Models & Master Pricing')
 
 @section('content')
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
     <p style="color: var(--text-muted); margin: 0; font-size: 14px;">
         Manage base equipment models, chassis configurations, and commercial &amp; cooperative pricing tiers.
     </p>
-    <a href="{{ route('admin.models.create') }}" class="btn-primary">
-        + Add New Model
-    </a>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ route('admin.quotation-settings.index') }}" class="btn-secondary">
+            &#9998; Edit Quotation Page &amp; Pricing Basis
+        </a>
+        <a href="{{ route('admin.models.create') }}" class="btn-primary">
+            + Add New Model
+        </a>
+    </div>
 </div>
 
 <div class="card">
@@ -56,9 +61,12 @@
                             </span>
                         </td>
                         <td style="text-align: right;">
-                            <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
+                            <div style="display: inline-flex; gap: 6px; justify-content: flex-end; align-items: center;">
+                                <a href="{{ route('admin.quotation-settings.index', ['scope' => $m->code]) }}" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; text-decoration: none;" title="Edit Quotation Specs, Standard Features &amp; Terms for {{ $m->code }}">
+                                    Quotation Specs &rarr;
+                                </a>
                                 <a href="{{ route('admin.models.edit', $m) }}" class="btn-primary" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
-                                    Edit Description &amp; Prices
+                                    Edit Prices &amp; Chassis
                                 </a>
                                 <form action="{{ route('admin.models.toggle', $m) }}" method="POST" style="margin:0;">
                                     @csrf

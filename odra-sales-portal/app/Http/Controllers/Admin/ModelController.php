@@ -9,6 +9,7 @@ use App\Models\SweeperModel;
 use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ModelController extends Controller
@@ -39,19 +40,35 @@ class ModelController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:24', 'unique:sweeper_models,code'],
+            'code' => ['required', 'string', 'max:24', Rule::unique('sweeper_models', 'code')->whereNull('deleted_at')],
             'description' => ['required', 'string'],
             'category' => ['required', 'string', 'max:100'],
             'msrp' => ['required', 'numeric', 'min:0'],
             'sw_list' => ['required', 'numeric', 'min:0'],
-            'sw_net' => ['required', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'sw_net' => ['nullable', 'numeric', 'min:0'],
             'configurations' => ['nullable', 'array'],
-            'configurations.*.label' => ['required', 'string'],
+            'configurations.*.label' => ['nullable', 'string'],
             'configurations.*.short_label' => ['nullable', 'string'],
+            'configurations.*.price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $code = strtoupper(trim($validated['code']));
+        $msrp = (float) $validated['msrp'];
+        $swList = (float) $validated['sw_list'];
+        if (isset($validated['discount_percent']) && $validated['discount_percent'] !== '') {
+            $discount = (float) $validated['discount_percent'];
+            $swNet = round($swList * (1 - ($discount / 100)), 2);
+        } elseif (! empty($validated['sw_net'])) {
+            $swNet = (float) $validated['sw_net'];
+            $discount = ($swList > 0 && $swList >= $swNet) ? round((1 - ($swNet / $swList)) * 100, 2) : 0;
+        } else {
+            $swNet = $swList;
+            $discount = 0;
+        }
+
         $model = SweeperModel::create([
-            'code' => strtoupper($validated['code']),
+            'code' => $code,
             'description' => $validated['description'],
             'category' => $validated['category'],
             'is_active' => true,
@@ -61,26 +78,42 @@ class ModelController extends Controller
         // Create initial price
         ModelPrice::create([
             'sweeper_model_id' => $model->id,
-            'msrp' => $validated['msrp'],
-            'sw_list' => $validated['sw_list'],
-            'sw_net' => $validated['sw_net'],
+            'msrp' => $msrp,
+            'sw_list' => $swList,
+            'sw_net' => $swNet,
             'effective_from' => now(),
             'updated_by' => auth()->id(),
         ]);
 
-        // Create configurations
+        // Create configurations (or default configuration if none provided)
+        $order = 0;
         if (! empty($validated['configurations'])) {
-            $order = 0;
             foreach ($validated['configurations'] as $cfg) {
-                if (empty($cfg['label'])) continue;
+                $label = trim($cfg['label'] ?? '');
+                if ($label === '') {
+                    continue;
+                }
+                $shortLabel = trim($cfg['short_label'] ?? '');
                 ModelConfiguration::create([
                     'sweeper_model_id' => $model->id,
-                    'label' => $cfg['label'],
-                    'short_label' => $cfg['short_label'] ?? null,
+                    'label' => $label,
+                    'short_label' => $shortLabel !== '' ? $shortLabel : $label,
+                    'price' => isset($cfg['price']) ? (float) $cfg['price'] : 0.00,
                     'sort_order' => $order++,
                     'is_active' => true,
                 ]);
             }
+        }
+
+        if ($order === 0) {
+            ModelConfiguration::create([
+                'sweeper_model_id' => $model->id,
+                'label' => "{$code} - Standard Commercial Truck Chassis Configuration",
+                'short_label' => "{$code} Standard Configuration",
+                'price' => 0.00,
+                'sort_order' => 0,
+                'is_active' => true,
+            ]);
         }
 
         AuditService::log(
@@ -88,10 +121,10 @@ class ModelController extends Controller
             entityType: 'SweeperModel',
             entityId: $model->id,
             newValue: $validated,
-            notes: "Created model {$model->code} with base MSRP \${$validated['msrp']}"
+            notes: "Created model {$model->code} with base MSRP \${$msrp}, List \${$swList}, Discount {$discount}%, Net \${$swNet}"
         );
 
-        return redirect()->route('admin.models.index')->with('success', "Model {$model->code} created successfully.");
+        return redirect()->route('admin.models.index')->with('success', "Model {$model->code} created successfully and is now live in the Quote Builder.");
     }
 
     /**
@@ -104,13 +137,13 @@ class ModelController extends Controller
             ->latest('effective_from')
             ->first();
 
-        $model->load('configurations');
+        $model->load(['configurations' => fn ($q) => $q->orderBy('sort_order')]);
 
         return view('admin.models.edit', compact('model', 'currentPrice'));
     }
 
     /**
-     * Update model details and prices.
+     * Update model details, chassis configurations, and prices.
      */
     public function update(Request $request, SweeperModel $model): RedirectResponse
     {
@@ -119,10 +152,27 @@ class ModelController extends Controller
             'category' => ['required', 'string', 'max:100'],
             'msrp' => ['required', 'numeric', 'min:0'],
             'sw_list' => ['required', 'numeric', 'min:0'],
-            'sw_net' => ['required', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'sw_net' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
             'configurations' => ['nullable', 'array'],
+            'configurations.*.label' => ['nullable', 'string'],
+            'configurations.*.short_label' => ['nullable', 'string'],
+            'configurations.*.price' => ['nullable', 'numeric', 'min:0'],
         ]);
+
+        $msrp = (float) $validated['msrp'];
+        $swList = (float) $validated['sw_list'];
+        if (isset($validated['discount_percent']) && $validated['discount_percent'] !== '') {
+            $discount = (float) $validated['discount_percent'];
+            $swNet = round($swList * (1 - ($discount / 100)), 2);
+        } elseif (! empty($validated['sw_net'])) {
+            $swNet = (float) $validated['sw_net'];
+            $discount = ($swList > 0 && $swList >= $swNet) ? round((1 - ($swNet / $swList)) * 100, 2) : 0;
+        } else {
+            $swNet = $swList;
+            $discount = 0;
+        }
 
         $oldModel = $model->toArray();
 
@@ -134,19 +184,50 @@ class ModelController extends Controller
 
         // Check if prices changed
         $currentPrice = ModelPrice::where('sweeper_model_id', $model->id)->current()->first();
-        if (! $currentPrice || $currentPrice->msrp != $validated['msrp'] || $currentPrice->sw_list != $validated['sw_list'] || $currentPrice->sw_net != $validated['sw_net']) {
+        if (! $currentPrice || $currentPrice->msrp != $msrp || $currentPrice->sw_list != $swList || $currentPrice->sw_net != $swNet) {
             if ($currentPrice) {
                 $currentPrice->update(['effective_until' => now()]);
             }
 
             ModelPrice::create([
                 'sweeper_model_id' => $model->id,
-                'msrp' => $validated['msrp'],
-                'sw_list' => $validated['sw_list'],
-                'sw_net' => $validated['sw_net'],
+                'msrp' => $msrp,
+                'sw_list' => $swList,
+                'sw_net' => $swNet,
                 'effective_from' => now(),
                 'updated_by' => auth()->id(),
             ]);
+        }
+
+        // Sync chassis configurations if submitted
+        if ($request->has('configurations')) {
+            $submittedConfigs = $validated['configurations'] ?? [];
+            $validConfigs = [];
+            foreach ($submittedConfigs as $cfg) {
+                $label = trim($cfg['label'] ?? '');
+                if ($label !== '') {
+                    $shortLabel = trim($cfg['short_label'] ?? '');
+                    $validConfigs[] = [
+                        'label' => $label,
+                        'short_label' => $shortLabel !== '' ? $shortLabel : $label,
+                        'price' => isset($cfg['price']) ? (float) $cfg['price'] : 0.00,
+                    ];
+                }
+            }
+
+            if (! empty($validConfigs)) {
+                $model->configurations()->delete();
+                foreach ($validConfigs as $idx => $cfg) {
+                    ModelConfiguration::create([
+                        'sweeper_model_id' => $model->id,
+                        'label' => $cfg['label'],
+                        'short_label' => $cfg['short_label'],
+                        'price' => $cfg['price'] ?? 0.00,
+                        'sort_order' => $idx,
+                        'is_active' => true,
+                    ]);
+                }
+            }
         }
 
         AuditService::log(
@@ -155,7 +236,7 @@ class ModelController extends Controller
             entityId: $model->id,
             oldValue: $oldModel,
             newValue: $validated,
-            notes: "Updated model {$model->code} details & master pricing."
+            notes: "Updated model {$model->code} details, chassis configurations & master pricing."
         );
 
         return redirect()->route('admin.models.index')->with('success', "Model {$model->code} updated successfully.");

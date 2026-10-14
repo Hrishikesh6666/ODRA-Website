@@ -56,7 +56,16 @@ class UserController extends Controller
 
         $users = $query->paginate(20)->withQueryString();
 
-        return view('admin.users.index', compact('users', 'admins', 'managers'));
+        $activeTab = $request->input('tab');
+        if (!$activeTab) {
+            if ($request->filled('search') || $request->filled('status') || $request->filled('page')) {
+                $activeTab = 'sales';
+            } else {
+                $activeTab = 'admins';
+            }
+        }
+
+        return view('admin.users.index', compact('users', 'admins', 'managers', 'activeTab'));
     }
 
     /**

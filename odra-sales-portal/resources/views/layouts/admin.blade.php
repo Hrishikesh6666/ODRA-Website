@@ -312,6 +312,45 @@
             width: 0 !important;
             height: 0 !important;
         }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column !important;
+            }
+            .sidebar {
+                width: 100% !important;
+                height: auto !important;
+                position: relative !important;
+            }
+            .sidebar-brand {
+                padding: 14px 18px;
+            }
+            .sidebar-nav {
+                flex-direction: row;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding: 8px 12px;
+                -webkit-overflow-scrolling: touch;
+                gap: 6px;
+            }
+            .nav-item {
+                flex-shrink: 0;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            .sidebar-footer {
+                display: none;
+            }
+            .topbar {
+                padding: 12px 16px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .main-body {
+                padding: 16px 12px;
+            }
+        }
     </style>
     @stack('styles')
 </head>
@@ -336,6 +375,12 @@
             <a href="{{ route('admin.models.index') }}" class="nav-item {{ request()->routeIs('admin.models.*') ? 'active' : '' }}">
                 Models &amp; Master Setup
             </a>
+            <a href="{{ route('manager.pricing.index') }}" class="nav-item {{ request()->routeIs('manager.pricing.*') ? 'active' : '' }}">
+                Master Pricing Console
+            </a>
+            <a href="{{ route('admin.quotation-settings.index') }}" class="nav-item {{ request()->routeIs('admin.quotation-settings.*') ? 'active' : '' }}">
+                Quotation Page &amp; Pricing Basis
+            </a>
             <a href="{{ route('admin.enhancements.index') }}" class="nav-item {{ request()->routeIs('admin.enhancements.*') ? 'active' : '' }}">
                 Enhancements &amp; Parts
             </a>
@@ -347,6 +392,28 @@
             <a href="{{ route('admin.users.index') }}" class="nav-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                 Users &amp; Administrators
             </a>
+            @if(request()->routeIs('admin.users.*'))
+                <div style="padding-left: 18px; display: flex; flex-direction: column; gap: 2px; margin-top: 3px; margin-bottom: 8px;">
+                    <a href="{{ route('admin.users.index', ['tab' => 'admins']) }}" 
+                       class="nav-sub-link" 
+                       onclick="if(typeof switchUserTab === 'function'){ switchUserTab('admins'); return false; }"
+                       style="font-size: 12.5px; color: #94a3b8; text-decoration: none; padding: 5px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px; transition: color 0.15s ease;">
+                        <span>🛡️</span> Technical Admins
+                    </a>
+                    <a href="{{ route('admin.users.index', ['tab' => 'managers']) }}" 
+                       class="nav-sub-link" 
+                       onclick="if(typeof switchUserTab === 'function'){ switchUserTab('managers'); return false; }"
+                       style="font-size: 12.5px; color: #94a3b8; text-decoration: none; padding: 5px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px; transition: color 0.15s ease;">
+                        <span>👔</span> Commercial Managers
+                    </a>
+                    <a href="{{ route('admin.users.index', ['tab' => 'sales']) }}" 
+                       class="nav-sub-link" 
+                       onclick="if(typeof switchUserTab === 'function'){ switchUserTab('sales'); return false; }"
+                       style="font-size: 12.5px; color: #94a3b8; text-decoration: none; padding: 5px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px; transition: color 0.15s ease;">
+                        <span>💼</span> Sales Representatives
+                    </a>
+                </div>
+            @endif
             <a href="{{ route('admin.audit.index') }}" class="nav-item {{ request()->routeIs('admin.audit.*') ? 'active' : '' }}">
                 Security Audit Log
             </a>

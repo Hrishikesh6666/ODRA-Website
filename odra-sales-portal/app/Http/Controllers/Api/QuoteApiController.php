@@ -82,6 +82,7 @@ class QuoteApiController extends Controller
             'subtotal' => ['nullable', 'numeric'],
             'total' => ['nullable', 'numeric'],
             'quote_code' => ['nullable', 'string'],
+            'enhancements' => ['nullable', 'array'],
             'state' => ['required', 'array'],
         ]);
 
@@ -134,6 +135,7 @@ class QuoteApiController extends Controller
             'subtotal' => ['nullable', 'numeric'],
             'total' => ['nullable', 'numeric'],
             'quote_code' => ['nullable', 'string'],
+            'enhancements' => ['nullable', 'array'],
             'state' => ['required', 'array'],
         ]);
 
@@ -165,6 +167,7 @@ class QuoteApiController extends Controller
             'subtotal' => ['nullable', 'numeric'],
             'total' => ['nullable', 'numeric'],
             'quote_code' => ['nullable', 'string'],
+            'enhancements' => ['nullable', 'array'],
             'state' => ['required', 'array'],
         ]);
 

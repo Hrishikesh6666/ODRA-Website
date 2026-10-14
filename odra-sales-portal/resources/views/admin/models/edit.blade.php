@@ -4,19 +4,21 @@
 @section('header-title', 'Edit Model: ' . $model->code)
 
 @section('content')
-<div class="card" style="max-width: 800px;">
+<div class="card" style="max-width: 900px;">
     <form action="{{ route('admin.models.update', $model) }}" method="POST">
         @csrf
         @method('PUT')
 
-        <div class="form-group">
-            <label>Model Code</label>
-            <input type="text" class="form-control" value="{{ $model->code }}" disabled>
-        </div>
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px;">
+            <div class="form-group">
+                <label>Model Code</label>
+                <input type="text" class="form-control" value="{{ $model->code }}" disabled style="font-weight: 700;">
+            </div>
 
-        <div class="form-group">
-            <label>Category</label>
-            <input type="text" name="category" class="form-control" value="{{ old('category', $model->category) }}" required>
+            <div class="form-group">
+                <label>Category</label>
+                <input type="text" name="category" class="form-control" value="{{ old('category', $model->category) }}" required>
+            </div>
         </div>
 
         <div class="form-group" style="background: #ffffff; border: 2px solid var(--red); border-radius: 8px; padding: 18px; margin: 18px 0;">
@@ -34,32 +36,146 @@
             <textarea name="description" class="form-control" rows="6" style="line-height: 1.5; font-size: 13px;" required>{{ old('description', $model->description) }}</textarea>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 20px 0; background: #f8fafc; padding: 16px; border-radius: 6px; border: 1px solid var(--border);">
+        @php
+            $msrpVal = old('msrp', $currentPrice ? (float)$currentPrice->msrp : 0);
+            $swListVal = old('sw_list', $currentPrice ? (float)$currentPrice->sw_list : 0);
+            $swNetVal = old('sw_net', $currentPrice ? (float)$currentPrice->sw_net : 0);
+            $discVal = old('discount_percent', ($swListVal > 0 && $swNetVal >= 0 && $swListVal >= $swNetVal) ? round((1 - ($swNetVal / $swListVal)) * 100, 1) : 0);
+        @endphp
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin: 20px 0; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
             <div class="form-group" style="margin:0;">
-                <label>MSRP (Commercial USD)</label>
-                <input type="number" name="msrp" class="form-control" value="{{ old('msrp', $currentPrice?->msrp) }}" required min="0" step="1">
+                <label style="font-weight:700; font-size:12px;">MSRP (Commercial USD)</label>
+                <input type="number" id="model_msrp" name="msrp" class="form-control" value="{{ $msrpVal }}" required min="0" step="1" oninput="calcEditModelPrices('msrp')">
             </div>
             <div class="form-group" style="margin:0;">
-                <label>Sourcewell List Price</label>
-                <input type="number" name="sw_list" class="form-control" value="{{ old('sw_list', $currentPrice?->sw_list) }}" required min="0" step="1">
+                <label style="font-weight:700; font-size:12px;">Coop List Price ($)</label>
+                <input type="number" id="model_sw_list" name="sw_list" class="form-control" value="{{ $swListVal }}" required min="0" step="1" oninput="calcEditModelPrices('list')">
             </div>
             <div class="form-group" style="margin:0;">
-                <label>Sourcewell Net Price</label>
-                <input type="number" name="sw_net" class="form-control" value="{{ old('sw_net', $currentPrice?->sw_net) }}" required min="0" step="1">
+                <label style="font-weight:700; font-size:12px; color:#1e40af;">Contract Discount (%)</label>
+                <input type="number" id="model_discount_percent" name="discount_percent" class="form-control" value="{{ $discVal > 0 ? $discVal : '' }}" min="0" max="100" step="0.1" placeholder="e.g. 12" oninput="calcEditModelPrices('disc')">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label style="font-weight:700; font-size:12px; color:#059669;">Coop Net Price ($)</label>
+                <input type="number" id="model_sw_net" name="sw_net" class="form-control" value="{{ $swNetVal }}" required min="0" step="0.01" oninput="calcEditModelPrices('net')">
+            </div>
+        </div>
+
+        <!-- Chassis / Discharge Configurations Editor -->
+        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin: 20px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <label style="font-size: 14px; font-weight: 700; color: #0f172a; margin: 0;">Chassis / Discharge Configurations ({{ $model->code }})</label>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                        Configure the chassis options available in the Quote Builder dropdown and the short label printed in the Quotation Header.
+                    </div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="addEditConfigRow()" style="font-size: 12px; padding: 6px 12px;">
+                    + Add Chassis Option
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr 140px 38px; gap: 10px; margin-bottom: 6px; font-size: 11.5px; font-weight: 700; color: #475569;">
+                <div>Full Chassis Configuration Label</div>
+                <div>Short Label (Printed on Quotation Header)</div>
+                <div>Price Adj. ($)</div>
+                <div></div>
+            </div>
+
+            <div id="editConfigsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                @forelse ($model->configurations as $idx => $cfg)
+                    <div class="config-row" style="display: grid; grid-template-columns: 1.5fr 1fr 140px 38px; gap: 10px; align-items: center;">
+                        <input type="text" name="configurations[{{ $idx }}][label]" class="form-control" value="{{ $cfg->label }}" required>
+                        <input type="text" name="configurations[{{ $idx }}][short_label]" class="form-control" value="{{ $cfg->short_label }}">
+                        <input type="number" name="configurations[{{ $idx }}][price]" class="form-control" value="{{ (float) $cfg->price }}" placeholder="0.00" min="0" step="1">
+                        <button type="button" class="btn-secondary" onclick="this.closest('.config-row').remove()" style="color: #991b1b; padding: 8px 10px;" title="Remove configuration">&times;</button>
+                    </div>
+                @empty
+                    <div class="config-row" style="display: grid; grid-template-columns: 1.5fr 1fr 140px 38px; gap: 10px; align-items: center;">
+                        <input type="text" name="configurations[0][label]" class="form-control" value="{{ $model->code }} - Standard Commercial Truck Chassis Configuration" required>
+                        <input type="text" name="configurations[0][short_label]" class="form-control" value="{{ $model->code }} Standard Configuration">
+                        <input type="number" name="configurations[0][price]" class="form-control" value="0" placeholder="0.00" min="0" step="1">
+                        <button type="button" class="btn-secondary" onclick="this.closest('.config-row').remove()" style="color: #991b1b; padding: 8px 10px;">&times;</button>
+                    </div>
+                @endforelse
             </div>
         </div>
 
         <div class="form-group">
             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                 <input type="checkbox" name="is_active" value="1" {{ $model->is_active ? 'checked' : '' }}>
-                <span>Active and available to Sales Representatives</span>
+                <span>Active and available to Sales Representatives in Quote Builder &amp; Showcase</span>
             </label>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 24px;">
-            <button type="submit" class="btn-primary">Save Changes &amp; Update Pricing</button>
-            <a href="{{ route('admin.models.index') }}" class="btn-secondary">Cancel</a>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 24px;">
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" class="btn-primary">Save Changes &amp; Update Quotation Builder</button>
+                <a href="{{ route('admin.models.index') }}" class="btn-secondary">Cancel</a>
+            </div>
+            <a href="{{ route('admin.quotation-settings.index', ['scope' => $model->code]) }}" class="btn-secondary" style="border-color: var(--red); color: var(--red); font-weight: 600; text-decoration: none;">
+                &#9998; Edit {{ $model->code }} Standard Features, Terms &amp; Pricing Bases &rarr;
+            </a>
         </div>
     </form>
 </div>
+
+@push('scripts')
+<script>
+let editCfgIdx = {{ max($model->configurations->count(), 1) }};
+function addEditConfigRow() {
+    const container = document.getElementById('editConfigsContainer');
+    const div = document.createElement('div');
+    div.className = 'config-row';
+    div.style.cssText = 'display: grid; grid-template-columns: 1.5fr 1fr 140px 38px; gap: 10px; align-items: center;';
+    div.innerHTML = `
+        <input type="text" name="configurations[${editCfgIdx}][label]" class="form-control" placeholder="{{ $model->code }} - Full Chassis Description" required>
+        <input type="text" name="configurations[${editCfgIdx}][short_label]" class="form-control" placeholder="{{ $model->code }} Short Label">
+        <input type="number" name="configurations[${editCfgIdx}][price]" class="form-control" placeholder="0.00" value="0" min="0" step="1">
+        <button type="button" class="btn-secondary" onclick="this.closest('.config-row').remove()" style="color: #991b1b; padding: 8px 10px;">&times;</button>
+    `;
+    container.appendChild(div);
+    editCfgIdx++;
+}
+
+function calcEditModelPrices(source) {
+    const msrpEl = document.getElementById('model_msrp');
+    const listEl = document.getElementById('model_sw_list');
+    const discEl = document.getElementById('model_discount_percent');
+    const netEl = document.getElementById('model_sw_net');
+
+    let msrp = parseFloat(msrpEl.value) || 0;
+    let list = parseFloat(listEl.value) || 0;
+
+    if (source === 'msrp' && (!list || list === 0)) {
+        list = msrp;
+        listEl.value = Math.round(list);
+    }
+
+    if (source === 'disc' || source === 'msrp') {
+        const disc = parseFloat(discEl.value) || 0;
+        const net = list > 0 ? Math.round(list * (1 - (disc / 100)) * 100) / 100 : 0;
+        netEl.value = net > 0 ? (net % 1 === 0 ? net : net.toFixed(2)) : 0;
+    } else if (source === 'net') {
+        const net = parseFloat(netEl.value) || 0;
+        if (list > 0 && net >= 0 && list >= net) {
+            const disc = Math.round((1 - (net / list)) * 1000) / 10;
+            discEl.value = disc > 0 ? disc : 0;
+        }
+    } else if (source === 'list') {
+        const disc = parseFloat(discEl.value) || 0;
+        if (disc > 0) {
+            const net = Math.round(list * (1 - (disc / 100)) * 100) / 100;
+            netEl.value = net > 0 ? (net % 1 === 0 ? net : net.toFixed(2)) : 0;
+        } else {
+            const net = parseFloat(netEl.value) || 0;
+            if (list > 0 && net > 0 && list >= net) {
+                discEl.value = Math.round((1 - (net / list)) * 1000) / 10;
+            }
+        }
+    }
+}
+</script>
+@endpush
 @endsection

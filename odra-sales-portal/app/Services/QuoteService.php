@@ -248,7 +248,7 @@ class QuoteService
     protected function createOrUpdateSnapshot(QuoteVersion $version, array $data): QuoteSnapshot
     {
         $state = $data['state'] ?? [];
-        $enhancements = $state['enh'] ?? [];
+        $enhancements = $data['enhancements'] ?? $state['enh'] ?? [];
 
         return QuoteSnapshot::updateOrCreate(
             ['quote_version_id' => $version->id],
@@ -313,10 +313,10 @@ class QuoteService
 
             QuoteItem::create([
                 'quote_version_id' => $version->id,
-                'item_type' => 'enhancement',
+                'item_type' => $enh['item_type'] ?? 'enhancement',
                 'source_enhancement_id' => $sourceEnh?->id,
                 'description' => $enh['desc'],
-                'category' => $enh['cat'] ?? ($sourceEnh?->category ?? 'ENHANCEMENT'),
+                'category' => $enh['category'] ?? $enh['cat'] ?? ($sourceEnh?->category ?? 'ENHANCEMENT'),
                 'qty' => (int) ($enh['qty'] ?? 1),
                 'msrp_at_time' => (float) ($enh['msrp'] ?? 0),
                 'list_price_at_time' => (float) ($enh['list'] ?? 0),

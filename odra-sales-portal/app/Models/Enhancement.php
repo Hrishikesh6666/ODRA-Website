@@ -15,6 +15,7 @@ class Enhancement extends Model
         'category',
         'description',
         'msrp',
+        'discount_percent',
         'sw_list',
         'sw_net',
         'sort_order',
@@ -24,6 +25,7 @@ class Enhancement extends Model
 
     protected $casts = [
         'msrp' => 'decimal:2',
+        'discount_percent' => 'decimal:2',
         'sw_list' => 'decimal:2',
         'sw_net' => 'decimal:2',
         'is_active' => 'boolean',

@@ -44,12 +44,33 @@ class EnhancementController extends Controller
             'category' => ['required', 'string', 'max:50'],
             'description' => ['required', 'string'],
             'msrp' => ['required', 'numeric', 'min:0'],
-            'sw_list' => ['required', 'numeric', 'min:0'],
-            'sw_net' => ['required', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'sw_list' => ['nullable', 'numeric', 'min:0'],
+            'sw_net' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $msrp = (float) $validated['msrp'];
+        $discount = isset($validated['discount_percent']) && $validated['discount_percent'] !== '' ? (float) $validated['discount_percent'] : null;
+        $swList = ! empty($validated['sw_list']) ? (float) $validated['sw_list'] : $msrp;
+
+        if ($discount !== null) {
+            $swNet = round($swList * (1 - ($discount / 100)), 2);
+        } elseif (! empty($validated['sw_net'])) {
+            $swNet = (float) $validated['sw_net'];
+            $discount = ($swList > 0 && $swList >= $swNet) ? round((1 - ($swNet / $swList)) * 100, 2) : 0.00;
+        } else {
+            $swNet = $swList;
+            $discount = 0.00;
+        }
+
         $enh = Enhancement::create([
-            ...$validated,
+            'sweeper_model_id' => $validated['sweeper_model_id'],
+            'category' => $validated['category'],
+            'description' => $validated['description'],
+            'msrp' => $msrp,
+            'discount_percent' => $discount,
+            'sw_list' => $swList,
+            'sw_net' => $swNet,
             'is_active' => true,
             'created_by' => auth()->id(),
         ]);
@@ -58,8 +79,8 @@ class EnhancementController extends Controller
             action: 'ENHANCEMENT_CREATED',
             entityType: 'Enhancement',
             entityId: $enh->id,
-            newValue: $validated,
-            notes: "Added enhancement {$enh->description} (\${$enh->msrp})"
+            newValue: $enh->toArray(),
+            notes: "Added enhancement {$enh->description} (MSRP \${$enh->msrp}, Discount {$discount}%, Unit Price \${$enh->sw_net})"
         );
 
         return redirect()->route('admin.enhancements.index')->with('success', 'Enhancement created successfully.');
@@ -74,14 +95,34 @@ class EnhancementController extends Controller
             'category' => ['required', 'string', 'max:50'],
             'description' => ['required', 'string'],
             'msrp' => ['required', 'numeric', 'min:0'],
-            'sw_list' => ['required', 'numeric', 'min:0'],
-            'sw_net' => ['required', 'numeric', 'min:0'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'sw_list' => ['nullable', 'numeric', 'min:0'],
+            'sw_net' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['boolean'],
         ]);
 
+        $msrp = (float) $validated['msrp'];
+        $discount = isset($validated['discount_percent']) && $validated['discount_percent'] !== '' ? (float) $validated['discount_percent'] : null;
+        $swList = ! empty($validated['sw_list']) ? (float) $validated['sw_list'] : $msrp;
+
+        if ($discount !== null) {
+            $swNet = round($swList * (1 - ($discount / 100)), 2);
+        } elseif (! empty($validated['sw_net'])) {
+            $swNet = (float) $validated['sw_net'];
+            $discount = ($swList > 0 && $swList >= $swNet) ? round((1 - ($swNet / $swList)) * 100, 2) : 0.00;
+        } else {
+            $swNet = $swList;
+            $discount = 0.00;
+        }
+
         $old = $enhancement->toArray();
         $enhancement->update([
-            ...$validated,
+            'category' => $validated['category'],
+            'description' => $validated['description'],
+            'msrp' => $msrp,
+            'discount_percent' => $discount,
+            'sw_list' => $swList,
+            'sw_net' => $swNet,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
@@ -90,11 +131,29 @@ class EnhancementController extends Controller
             entityType: 'Enhancement',
             entityId: $enhancement->id,
             oldValue: $old,
-            newValue: $validated,
+            newValue: $enhancement->toArray(),
             notes: "Updated enhancement {$enhancement->description}"
         );
 
         return redirect()->route('admin.enhancements.index')->with('success', 'Enhancement updated successfully.');
+    }
+
+    /**
+     * Delete / remove an enhancement.
+     */
+    public function destroy(Enhancement $enhancement): RedirectResponse
+    {
+        $desc = $enhancement->description;
+        $enhancement->delete();
+
+        AuditService::log(
+            action: 'ENHANCEMENT_DELETED',
+            entityType: 'Enhancement',
+            entityId: $enhancement->id,
+            notes: "Deleted enhancement {$desc}"
+        );
+
+        return redirect()->route('admin.enhancements.index')->with('success', "Enhancement '{$desc}' removed successfully.");
     }
 
     /**

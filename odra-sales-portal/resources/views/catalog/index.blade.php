@@ -1089,9 +1089,12 @@
   <!-- Mercedes-Benz AMG Style Filter Bar -->
   <div class="filter-bar-wrap">
     <div class="filter-pills">
-      <button class="filter-pill active" data-filter="all">All Models (2)</button>
+      <button class="filter-pill active" data-filter="all">All Models ({{ max($models->count(), 2) }})</button>
       <button class="filter-pill" data-filter="mt4h">MT4H Series (Dual-Engine)</button>
       <button class="filter-pill" data-filter="ms5h">MS5H Series (Single-Engine)</button>
+      @foreach ($models->whereNotIn('code', ['MT4H', 'MS5H']) as $extraFilterModel)
+        <button class="filter-pill" data-filter="{{ strtolower($extraFilterModel->code) }}">{{ $extraFilterModel->code }} Series</button>
+      @endforeach
       <button class="filter-pill" data-filter="non-cdl">Non-CDL Commercial</button>
       <button class="filter-pill" data-filter="cooperative">Cooperative Approved</button>
       <button class="filter-pill" id="jumpToCompareBtn" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); color: #fff;">
@@ -1619,6 +1622,114 @@
       </div>
     </div>
 
+    @foreach ($models->whereNotIn('code', ['MT4H', 'MS5H']) as $dynModel)
+      @php
+        $dynCode = $dynModel->code;
+        $dynLower = strtolower($dynCode);
+        $dynPrice = $dynModel->prices->first();
+        $dynMsrp = $dynPrice ? (float) $dynPrice->msrp : 0;
+        $dynSwList = $dynPrice ? (float) $dynPrice->sw_list : 0;
+        $dynSwNet = $dynPrice ? (float) $dynPrice->sw_net : 0;
+        $dynConfigs = $dynModel->configurations;
+      @endphp
+      <div class="model-card" data-model="{{ $dynCode }}" data-category="{{ $dynLower }} non-cdl cooperative">
+        <div class="card-badges-bar">
+          <span class="category-eyebrow">{{ $dynModel->category }} &middot; 2027MY</span>
+          <div class="pill-badges-group">
+            <span class="badge-amg badge-noncdl">COMMERCIAL SERIES</span>
+            <span class="badge-amg badge-engine">ODRA {{ $dynCode }}</span>
+          </div>
+        </div>
+
+        <div class="vehicle-visual-wrap">
+          <img id="{{ $dynLower }}MainImg" class="vehicle-main-img" src="{{ asset('images/models/landing-ms5h.webp') }}" alt="ODRA {{ $dynCode }}">
+        </div>
+
+        <div class="card-content">
+          <div class="model-title-row">
+            <h2>ODRA {{ $dynCode }}</h2>
+          </div>
+          <p class="model-descriptor">
+            {{ $dynModel->description }}
+          </p>
+
+          <div class="chassis-configs-box">
+            <div class="chassis-box-title">
+              <span>Select Chassis &amp; Discharge Specification ({{ max($dynConfigs->count(), 1) }} Options)</span>
+              <span style="color:#6ee7b7;font-size:10px;">&#9679; Click to Select</span>
+            </div>
+            <div class="chassis-selector-list" data-model="{{ $dynCode }}">
+              @forelse ($dynConfigs as $cIdx => $cfg)
+                <button type="button" class="chassis-chip-btn {{ $cIdx === 0 ? 'active' : '' }}"
+                  data-chassis="{{ $cfg->label }}"
+                  onclick="selectChassis('{{ $dynCode }}', this)">
+                  <div class="chassis-chip-left">
+                    <span class="chassis-radio-dot"></span>
+                    <span><strong>{{ $cfg->short_label ?: $cfg->label }}</strong></span>
+                  </div>
+                  <span class="chassis-badge-included" style="{{ $cIdx === 0 ? '' : 'display:none;' }}">Selected</span>
+                </button>
+              @empty
+                <button type="button" class="chassis-chip-btn active"
+                  data-chassis="{{ $dynCode }} - Standard Commercial Truck Chassis Configuration"
+                  onclick="selectChassis('{{ $dynCode }}', this)">
+                  <div class="chassis-chip-left">
+                    <span class="chassis-radio-dot"></span>
+                    <span><strong>{{ $dynCode }} Standard Configuration</strong></span>
+                  </div>
+                  <span class="chassis-badge-included">Selected</span>
+                </button>
+              @endforelse
+            </div>
+          </div>
+
+          <div class="basis-selector-section">
+            <div class="basis-selector-label">
+              <span>Procurement Pricing Basis</span>
+              <span id="{{ $dynLower }}BasisBadge" style="font-size:10px;color:#94a3b8;font-weight:600;">Commercial Baseline</span>
+            </div>
+            <div class="basis-pills-row" data-model="{{ $dynCode }}">
+              <button type="button" class="basis-pill-btn active" data-basis="msrp" data-basis-label="MSRP (Commercial)" onclick="selectPricingBasis('{{ $dynCode }}', 'msrp', this)">
+                MSRP Commercial
+              </button>
+              <button type="button" class="basis-pill-btn" data-basis="sourcewell" data-basis-label="Sourcewell" onclick="selectPricingBasis('{{ $dynCode }}', 'sourcewell', this)">
+                Sourcewell
+              </button>
+              <button type="button" class="basis-pill-btn" data-basis="hgac" data-basis-label="H-GAC / HGACBuy" onclick="selectPricingBasis('{{ $dynCode }}', 'hgac', this)">
+                H-GAC Buy
+              </button>
+              <button type="button" class="basis-pill-btn" data-basis="buyboard" data-basis-label="BuyBoard" onclick="selectPricingBasis('{{ $dynCode }}', 'buyboard', this)">
+                BuyBoard
+              </button>
+            </div>
+          </div>
+
+          <div class="pricing-coop-bar">
+            <div class="price-display-wrap">
+              @if ($isAdmin)
+                <span class="price-caption">Master Model Code</span>
+                <span class="price-amount" style="font-size: 18px; color: #cbd5e1;">{{ $dynCode }}-SERIES</span>
+                <span style="font-size: 11px; color: #94a3b8;">MSRP: ${{ number_format($dynMsrp, 0) }} &middot; SW Net: ${{ number_format($dynSwNet, 0) }}</span>
+              @else
+                <span class="price-caption" id="{{ $dynLower }}PriceCaption">Configured MSRP Price</span>
+                <span class="price-amount" id="{{ $dynLower }}PriceAmount">${{ number_format($dynMsrp, 0) }} <span id="{{ $dynLower }}PriceSuffix" style="font-size:13px;font-weight:normal;color:#94a3b8;">MSRP</span></span>
+                <div class="price-breakdown-row" id="{{ $dynLower }}BreakdownRow">
+                  <span class="breakdown-pill" id="{{ $dynLower }}BreakdownPill">Base: ${{ number_format($dynMsrp, 0) }} &bull; Upgrades: $0</span>
+                </div>
+              @endif
+            </div>
+          </div>
+
+          <div class="card-cta-bar">
+            <a id="{{ $dynLower }}ConfigureBtn" href="{{ route('sales.quotes.create') }}?model={{ urlencode($dynCode) }}" class="btn-amg-primary">
+              <span>Configure in Quote Builder</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    @endforeach
+
   </div>
 
   <!-- Side-by-Side Model Comparison Matrix (Mercedes "Compare Models" Style) -->
@@ -1829,6 +1940,28 @@ const CARD_CONFIGS = {
     currentTotal: 349149
   }
 };
+
+@foreach ($models as $mItem)
+  @php
+    $mp = $mItem->prices->first();
+    $mMsrp = $mp ? (float) $mp->msrp : 0;
+    $mSwList = $mp ? (float) $mp->sw_list : 0;
+    $mSwNet = $mp ? (float) $mp->sw_net : 0;
+    $firstCfg = $mItem->configurations->first()?->label ?: ($mItem->code . ' - Standard Commercial Truck Chassis Configuration');
+  @endphp
+  CARD_CONFIGS[@json($mItem->code)] = {
+    bases: {
+      msrp: { amount: {{ $mMsrp }}, list: {{ $mMsrp }}, label: 'MSRP Commercial' },
+      sourcewell: { amount: {{ $mSwNet }}, list: {{ $mSwList }}, label: 'Sourcewell' },
+      hgac: { amount: {{ $mSwNet }}, list: {{ $mSwList }}, label: 'H-GAC / HGACBuy' },
+      buyboard: { amount: {{ $mSwNet }}, list: {{ $mSwList }}, label: 'BuyBoard' }
+    },
+    basis: 'msrp',
+    chassis: @json($firstCfg),
+    selected: new Map(),
+    currentTotal: {{ $mMsrp }}
+  };
+@endforeach
 
 const IS_MANAGER = {{ $isManager ? 'true' : 'false' }};
 const IS_ADMIN = {{ $isAdmin ? 'true' : 'false' }};

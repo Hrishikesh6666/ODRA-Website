@@ -44,6 +44,13 @@ class EnhancementSeeder extends Seeder
 
         if ($mt4h) {
             foreach ($mt4h_enhancements as $enhancement) {
+                if (!isset($enhancement['discount_percent'])) {
+                    $swList = (float) $enhancement['sw_list'];
+                    $swNet = (float) $enhancement['sw_net'];
+                    $enhancement['discount_percent'] = ($swList > 0 && $swList >= $swNet)
+                        ? round((1 - ($swNet / $swList)) * 100, 1)
+                        : 0.0;
+                }
                 Enhancement::updateOrCreate(
                     ['sweeper_model_id' => $mt4h->id, 'description' => $enhancement['description']],
                     $enhancement
@@ -53,6 +60,13 @@ class EnhancementSeeder extends Seeder
 
         if ($ms5h) {
             foreach ($ms5h_enhancements as $enhancement) {
+                if (!isset($enhancement['discount_percent'])) {
+                    $swList = (float) $enhancement['sw_list'];
+                    $swNet = (float) $enhancement['sw_net'];
+                    $enhancement['discount_percent'] = ($swList > 0 && $swList >= $swNet)
+                        ? round((1 - ($swNet / $swList)) * 100, 1)
+                        : 0.0;
+                }
                 Enhancement::updateOrCreate(
                     ['sweeper_model_id' => $ms5h->id, 'description' => $enhancement['description']],
                     $enhancement

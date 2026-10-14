@@ -14,7 +14,9 @@ class PricingBasis extends Model
         'name',
         'slug',
         'price_field',
+        'discount_percent',
         'subtotal_label',
+        'description_template',
         'logo_key',
         'show_discount',
         'use_municipality_freight',
@@ -22,6 +24,7 @@ class PricingBasis extends Model
     ];
 
     protected $casts = [
+        'discount_percent' => 'decimal:2',
         'show_discount' => 'boolean',
         'use_municipality_freight' => 'boolean',
         'is_active' => 'boolean',

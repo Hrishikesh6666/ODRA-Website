@@ -44,6 +44,13 @@ class SweeperModel extends Model
         return $this->prices();
     }
 
+    public function currentPrice()
+    {
+        return $this->hasOne(ModelPrice::class, 'sweeper_model_id')
+            ->current()
+            ->latest('effective_from');
+    }
+
     public function enhancements()
     {
         return $this->hasMany(Enhancement::class, 'sweeper_model_id');

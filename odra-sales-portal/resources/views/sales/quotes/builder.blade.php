@@ -453,9 +453,79 @@ table.items tr.totalRow td {
   color: #1a1a1a;
 }
 
+@media (max-width: 991px) {
+  .builder-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .builder-heading h1 {
+    font-size: 17px;
+  }
+  .builder-topbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .builder-topbar-actions .btn-nav {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 12px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .app-builder-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .builder {
+    flex: 1 1 100%;
+    width: 100%;
+    max-height: none;
+    box-sizing: border-box;
+    padding: 16px;
+  }
+  .previewWrap {
+    flex: 1 1 100%;
+    width: 100%;
+    max-height: none;
+    padding: 16px 8px;
+    box-sizing: border-box;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #preview {
+    padding: 20px 14px;
+    min-width: 600px;
+    box-sizing: border-box;
+  }
+  .mobile-jump-bar {
+    display: flex !important;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .mobile-jump-btn {
+    flex: 1;
+    text-align: center;
+    padding: 9px 12px;
+    background: #e2e8f0;
+    color: #1e293b;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+}
+
+.mobile-jump-bar {
+  display: none;
+}
+
 @media print {
   body { background: #fff !important; }
-  .portal-header, .builder-topbar, .builder, .btnrow { display: none !important; }
+  .portal-header, .builder-topbar, .builder, .btnrow, .mobile-jump-bar { display: none !important; }
   .app-builder-layout { display: block !important; padding: 0 !important; max-width: none !important; }
   .previewWrap { background: transparent !important; padding: 0 !important; max-height: none !important; overflow: visible !important; display: block !important; }
   #preview { box-shadow: none !important; border: none !important; padding: 0 !important; max-width: 100% !important; width: 100% !important; }
@@ -473,6 +543,15 @@ table.items tr.totalRow td {
         <span>Version {{ $version }} &middot; {{ $isReadonly ? 'Finalized (Historical Snapshot Frozen)' : 'Draft (Editable)' }}</span>
     </div>
     <div class="builder-topbar-actions">
+        @if(auth()->user()->isAdmin())
+            <a href="{{ route('admin.models.index') }}" class="btn-nav" style="border-color:var(--red);color:var(--red);" title="Add or Edit Sweeper Models & Master Prices">
+                &#9881; Edit Models
+            </a>
+            <a href="{{ route('admin.quotation-settings.index') }}" class="btn-nav" style="border-color:var(--red);color:var(--red);" title="Edit Every Quotation Section & Pricing Basis Rules">
+                &#9998; Edit Quotation Sections &amp; Pricing Basis
+            </a>
+        @endif
+
         @if(auth()->user()->isManager())
             <a href="{{ route('manager.quotes.index') }}" class="btn-nav">&larr; Team Quotations</a>
         @else
@@ -494,9 +573,22 @@ table.items tr.totalRow td {
     </div>
 </div>
 
+@php
+    $tplHeader = $catalog['quote_template']['header'] ?? [];
+    $maxShowDiscount = (int) ($tplHeader['max_show_discount'] ?? 20000);
+    $defaultFob = $tplHeader['default_fob'] ?? 'Transport, estimate only noted in quote';
+    $exwFob = $tplHeader['exw_fob'] ?? 'EXW, Factory pick-up';
+    $catalogModels = $catalog['models'] ?? [];
+    $catalogBases = $catalog['pricing_bases'] ?? [];
+@endphp
+<div class="mobile-jump-bar">
+    <a href="#builderPanel" class="mobile-jump-btn">&#9998; Edit Specifications</a>
+    <a href="#preview" class="mobile-jump-btn" style="background:var(--red);color:white;">&#128196; View Live Proposal</a>
+</div>
+
 <div class="app-builder-layout">
   <!-- Left Builder Form Panel -->
-  <div class="panel builder">
+  <div class="panel builder" id="builderPanel">
     <div class="brandbar">
       <img src="{{ asset('images/logo.jpg') }}" alt="ODRA Logo">
       <div><h1>Quote Builder</h1></div>
@@ -519,17 +611,29 @@ table.items tr.totalRow td {
     <h2 class="sec">Unit &amp; Pricing</h2>
     <label>Model</label>
     <select id="model" {{ $isReadonly ? 'disabled' : '' }}>
-      <option value="MT4H">MT4H</option>
-      <option value="MS5H">MS5H</option>
+      @if(!empty($catalogModels))
+        @foreach($catalogModels as $cm)
+          <option value="{{ $cm['code'] }}">{{ $cm['code'] }}</option>
+        @endforeach
+      @else
+        <option value="MT4H">MT4H</option>
+        <option value="MS5H">MS5H</option>
+      @endif
     </select>
 
     <label>Pricing Basis</label>
     <select id="basis" {{ $isReadonly ? 'disabled' : '' }}>
-      <option value="MSRP (Commercial)">MSRP (Commercial)</option>
-      <option value="Sourcewell">Sourcewell</option>
-      <option value="HGAC">H-GAC / HGACBuy</option>
-      <option value="Minnesota">State of Minnesota</option>
-      <option value="Buyboard">BuyBoard</option>
+      @if(!empty($catalogBases))
+        @foreach($catalogBases as $pb)
+          <option value="{{ $pb['key'] ?? $pb['name'] }}">{{ $pb['label'] ?? $pb['name'] }}</option>
+        @endforeach
+      @else
+        <option value="MSRP (Commercial)">MSRP (Commercial)</option>
+        <option value="Sourcewell">Sourcewell</option>
+        <option value="HGAC">H-GAC / HGACBuy</option>
+        <option value="Minnesota">State of Minnesota</option>
+        <option value="Buyboard">BuyBoard</option>
+      @endif
     </select>
 
     <label>Chassis / Discharge Configuration</label>
@@ -559,8 +663,8 @@ table.items tr.totalRow td {
       <div>
         <label>FOB / Transport</label>
         <select id="fob" {{ $isReadonly ? 'disabled' : '' }}>
-          <option value="Transport, estimate only noted in quote">Transport, estimate only noted in quote</option>
-          <option value="EXW, Factory pick-up">EXW, Factory pick-up</option>
+          <option value="{{ $defaultFob }}">{{ $defaultFob }}</option>
+          <option value="{{ $exwFob }}">{{ $exwFob }}</option>
         </select>
       </div>
     </div>
@@ -574,9 +678,9 @@ table.items tr.totalRow td {
     <h2 class="sec">Base Unit Qty</h2>
     <input type="number" id="baseQty" value="1" min="1" {{ $isReadonly ? 'disabled' : '' }}>
 
-    <label style="margin-top:10px;display:block;">Show Extra Discount On Quote (USD) <span class="smallnote">optional &mdash; max $20,000</span></label>
-    <input type="number" id="baseShowDiscount" value="0" min="0" max="20000" {{ $isReadonly ? 'disabled' : '' }}>
-    <div id="discountWarning" style="display:none;color:#b3261e;font-size:11px;margin-top:4px;">Maximum limit allowed is $20,000.</div>
+    <label style="margin-top:10px;display:block;">Show Extra Discount On Quote (USD) <span class="smallnote">optional &mdash; max ${{ number_format($maxShowDiscount) }}</span></label>
+    <input type="number" id="baseShowDiscount" value="0" min="0" max="{{ $maxShowDiscount }}" {{ $isReadonly ? 'disabled' : '' }}>
+    <div id="discountWarning" style="display:none;color:#b3261e;font-size:11px;margin-top:4px;">Maximum limit allowed is ${{ number_format($maxShowDiscount) }}.</div>
 
     <h2 class="sec">Enhancements <span class="smallnote">(pick up to 13 options)</span></h2>
     <div id="enhList"></div>
@@ -587,7 +691,7 @@ table.items tr.totalRow td {
 
     <label style="margin-top:10px;display:block;">Sweeper Transport / Freight Estimate (USD) <span class="smallnote">auto-filled from territory</span></label>
     <input type="number" id="freight" value="0" min="0" readonly>
-    <div id="exwFreightNote" style="display:none;color:#666;font-size:11px;margin-top:4px;font-style:italic;">FOB is set to EXW, Factory pick-up &mdash; freight is $0.</div>
+    <div id="exwFreightNote" style="display:none;color:#666;font-size:11px;margin-top:4px;font-style:italic;">FOB is set to {{ $exwFob }} &mdash; freight is $0.</div>
 
 
   </div>
@@ -607,13 +711,235 @@ const INITIAL_STATE = @json($initialState);
 const IS_READONLY = @json($isReadonly);
 const CURRENT_QUOTE_ID = @json($quote?->id);
 
+let ITEMS = CATALOG.items || [];
+let CHASSIS = CATALOG.chassis || [];
+let CHASSIS_BY_MODEL = CATALOG.chassis_by_model || {};
+let CHASSIS_SHORT = Object.assign({
+  "MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - LEFT side dumping hopper": "MT4H Isuzu cabover, Class 5, non-CDL - LHD",
+  "MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - RIGHT side dumping hopper": "MT4H Isuzu cabover, Class 5, non-CDL - RHD",
+  "MT4H - Ford F-550XL conventional, 19,000 GVWR, non-CDL - LEFT side dumping hopper": "MT4H Ford F-550XL, non-CDL - LHD",
+  "MS5H - Conventional Class 6, 25,500 GVWR, 148\" WB, 300HP Cummins, non-CDL": "MS5H Conventional Class 6, non-CDL",
+  "MS5H - Conventional Class 7, CDL-required configuration, 300HP Cummins - no price difference": "MS5H Conventional Class 7, CDL-required"
+}, CATALOG.chassis_short || {});
+
+let FREIGHT_ESTIMATES = CATALOG.freight || [];
+let TERRITORIES = CATALOG.territories || [];
+let QUOTE_TEMPLATE = CATALOG.quote_template || {};
+let TEMPLATE_HEADER = QUOTE_TEMPLATE.header || {};
+let TEMPLATE_LEGAL = QUOTE_TEMPLATE.legal || {};
+let MODEL_TEMPLATES = CATALOG.model_templates || {};
+
+const SOURCEWELL_LOGO = "{{ asset('images/logo-sourcewell.png') }}";
+const HGAC_LOGO = "{{ asset('images/logo-hgac.png') }}";
+const BUYBOARD_LOGO = "{{ asset('images/logo-buyboard.png') }}";
+
+const LOGO_MAP = {
+  'sourcewell': SOURCEWELL_LOGO,
+  'hgac': HGAC_LOGO,
+  'buyboard': BUYBOARD_LOGO
+};
+
+// Build dynamic Pricing Basis lookup table from Admin configuration + fallback defaults
+const PRICING_BASES_MAP = {};
+const DEFAULT_BASES = [
+  {
+    key: 'MSRP (Commercial)',
+    label: 'MSRP (Commercial)',
+    slug: 'msrp',
+    price_tier: 'msrp',
+    subtotal_label: 'MSRP Subtotal',
+    disclaimer: '',
+    logo_key: null,
+    caption: '',
+    is_coop: false,
+    use_municipality_freight: false
+  },
+  {
+    key: 'Sourcewell',
+    label: 'Sourcewell',
+    slug: 'sourcewell',
+    price_tier: 'sw_net',
+    subtotal_label: 'Sourcewell Contract Price',
+    disclaimer: 'Quoted under cooperative contract: Sourcewell #062425-ODRA',
+    logo_key: 'sourcewell',
+    caption: 'Referenced under Sourcewell<br>Contract # 062425-ODRA',
+    is_coop: true,
+    use_municipality_freight: true
+  },
+  {
+    key: 'HGAC',
+    label: 'H-GAC / HGACBuy',
+    slug: 'hgac',
+    price_tier: 'sw_net',
+    subtotal_label: 'H-GAC Contract Price',
+    disclaimer: 'Quoted under cooperative contract: H-GAC/HGACBuy Master Agreement SW04-26',
+    logo_key: 'hgac',
+    caption: 'Referenced under H-GAC/HGACBuy<br>Master Agreement SW04-26',
+    is_coop: true,
+    use_municipality_freight: true
+  },
+  {
+    key: 'Minnesota',
+    label: 'State of Minnesota',
+    slug: 'minnesota',
+    price_tier: 'sw_net',
+    subtotal_label: 'Minnesota Contract Price',
+    disclaimer: 'Quoted under cooperative contract: State of Minnesota Contract 285158, Release S-843(5)',
+    logo_key: null,
+    caption: 'Referenced under State of Minnesota<br>Contract 285158 (Release S-843(5))',
+    is_coop: true,
+    use_municipality_freight: true
+  },
+  {
+    key: 'Buyboard',
+    label: 'BuyBoard',
+    slug: 'buyboard',
+    price_tier: 'sw_net',
+    subtotal_label: 'BuyBoard Contract Price',
+    disclaimer: 'Quoted under cooperative contract: ODRA BuyBoard Contract #788-25',
+    logo_key: 'buyboard',
+    caption: 'Referenced under BuyBoard<br>ODRA Contract # 788-25',
+    is_coop: true,
+    use_municipality_freight: true
+  }
+];
+
+const activeBasesList = (CATALOG.pricing_bases && CATALOG.pricing_bases.length)
+  ? CATALOG.pricing_bases
+  : DEFAULT_BASES;
+
+activeBasesList.forEach(b => {
+  const key = b.key || b.name || b.label;
+  const label = b.label || b.name || key;
+  const slug = (b.slug || '').toLowerCase();
+  const tier = b.price_tier || b.price_field || (b.is_coop ? 'sw_net' : 'msrp');
+  const isCoop = b.is_coop !== undefined ? !!b.is_coop : (tier === 'sw_net');
+  const logoUrl = b.logo_key ? (LOGO_MAP[String(b.logo_key).toLowerCase()] || null) : null;
+  const discPct = (b.discount_percent !== undefined && b.discount_percent !== null && !isNaN(b.discount_percent))
+    ? Number(b.discount_percent)
+    : (isCoop ? 12.00 : 0.00);
+  const entry = {
+    key: key,
+    label: label,
+    slug: slug,
+    priceTier: tier,
+    isCoop: isCoop,
+    discountPercent: discPct,
+    descriptionTemplate: b.description_template || b.caption || '',
+    subtotalLabel: b.subtotal_label || (isCoop ? (label + ' Contract Price') : 'MSRP Subtotal'),
+    disclaimer: b.disclaimer || '',
+    logo: logoUrl,
+    caption: b.caption || '',
+    useMunicipalityFreight: b.use_municipality_freight !== undefined ? !!b.use_municipality_freight : isCoop
+  };
+  PRICING_BASES_MAP[key] = entry;
+  PRICING_BASES_MAP[key.toLowerCase()] = entry;
+  PRICING_BASES_MAP[label] = entry;
+  PRICING_BASES_MAP[label.toLowerCase()] = entry;
+  if (slug) PRICING_BASES_MAP[slug] = entry;
+});
+// Common aliases from Catalog showcase
+if (PRICING_BASES_MAP['msrp']) {
+  PRICING_BASES_MAP['msrp commercial'] = PRICING_BASES_MAP['msrp'];
+  PRICING_BASES_MAP['commercial'] = PRICING_BASES_MAP['msrp'];
+}
+
+function getBasesForModel(m) {
+  const modelCode = (m || (typeof state !== 'undefined' ? state.model : '') || '').toUpperCase();
+  if (MODEL_TEMPLATES[modelCode] && Array.isArray(MODEL_TEMPLATES[modelCode].pricing_bases) && MODEL_TEMPLATES[modelCode].pricing_bases.length) {
+    return MODEL_TEMPLATES[modelCode].pricing_bases;
+  }
+  return activeBasesList;
+}
+
+function getLegalForModel(m) {
+  const modelCode = (m || (typeof state !== 'undefined' ? state.model : '') || '').toUpperCase();
+  if (MODEL_TEMPLATES[modelCode] && MODEL_TEMPLATES[modelCode].legal) {
+    return MODEL_TEMPLATES[modelCode].legal;
+  }
+  return TEMPLATE_LEGAL;
+}
+
+function resolveBasis(basisVal, modelCode) {
+  const mCode = modelCode || (typeof state !== 'undefined' ? state.model : null);
+  const mBases = getBasesForModel(mCode);
+  const searchVal = String(basisVal || '').trim().toLowerCase();
+
+  if (searchVal) {
+    const found = mBases.find(b => {
+      const k = String(b.key || b.name || b.label || '').toLowerCase().trim();
+      const l = String(b.label || b.name || '').toLowerCase().trim();
+      const s = String(b.slug || '').toLowerCase().trim();
+      return k === searchVal || l === searchVal || s === searchVal;
+    });
+
+    if (found) {
+      const key = found.key || found.name || found.label;
+      const label = found.label || found.name || key;
+      const slug = (found.slug || '').toLowerCase();
+      const tier = found.price_tier || found.price_field || (found.is_coop ? 'sw_net' : 'msrp');
+      const isCoop = found.is_coop !== undefined ? !!found.is_coop : (tier === 'sw_net');
+      const logoUrl = found.logo_key ? (LOGO_MAP[String(found.logo_key).toLowerCase()] || null) : null;
+      const discPct = (found.discount_percent !== undefined && found.discount_percent !== null && !isNaN(found.discount_percent))
+        ? Number(found.discount_percent)
+        : (isCoop ? 12.00 : 0.00);
+      return {
+        key: key,
+        label: label,
+        slug: slug,
+        priceTier: tier,
+        isCoop: isCoop,
+        discountPercent: discPct,
+        descriptionTemplate: found.description_template || found.caption || '',
+        subtotalLabel: found.subtotal_label || (isCoop ? (label + ' Contract Price') : 'MSRP Subtotal'),
+        disclaimer: found.disclaimer || '',
+        logo: logoUrl,
+        caption: found.caption || '',
+        useMunicipalityFreight: found.use_municipality_freight !== undefined ? !!found.use_municipality_freight : isCoop
+      };
+    }
+  }
+
+  if (!basisVal) {
+    if (mBases && mBases.length > 0) {
+      const firstB = mBases[0];
+      return resolveBasis(firstB.key || firstB.name || firstB.label, mCode);
+    }
+    return PRICING_BASES_MAP['MSRP (Commercial)'] || activeBasesList[0];
+  }
+
+  return PRICING_BASES_MAP[basisVal]
+    || PRICING_BASES_MAP[String(basisVal).toLowerCase()]
+    || {
+      key: basisVal,
+      label: basisVal,
+      priceTier: 'msrp',
+      isCoop: false,
+      discountPercent: 0,
+      descriptionTemplate: '',
+      subtotalLabel: 'MSRP Subtotal',
+      disclaimer: '',
+      logo: null,
+      caption: '',
+      useMunicipalityFreight: false
+    };
+}
+
+const SR_CODES = Object.assign({
+  "Carlos Silva":"CS", "John Wells":"JW", "Kerry Briggs":"KB",
+  "Paul Piotrowski":"PP", "Ryan Khosrofian":"RK", "Shawn Herringer":"SH", "Juan Oliver":"JO",
+  "Robert Yuska":"RY", "Chris Norlin":"CN", "Kra Whitmore":"KW", "Fernando Oliveira":"FO",
+  "Troy Fisher":"TF", "Sean Chenoweth":"SC", "Jason Coover":"JC", "Alex Byczynski":"AB",
+  "JJ Rickis":"JR"
+}, CATALOG.sr_codes || {});
+
 let state = {
   date: todayISO(),
-  model: 'MT4H',
-  basis: 'MSRP (Commercial)',
+  model: (CATALOG.models && CATALOG.models[0] ? CATALOG.models[0].code : 'MT4H'),
+  basis: (activeBasesList[0] ? (activeBasesList[0].key || activeBasesList[0].name) : 'MSRP (Commercial)'),
   chassis: '',
   po: '',
-  fob: 'Transport, estimate only noted in quote',
+  fob: TEMPLATE_HEADER.default_fob || 'Transport, estimate only noted in quote',
   acct: '',
   salesRep: '',
   toContact: '',
@@ -633,28 +959,43 @@ if (INITIAL_STATE && typeof INITIAL_STATE === 'object') {
   Object.assign(state, INITIAL_STATE);
 }
 
-// Support pre-selecting model, chassis, pricing basis, and enhancements from Catalog showcase URL
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.has('model') && (!INITIAL_STATE || !INITIAL_STATE.model)) {
-  const paramModel = urlParams.get('model').toUpperCase();
-  if (['MT4H', 'MS5H'].includes(paramModel)) {
-    state.model = paramModel;
+// Normalize state.basis to canonical key
+if (state.basis) {
+  const resolved = resolveBasis(state.basis);
+  if (resolved && resolved.key) {
+    state.basis = resolved.key;
   }
 }
-if (urlParams.has('chassis') && (!INITIAL_STATE || !INITIAL_STATE.chassis)) {
-  state.chassis = urlParams.get('chassis');
-}
-if (urlParams.has('basis') && (!INITIAL_STATE || !INITIAL_STATE.basis)) {
-  state.basis = urlParams.get('basis');
-}
-if (urlParams.has('enhancements') && (!INITIAL_STATE || !INITIAL_STATE.enh)) {
-  const optionsList = urlParams.get('enhancements').split('||').map(s => s.trim()).filter(Boolean);
-  state.enh = Array.from({length: 13}, () => ({desc: '', qty: 1}));
-  optionsList.forEach((opt, idx) => {
-    if (idx < 13) {
-      state.enh[idx] = { desc: opt, qty: 1 };
+
+// Support pre-selecting model, chassis, pricing basis, and enhancements from Catalog showcase URL
+const urlParams = new URLSearchParams(window.location.search);
+if (!CURRENT_QUOTE_ID) {
+  if (urlParams.has('model')) {
+    const paramModel = urlParams.get('model').trim().toUpperCase();
+    const knownModels = (CATALOG.models || []).map(m => m.code.toUpperCase());
+    if (knownModels.includes(paramModel) || ITEMS.some(i => i.model === paramModel)) {
+      state.model = paramModel;
+      state.chassis = '';
     }
-  });
+  }
+  if (urlParams.has('chassis')) {
+    state.chassis = urlParams.get('chassis');
+  }
+  if (urlParams.has('basis')) {
+    const resolvedParamBasis = resolveBasis(urlParams.get('basis'));
+    if (resolvedParamBasis && resolvedParamBasis.key) {
+      state.basis = resolvedParamBasis.key;
+    }
+  }
+  if (urlParams.has('enhancements')) {
+    const optionsList = urlParams.get('enhancements').split('||').map(s => s.trim()).filter(Boolean);
+    state.enh = Array.from({length: 13}, () => ({desc: '', qty: 1}));
+    optionsList.forEach((opt, idx) => {
+      if (idx < 13) {
+        state.enh[idx] = { desc: opt, qty: 1 };
+      }
+    });
+  }
 }
 
 // Guarantee enh is always an array of 13 rows
@@ -664,83 +1005,6 @@ if (!state.enh || !Array.isArray(state.enh)) {
 while (state.enh.length < 13) {
   state.enh.push({desc: '', qty: 1});
 }
-
-let ITEMS = CATALOG.items || [];
-let CHASSIS = CATALOG.chassis || [];
-let CHASSIS_SHORT = CATALOG.chassis_short || {
-  "MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - LEFT side dumping hopper": "MT4H Isuzu cabover, Class 5, non-CDL - LHD",
-  "MT4H - Isuzu NRR cabover, 19,500 GVWR, Class 5, non-CDL - RIGHT side dumping hopper": "MT4H Isuzu cabover, Class 5, non-CDL - RHD",
-  "MT4H - Ford F-550XL conventional, 19,000 GVWR, non-CDL - LEFT side dumping hopper": "MT4H Ford F-550XL, non-CDL - LHD",
-  "MS5H - Conventional Class 6, 25,500 GVWR, 148\" WB, 300HP Cummins, non-CDL": "MS5H Conventional Class 6, non-CDL",
-  "MS5H - Conventional Class 7, CDL-required configuration, 300HP Cummins - no price difference": "MS5H Conventional Class 7, CDL-required"
-};
-
-let FREIGHT_ESTIMATES = CATALOG.freight || [];
-let TERRITORIES = CATALOG.territories || [];
-
-const SOURCEWELL_LOGO = "{{ asset('images/logo-sourcewell.png') }}";
-const HGAC_LOGO = "{{ asset('images/logo-hgac.png') }}";
-const BUYBOARD_LOGO = "{{ asset('images/logo-buyboard.png') }}";
-
-const COOP_BASES = {
-  'Sourcewell': {
-    label: 'Sourcewell',
-    subtotalLabel: 'Sourcewell Contract Price',
-    disclaimer: 'Quoted under cooperative contract: Sourcewell #062425-ODRA',
-    logo: SOURCEWELL_LOGO,
-    caption: 'Referenced under Sourcewell<br>Contract # 062425-ODRA'
-  },
-  'HGAC': {
-    label: 'H-GAC / HGACBuy',
-    subtotalLabel: 'H-GAC Contract Price',
-    disclaimer: 'Quoted under cooperative contract: H-GAC/HGACBuy Master Agreement SW04-26',
-    logo: HGAC_LOGO,
-    caption: 'Referenced under H-GAC/HGACBuy<br>Master Agreement SW04-26'
-  },
-  'H-GAC / HGACBuy': {
-    label: 'H-GAC / HGACBuy',
-    subtotalLabel: 'H-GAC Contract Price',
-    disclaimer: 'Quoted under cooperative contract: H-GAC/HGACBuy Master Agreement SW04-26',
-    logo: HGAC_LOGO,
-    caption: 'Referenced under H-GAC/HGACBuy<br>Master Agreement SW04-26'
-  },
-  'Minnesota': {
-    label: 'State of Minnesota',
-    subtotalLabel: 'Minnesota Contract Price',
-    disclaimer: 'Quoted under cooperative contract: State of Minnesota Contract 285158, Release S-843(5)',
-    logo: null,
-    caption: 'Referenced under State of Minnesota<br>Contract 285158 (Release S-843(5))'
-  },
-  'State of Minnesota': {
-    label: 'State of Minnesota',
-    subtotalLabel: 'Minnesota Contract Price',
-    disclaimer: 'Quoted under cooperative contract: State of Minnesota Contract 285158, Release S-843(5)',
-    logo: null,
-    caption: 'Referenced under State of Minnesota<br>Contract 285158 (Release S-843(5))'
-  },
-  'Buyboard': {
-    label: 'BuyBoard',
-    subtotalLabel: 'BuyBoard Contract Price',
-    disclaimer: 'Quoted under cooperative contract: ODRA BuyBoard Contract #788-25',
-    logo: BUYBOARD_LOGO,
-    caption: 'Referenced under BuyBoard<br>ODRA Contract # 788-25'
-  },
-  'BuyBoard': {
-    label: 'BuyBoard',
-    subtotalLabel: 'BuyBoard Contract Price',
-    disclaimer: 'Quoted under cooperative contract: ODRA BuyBoard Contract #788-25',
-    logo: BUYBOARD_LOGO,
-    caption: 'Referenced under BuyBoard<br>ODRA Contract # 788-25'
-  }
-};
-
-const SR_CODES = {
-  "Carlos Silva":"CS", "John Wells":"JW", "Kerry Briggs":"KB",
-  "Paul Piotrowski":"PP", "Ryan Khosrofian":"RK", "Shawn Herringer":"SH", "Juan Oliver":"JO",
-  "Robert Yuska":"RY", "Chris Norlin":"CN", "Kra Whitmore":"KW", "Fernando Oliveira":"FO",
-  "Troy Fisher":"TF", "Sean Chenoweth":"SC", "Jason Coover":"JC", "Alex Byczynski":"AB",
-  "JJ Rickis":"JR"
-};
 
 function shortChassisLabel(c) {
   return CHASSIS_SHORT[c] || c || 'Standard Configuration';
@@ -769,12 +1033,22 @@ function fmtDateDisplay(iso) {
 
 function fmt(n) {
   if (n === null || n === undefined || isNaN(n)) return '';
-  return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  return Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtMSRP(n) {
+  if (n === null || n === undefined || isNaN(n)) return '';
+  const num = Number(n);
+  if (Math.floor(num) === num) {
+    return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  }
+  return num.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function pctFmt(n) {
   if (n === null || n === undefined || isNaN(n) || Math.abs(n) < 0.0005) return '';
-  return Math.round(n * 100) + '%';
+  const val = Math.round(n * 1000) / 10;
+  return (val % 1 === 0 ? val.toFixed(0) : val.toFixed(1)) + '%';
 }
 
 function esc(s) {
@@ -794,27 +1068,74 @@ function enhOptions(m) {
 }
 
 function chassisForModel(m) {
+  if (CHASSIS_BY_MODEL && Array.isArray(CHASSIS_BY_MODEL[m]) && CHASSIS_BY_MODEL[m].length) {
+    return CHASSIS_BY_MODEL[m];
+  }
   const filtered = CHASSIS.filter(c => c.indexOf(m) === 0);
-  return filtered.length ? filtered : (CHASSIS.length ? CHASSIS : ['Standard ' + m + ' Chassis']);
+  return filtered.length ? filtered : [m + ' - Standard Commercial Truck Chassis Configuration'];
 }
 
-function priceForItem(item) {
-  if (!item) return { list: 0, unit: 0, msrp: 0 };
-  if (COOP_BASES[state.basis]) {
-    return {
-      list: Number(item.swList) || Number(item.msrp) || 0,
-      unit: Number(item.swNet) || Number(item.msrp) || 0,
-      msrp: Number(item.msrp) || 0
-    };
+function priceForItem(item, basisOverride) {
+  if (!item) return { list: 0, unit: 0, msrp: 0, discountPercent: 0 };
+  const basisInfo = basisOverride ? resolveBasis(basisOverride) : resolveBasis(state.basis);
+  const isCoop = !!(basisInfo && (basisInfo.isCoop || basisInfo.priceTier === 'sw_net'));
+
+  if (isCoop) {
+    if (item.isBase) {
+      // BASE EQUIPMENT / SWEEPER MACHINE
+      const msrp = Number(item.swList) || Number(item.msrp) || 0;
+      let discPct = (basisInfo && basisInfo.discountPercent !== undefined && basisInfo.discountPercent !== null)
+        ? Number(basisInfo.discountPercent)
+        : 12.00;
+      if (item.discount_percent !== undefined && item.discount_percent !== null && !isNaN(item.discount_percent)) {
+        discPct = Number(item.discount_percent);
+      }
+      // Unit Price = MSRP * (1 - Discount / 100)
+      const unitPrice = Math.round((msrp * (1 - (discPct / 100))) * 100) / 100;
+      return {
+        list: msrp,
+        msrp: msrp,
+        unit: unitPrice,
+        discountPercent: discPct
+      };
+    } else {
+      // ENHANCEMENT / OPTION ITEM:
+      // Uses the enhancement's own configured contract pricing and discount.
+      // Must NEVER inherit the base machine's 12% or 15% discount!
+      const list = Number(item.swList) || Number(item.msrp) || 0;
+      let unit = Number(item.swNet);
+      let discPct = 0;
+
+      if (item.discount_percent !== undefined && item.discount_percent !== null && !isNaN(item.discount_percent) && Number(item.discount_percent) >= 0) {
+        discPct = Number(item.discount_percent);
+        unit = Math.round((list * (1 - (discPct / 100))) * 100) / 100;
+      } else if (!isNaN(unit) && unit > 0 && list > 0) {
+        discPct = (list >= unit) ? Math.round((1 - (unit / list)) * 1000) / 10 : 0;
+      } else {
+        unit = list;
+        discPct = 0;
+      }
+
+      return {
+        list: list,
+        msrp: Number(item.msrp) || list,
+        unit: unit,
+        discountPercent: discPct
+      };
+    }
   }
+
+  // Commercial / MSRP (Discount is 0 / Hidden)
+  const msrp = Number(item.msrp) || 0;
   return {
-    list: Number(item.msrp) || 0,
-    unit: Number(item.msrp) || 0,
-    msrp: Number(item.msrp) || 0
+    list: msrp,
+    msrp: msrp,
+    unit: msrp,
+    discountPercent: 0
   };
 }
 
-function dynamicBaseDesc(base, chassisStr, model) {
+function dynamicBaseDesc(base, chassisStr, model, basisVal) {
   let desc = (base && base.desc) ? base.desc : '';
   if (!desc) {
     return '';
@@ -835,6 +1156,19 @@ function dynamicBaseDesc(base, chassisStr, model) {
       desc = desc.replace(/non-CDL,\s*148"\s*WB\s*Class\s*6/i, 'CDL-required, 148" WB Class 7');
     }
   }
+
+  // Automatically append contract reference description note when pricing basis changes
+  const basisInfo = resolveBasis(basisVal || state.basis);
+  if (basisInfo && basisInfo.isCoop) {
+    const rawNote = basisInfo.descriptionTemplate || basisInfo.caption || basisInfo.disclaimer || '';
+    if (rawNote) {
+      const cleanNote = rawNote.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '').trim();
+      if (cleanNote && !desc.includes(cleanNote)) {
+        desc += `\n[${cleanNote}]`;
+      }
+    }
+  }
+
   return desc;
 }
 
@@ -843,7 +1177,14 @@ function populateChassis() {
   if (!sel) return;
   const opts = chassisForModel(state.model);
   const keep = opts.includes(state.chassis) ? state.chassis : (opts[0] || '');
-  sel.innerHTML = opts.map(c => `<option value="${esc(c)}" ${c === keep ? 'selected' : ''}>${esc(shortChassisLabel(c))}</option>`).join('');
+  sel.innerHTML = opts.map(c => {
+    const rawPrice = (CATALOG.chassis_prices && CATALOG.chassis_prices[c]) ? Number(CATALOG.chassis_prices[c]) : 0;
+    let label = shortChassisLabel(c);
+    if (rawPrice > 0) {
+      label += ` (+${fmt(rawPrice)})`;
+    }
+    return `<option value="${esc(c)}" ${c === keep ? 'selected' : ''}>${esc(label)}</option>`;
+  }).join('');
   state.chassis = keep;
 }
 
@@ -873,7 +1214,8 @@ function territoryMaxFreight(code, useMunicipality) {
 function applyTerritoryFreight() {
   const freightEl = document.getElementById('freight');
   const exwNoteEl = document.getElementById('exwFreightNote');
-  if (state.fob === 'EXW, Factory pick-up') {
+  const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
+  if (state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up') {
     state.freight = 0;
     if (freightEl) freightEl.value = 0;
     if (exwNoteEl) exwNoteEl.style.display = 'block';
@@ -881,7 +1223,8 @@ function applyTerritoryFreight() {
   }
   if (exwNoteEl) exwNoteEl.style.display = 'none';
   if (!state.repTerritory) return;
-  const useMunicipality = !!COOP_BASES[state.basis];
+  const basisInfo = resolveBasis(state.basis);
+  const useMunicipality = !!(basisInfo && basisInfo.useMunicipalityFreight);
   const val = territoryMaxFreight(state.repTerritory, useMunicipality);
   state.freight = val;
   if (freightEl) freightEl.value = val;
@@ -904,20 +1247,30 @@ function currentQuoteCode() {
 }
 
 function standardInclusionsHtml(model) {
-  const pm10 = model === 'MS5H' ? '' : ' PM-10 compliant (SCAQMD Rule 1186).';
-  return `<p><b>Standard Features:</b> ODRA Sweepers are fully loaded with standard features including rear air ride suspension, squeegee elevator design, variable displacement load-sensing hydraulic pump, dual hydraulically driven side brooms, and electric backup alarm.</p>
-  <p>Sweeper has single, one button sweeping operation, greaseless composite bushings with chromed shafts. The elevator raises automatically when chassis is put into reverse. The elevator is reversible when stall alarm is activated. Heavy duty, 8-flight squeegee style elevator. Sweeper features dual side brooms that feature tilt adjustment and down pressure adjustment from inside cab. Water system includes our polyethylene water tank, an electrical diaphragm water pump, and 4 spray bars for dust control suppression that can be controlled from inside the cab.</p>
-  <p>Inside cab controls also include safety infrared, night-vision 3-camera system with color monitor. Safety LED lighting includes complete chassis lighting, rear mounted strobe light, and per broom control.${pm10}</p>`;
+  const legal = getLegalForModel(model);
+  const p1 = legal.standard_features_p1 || TEMPLATE_LEGAL.standard_features_p1 || '<b>Standard Features:</b> ODRA Sweepers are fully loaded with standard features including rear air ride suspension, squeegee elevator design, variable displacement load-sensing hydraulic pump, dual hydraulically driven side brooms, and electric backup alarm.';
+  const p2 = legal.standard_features_p2 || TEMPLATE_LEGAL.standard_features_p2 || 'Sweeper has single, one button sweeping operation, greaseless composite bushings with chromed shafts. The elevator raises automatically when chassis is put into reverse. The elevator is reversible when stall alarm is activated. Heavy duty, 8-flight squeegee style elevator. Sweeper features dual side brooms that feature tilt adjustment and down pressure adjustment from inside cab. Water system includes our polyethylene water tank, an electrical diaphragm water pump, and 4 spray bars for dust control suppression that can be controlled from inside the cab.';
+  const p3 = legal.standard_features_p3 || TEMPLATE_LEGAL.standard_features_p3 || 'Inside cab controls also include safety infrared, night-vision 3-camera system with color monitor. Safety LED lighting includes complete chassis lighting, rear mounted strobe light, and per broom control.';
+  const pm10Text = legal.pm10_note !== undefined ? legal.pm10_note : (TEMPLATE_LEGAL.pm10_note !== undefined ? TEMPLATE_LEGAL.pm10_note : 'PM-10 compliant (SCAQMD Rule 1186).');
+  const pm10 = (model === 'MS5H' || !pm10Text || !pm10Text.trim()) ? '' : (' ' + pm10Text.trim());
+  return `<p>${p1}</p>
+  <p>${p2}</p>
+  <p>${p3}${pm10}</p>`;
 }
 
 function legalHtml(model) {
+  const legal = getLegalForModel(model);
+  const l1 = legal.legal_p1 || TEMPLATE_LEGAL.legal_p1 || 'Delivery transport charge, shown as an estimate ONLY. Actual rate to be determined at time of invoicing.';
+  const l2 = legal.legal_p2 || TEMPLATE_LEGAL.legal_p2 || 'Charges relating to taxes, registration, titling, and other fees are the responsibility of the customer; not included in this quotation. Customer takes responsibility for adherence to local and state laws for chassis, emissions, and registration relating to the sweeper.';
+  const l3 = legal.legal_p3 || TEMPLATE_LEGAL.legal_p3 || 'A <b>$10,000 deposit and Purchase Order number</b> is requested at time of quotation acceptance. ODRA will issue a detailed sales acknowledgement for signature to confirm the order prior to assembly. Balance will be due prior to shipping, unless otherwise confirmed in writing by an authorized ODRA representative.';
+  const l4 = legal.legal_p4 || TEMPLATE_LEGAL.legal_p4 || 'This quote is <b>BUDGETARY ONLY</b>, valid 21 days from date of quote. ODRA LLC may modify or cancel without notice. Prices and availability are subject to change.';
   return `
   <div class="legal">
     ${standardInclusionsHtml(model)}
-    <p>Delivery transport charge, shown as an estimate ONLY. Actual rate to be determined at time of invoicing.</p>
-    <p>Charges relating to taxes, registration, titling, and other fees are the responsibility of the customer; not included in this quotation. Customer takes responsibility for adherence to local and state laws for chassis, emissions, and registration relating to the sweeper.</p>
-    <p>A <b>$10,000 deposit and Purchase Order number</b> is requested at time of quotation acceptance. ODRA will issue a detailed sales acknowledgement for signature to confirm the order prior to assembly. Balance will be due prior to shipping, unless otherwise confirmed in writing by an authorized ODRA representative.</p>
-    <p>This quote is <b>BUDGETARY ONLY</b>, valid 21 days from date of quote. ODRA LLC may modify or cancel without notice. Prices and availability are subject to change.</p>
+    <p>${l1}</p>
+    <p>${l2}</p>
+    <p>${l3}</p>
+    <p>${l4}</p>
   </div>`;
 }
 
@@ -929,19 +1282,32 @@ function buildEnhRows() {
 
   state.enh.forEach((row, idx) => {
     if (!opts.find(o => o.desc === row.desc)) row.desc = '';
+    const selectedItem = opts.find(o => o.desc === row.desc);
+    const p = selectedItem ? priceForItem(selectedItem) : null;
+    const qty = row.qty || 1;
+    const ext = p ? (p.unit * qty) : 0;
+    const discInfo = (p && p.discountPercent > 0) ? ` &middot; ${p.discountPercent}% off` : '';
+    const priceBadge = p ? `<span style="font-size:11px;color:#0f172a;font-weight:600;">${fmt(p.unit)}${discInfo} &rarr; Ext: ${fmt(ext)}</span>` : '';
+
     const div = document.createElement('div');
     div.className = 'enhRow';
     div.innerHTML = `
       <div>
-        <label>${idx === 0 ? 'Option' : ''}</label>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label>${idx === 0 ? 'Option' : ''}</label>
+          ${priceBadge}
+        </div>
         <select data-idx="${idx}" class="enhDesc" ${IS_READONLY ? 'disabled' : ''}>
           <option value="">&mdash; none &mdash;</option>
-          ${opts.map(o => `<option value="${esc(o.desc)}" ${o.desc === row.desc ? 'selected' : ''}>${esc(o.desc)}</option>`).join('')}
+          ${opts.map(o => {
+            const op = priceForItem(o);
+            return `<option value="${esc(o.desc)}" ${o.desc === row.desc ? 'selected' : ''}>${esc(o.desc)} (${fmt(op.unit)})</option>`;
+          }).join('')}
         </select>
       </div>
       <div>
         <label>${idx === 0 ? 'Qty' : ''}</label>
-        <input type="number" min="1" class="enhQty" data-idx="${idx}" value="${row.qty || 1}" ${IS_READONLY ? 'disabled' : ''}>
+        <input type="number" min="1" class="enhQty" data-idx="${idx}" value="${qty}" ${IS_READONLY ? 'disabled' : ''}>
       </div>
     `;
     wrap.appendChild(div);
@@ -975,10 +1341,19 @@ function calculateSnapshotData() {
   const base = baseItem(state.model);
   const bp = priceForItem(base);
   const baseQty = Number(state.baseQty) || 1;
-  const showDiscount = Number(state.baseShowDiscount) || 0;
+  const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
+  const showDiscount = Math.min(maxDisc, Number(state.baseShowDiscount) || 0);
   const baseList = (bp.list || 0) + showDiscount;
   const baseUnit = bp.unit || 0;
   const baseExt = baseQty * baseUnit;
+
+  // Chassis upgrade if priced
+  const chassisPrice = (CATALOG.chassis_prices && CATALOG.chassis_prices[state.chassis]) ? Number(CATALOG.chassis_prices[state.chassis]) : 0;
+  const basisInfo = resolveBasis(state.basis);
+  const isCoop = !!(basisInfo && (basisInfo.isCoop || basisInfo.priceTier === 'sw_net'));
+  const chassisDiscount = isCoop ? (Number(basisInfo.discountPercent) || 12) : 0;
+  const chassisUnit = chassisPrice > 0 ? (Math.round((chassisPrice * (1 - (chassisDiscount / 100))) * 100) / 100) : 0;
+  const chassisExt = chassisUnit * baseQty;
 
   let enhTotal = 0;
   const enhRows = [];
@@ -1003,12 +1378,24 @@ function calculateSnapshotData() {
     }
   }
 
+  if (chassisPrice > 0) {
+    enhRows.unshift({
+      desc: `Chassis Option: ${shortChassisLabel(state.chassis)}`,
+      category: 'CHASSIS CONFIGURATION',
+      qty: baseQty,
+      msrp: chassisPrice,
+      list: chassisPrice,
+      unit: chassisUnit,
+      extended: chassisExt
+    });
+  }
+
   const freightVal = Number(state.freight) || 0;
-  const subtotalVal = baseExt + enhTotal;
+  const subtotalVal = baseExt + chassisExt + enhTotal;
   const totalVal = subtotalVal + freightVal;
 
   return {
-    base_msrp: base.msrp || 0,
+    base_msrp: bp.msrp || base.msrp || 0,
     base_list_price: baseList,
     base_unit_price: baseUnit,
     subtotal: subtotalVal,
@@ -1029,14 +1416,23 @@ function renderPreview() {
 
   const base = baseItem(state.model);
   const bp = priceForItem(base);
+  const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
   const rawDiscount = Number(state.baseShowDiscount) || 0;
-  const showDiscount = Math.min(20000, rawDiscount);
+  const showDiscount = Math.min(maxDisc, rawDiscount);
   const discWarnEl = document.getElementById('discountWarning');
-  if (discWarnEl) discWarnEl.style.display = rawDiscount > 20000 ? 'block' : 'none';
+  if (discWarnEl) discWarnEl.style.display = rawDiscount > maxDisc ? 'block' : 'none';
 
   const displayBaseList = (bp.list || 0) + showDiscount;
   const baseExt = state.baseQty * bp.unit;
-  const baseDisc = displayBaseList ? 1 - (bp.unit / displayBaseList) : 0;
+  const baseDisc = bp.discountPercent > 0 ? (bp.discountPercent / 100) : (displayBaseList ? 1 - (bp.unit / displayBaseList) : 0);
+
+  // Chassis configuration upgrade if priced
+  const chassisRawPrice = (CATALOG.chassis_prices && CATALOG.chassis_prices[state.chassis]) ? Number(CATALOG.chassis_prices[state.chassis]) : 0;
+  const basisInfo = resolveBasis(state.basis);
+  const isCoop = !!(basisInfo && (basisInfo.isCoop || basisInfo.priceTier === 'sw_net'));
+  const chassisDiscPct = isCoop ? (Number(basisInfo.discountPercent) || 12) : 0;
+  const chassisUnitPrice = chassisRawPrice > 0 ? Math.round((chassisRawPrice * (1 - (chassisDiscPct / 100))) * 100) / 100 : 0;
+  const chassisExtPrice = chassisUnitPrice * state.baseQty;
 
   let enhExtTotal = 0;
   const enhRowData = [];
@@ -1047,42 +1443,52 @@ function renderPreview() {
     const p = priceForItem(item);
     const ext = row.qty * p.unit;
     enhExtTotal += ext;
-    const disc = p.list ? 1 - (p.unit / p.list) : 0;
+    const disc = p.discountPercent > 0 ? (p.discountPercent / 100) : (p.list ? 1 - (p.unit / p.list) : 0);
     enhRowData.push({ desc: item.desc, qty: row.qty, list: p.list, unit: p.unit, ext, disc });
   });
 
-  const anyDisc = Math.abs(baseDisc) >= 0.0005 || enhRowData.some(r => Math.abs(r.disc) >= 0.0005);
+  const anyDisc = Math.abs(baseDisc) >= 0.0005 || chassisDiscPct > 0 || enhRowData.some(r => Math.abs(r.disc) >= 0.0005);
   const cols = anyDisc ? 6 : 5;
-  const discTh = anyDisc ? '<th class="num">DISCOUNT</th>' : '';
+  const discTh = anyDisc ? '<th class="num">DISCOUNT (%)</th>' : '';
+
+  const chassisRowHtml = chassisRawPrice > 0 ? `
+    <tr class="chassisRow">
+      <td class="descCol"><b>Chassis Option:</b> ${esc(shortChassisLabel(state.chassis))}</td>
+      <td class="num">${state.baseQty}</td>
+      <td class="num">${fmtMSRP(chassisRawPrice)}</td>
+      ${anyDisc ? `<td class="num">${chassisDiscPct > 0 ? (chassisDiscPct + '%') : '<span style="color:#888;">—</span>'}</td>` : ''}
+      <td class="num">${fmt(chassisUnitPrice)}</td>
+      <td class="num">${fmt(chassisExtPrice)}</td>
+    </tr>
+  ` : '';
 
   const enhRowsHtml = enhRowData.map(r => `
     <tr>
       <td class="descCol">${esc(r.desc)}</td>
       <td class="num">${r.qty}</td>
-      <td class="num">${fmt(r.list)}</td>
-      ${anyDisc ? `<td class="num">${pctFmt(r.disc)}</td>` : ''}
+      <td class="num">${fmtMSRP(r.list)}</td>
+      ${anyDisc ? `<td class="num">${r.disc > 0 ? pctFmt(r.disc) : '<span style="color:#888;">—</span>'}</td>` : ''}
       <td class="num">${fmt(r.unit)}</td>
       <td class="num">${fmt(r.ext)}</td>
     </tr>
   `).join('');
 
   const freight = Number(state.freight) || 0;
-  const subtotal = baseExt + enhExtTotal;
+  const subtotal = baseExt + chassisExtPrice + enhExtTotal;
   const total = subtotal + freight;
-  const coopBasis = COOP_BASES[state.basis] || null;
-  const subtotalLabel = coopBasis ? coopBasis.subtotalLabel : 'MSRP Subtotal';
-  const disclaimer = coopBasis ? coopBasis.disclaimer : '';
+  const subtotalLabel = basisInfo ? basisInfo.subtotalLabel : 'MSRP Subtotal';
+  const disclaimer = basisInfo ? basisInfo.disclaimer : '';
 
-  const coopLogo = coopBasis ? coopBasis.logo : null;
-  const coopCaption = coopBasis ? coopBasis.caption : '';
+  const coopLogo = basisInfo ? basisInfo.logo : null;
+  const coopCaption = basisInfo ? basisInfo.caption : '';
   const coopRowHtml = coopLogo ? `
     <tr class="coopRow">
       <td colspan="${cols - 2}" style="text-align:center;padding:12px 6px;">
-        <img src="${coopLogo}" style="height:38px;max-width:180px;object-fit:contain;vertical-align:middle;" alt="Cooperative Logo">
+        <img src="${coopLogo}" style="height:36px;max-width:260px;display:block;margin:0 auto 8px auto;object-fit:contain;" alt="Cooperative Logo">
+        <b style="font-size:11.5px;line-height:1.4;">${coopCaption}</b>
       </td>
-      <td colspan="2" style="font-size:10.5px;color:var(--gray);text-align:right;vertical-align:middle;padding:12px 8px;line-height:1.3;">
-        ${coopCaption}
-      </td>
+      <td class="num"></td>
+      <td class="num"></td>
     </tr>
   ` : '';
 
@@ -1091,17 +1497,25 @@ function renderPreview() {
     ? `<span class="toLines">${toLines.map(l => `<div>${l}</div>`).join('')}</span>`
     : ' &mdash;';
 
+  const addrLine1 = esc(TEMPLATE_HEADER.address_line_1 || '705 South 48th Street, Grand Forks, ND 58201');
+  const addrLine2 = esc(TEMPLATE_HEADER.address_line_2 || 't: 844-888-6372 • e: info@odrasweeper.com • odrasweeper.com');
+  const quoteTitle = esc(TEMPLATE_HEADER.quote_title || 'QUOTATION');
+  const sectionHeading = esc(TEMPLATE_HEADER.section_heading || 'Including Enhancements');
+  const freightRowLabel = esc(TEMPLATE_HEADER.freight_row_label || 'Sweeper Transport / Freight');
+  const totalRowLabel = esc(TEMPLATE_HEADER.total_row_label || 'TOTAL (USD)');
+  const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
+
   p.innerHTML = `
     <div class="docHeaderTop">
       <div class="co">
-        <img src="{{ asset('images/logo.jpg') }}" alt="ODRA Road Sweepers">
+        <img src="{{ asset('images/logo.jpg') }}" alt="${esc(TEMPLATE_HEADER.company_name || 'ODRA Road Sweepers')}">
         <div class="addr">
-          705 South 48th Street, Grand Forks, ND 58201<br>
-          t: 844-888-6372 &bull; e: info@odrasweeper.com &bull; odrasweeper.com
+          ${addrLine1}<br>
+          ${addrLine2}
         </div>
       </div>
       <div class="qbox">
-        <div class="ttl">QUOTATION</div>
+        <div class="ttl">${quoteTitle}</div>
         <table>
           <tr><td class="k">Quote Code</td><td>${esc(qcode)}</td></tr>
           <tr><td class="k">Date</td><td>${fmtDateDisplay(state.date)}</td></tr>
@@ -1109,7 +1523,7 @@ function renderPreview() {
       </div>
     </div>
 
-    ${disclaimer ? `<div class="disclaimerLine">${disclaimer}</div>` : ''}
+    ${disclaimer ? `<div class="disclaimerLine">${esc(disclaimer)}</div>` : ''}
 
     <div class="infoGrid">
       <div class="col">
@@ -1119,7 +1533,7 @@ function renderPreview() {
         <div class="toBlock"><span class="k">To:</span>${toBlockHtml}</div>
       </div>
       <div class="col">
-        <div><span class="k">Pricing Basis:</span> ${esc(coopBasis ? coopBasis.label : state.basis)}</div>
+        <div><span class="k">Pricing Basis:</span> ${esc(basisInfo ? basisInfo.label : state.basis)}</div>
         <div><span class="k">P.O. No.:</span> ${esc(state.po) || '&mdash;'}</div>
         <div><span class="k">Customer Acct #:</span> ${esc(state.acct) || '&mdash;'}</div>
         <div><span class="k">Sales Rep:</span> ${esc(state.salesRep) || '&mdash;'}</div>
@@ -1145,44 +1559,43 @@ function renderPreview() {
       </colgroup>
       <thead>
         <tr>
-          <th>DESCRIPTION</th>
+          <th>PRICING BASIS / DESCRIPTION</th>
           <th class="num">QTY</th>
-          <th class="num">MSRP</th>
+          <th class="num">MSRP ($)</th>
           ${discTh}
-          <th class="num">UNIT PRICE</th>
-          <th class="num">EXTENDED</th>
+          <th class="num">UNIT PRICE ($)</th>
+          <th class="num">EXTENDED ($)</th>
         </tr>
       </thead>
       <tbody>
         <tr class="baseRow">
-          <td class="descCol">${esc(dynamicBaseDesc(base, state.chassis, state.model))}</td>
+          <td class="descCol">${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}</td>
           <td class="num">${state.baseQty}</td>
-          <td class="num">${fmt(displayBaseList)}</td>
-          ${anyDisc ? `<td class="num">${pctFmt(baseDisc)}</td>` : ''}
+          <td class="num">${fmtMSRP(displayBaseList)}</td>
+          ${anyDisc ? `<td class="num">${baseDisc > 0 ? pctFmt(baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
           <td class="num">${fmt(bp.unit)}</td>
           <td class="num">${fmt(baseExt)}</td>
         </tr>
+        ${chassisRowHtml}
         <tr class="sectionRow">
-          <td colspan="${cols}">Including Enhancements</td>
+          <td colspan="${cols}">${sectionHeading}</td>
         </tr>
         ${enhRowsHtml || `<tr><td colspan="${cols}" style="color:#999;font-style:italic;">No enhancements selected</td></tr>`}
         ${coopRowHtml}
         <tr class="subtotalRow">
-          <td colspan="${cols - 2}"></td>
-          <td class="num">${subtotalLabel}</td>
+          <td colspan="${cols - 1}" class="num">${esc(subtotalLabel)}</td>
           <td class="num">${fmt(subtotal)}</td>
         </tr>
         <tr>
-          <td class="descCol">Sweeper Transport / Freight</td>
-          <td class="num">${state.fob === 'EXW, Factory pick-up' ? 0 : 1}</td>
+          <td class="descCol">${freightRowLabel}</td>
+          <td class="num">${(state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up') ? 0 : 1}</td>
           <td class="num"></td>
           ${anyDisc ? '<td class="num"></td>' : ''}
           <td class="num">${fmt(freight)}</td>
           <td class="num">${fmt(freight)}</td>
         </tr>
         <tr class="totalRow">
-          <td colspan="${cols - 2}"></td>
-          <td class="num">TOTAL (USD)</td>
+          <td colspan="${cols - 1}" class="num">${totalRowLabel}</td>
           <td class="num">${fmt(total)}</td>
         </tr>
       </tbody>
@@ -1198,6 +1611,38 @@ function render() {
   applyTerritoryFreight();
   buildEnhRows();
   renderPreview();
+}
+
+function populatePricingBases() {
+  const basisEl = document.getElementById('basis');
+  if (!basisEl) return;
+  const mBases = getBasesForModel(state.model);
+  const currentVal = state.basis;
+
+  basisEl.innerHTML = '';
+  mBases.forEach(b => {
+    if (b.is_active === false) return;
+    const key = b.key || b.name || b.label;
+    const label = b.label || b.name || key;
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = label;
+    basisEl.appendChild(opt);
+  });
+
+  const matchingOpt = Array.from(basisEl.options).find(o => 
+    o.value === currentVal || 
+    o.value.toLowerCase() === String(currentVal).toLowerCase() ||
+    o.textContent.toLowerCase() === String(currentVal).toLowerCase()
+  );
+
+  if (matchingOpt) {
+    basisEl.value = matchingOpt.value;
+    state.basis = matchingOpt.value;
+  } else if (basisEl.options.length > 0) {
+    basisEl.value = basisEl.options[0].value;
+    state.basis = basisEl.value;
+  }
 }
 
 function initForm() {
@@ -1222,17 +1667,26 @@ function initForm() {
 
   const modelEl = document.getElementById('model');
   if (modelEl) {
-    modelEl.value = state.model || 'MT4H';
+    if (state.model && !Array.from(modelEl.options).some(o => o.value === state.model)) {
+      const opt = document.createElement('option');
+      opt.value = state.model;
+      opt.textContent = state.model;
+      modelEl.appendChild(opt);
+    }
+    modelEl.value = state.model || (modelEl.options[0] ? modelEl.options[0].value : 'MT4H');
+    state.model = modelEl.value;
     modelEl.addEventListener('change', e => {
       state.model = e.target.value;
       populateChassis();
+      populatePricingBases();
+      buildEnhRows();
       render();
     });
   }
 
   const basisEl = document.getElementById('basis');
   if (basisEl) {
-    basisEl.value = state.basis || 'MSRP (Commercial)';
+    populatePricingBases();
     basisEl.addEventListener('change', e => {
       state.basis = e.target.value;
       applyTerritoryFreight();
@@ -1289,7 +1743,15 @@ function initForm() {
   });
 
   const fobEl = document.getElementById('fob');
-  if (fobEl && state.fob) fobEl.value = state.fob;
+  if (fobEl && state.fob) {
+    if (!Array.from(fobEl.options).some(o => o.value === state.fob)) {
+      const opt = document.createElement('option');
+      opt.value = state.fob;
+      opt.textContent = state.fob;
+      fobEl.appendChild(opt);
+    }
+    fobEl.value = state.fob;
+  }
 
   render();
 
@@ -1318,13 +1780,14 @@ async function saveQuote(isFinalize = false) {
   const payload = {
     quote_number: state.quoteSeq,
     customer: state.toCompany,
-    model_description: dynamicBaseDesc(base, state.chassis, state.model),
+    model_description: dynamicBaseDesc(base, state.chassis, state.model, state.basis),
     base_msrp: snap.base_msrp,
     base_list_price: snap.base_list_price,
     base_unit_price: snap.base_unit_price,
     subtotal: snap.subtotal,
     total: snap.total,
     quote_code: snap.quote_code,
+    enhancements: snap.enhancements,
     state: state
   };
 
