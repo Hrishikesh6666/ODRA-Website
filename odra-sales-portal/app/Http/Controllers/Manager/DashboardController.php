@@ -70,23 +70,35 @@ class DashboardController extends Controller
             DB::raw('COUNT(*) as quotes_count'),
             DB::raw('SUM(total) as total_amount')
         )
-            ->groupBy('state_name')
+            ->groupBy(DB::raw("COALESCE(rep_territory, 'Unassigned')"))
             ->orderByDesc('total_amount')
             ->take(6)
             ->get();
 
-        // 4. Monthly Trend (Last 6 Months)
+        // 4. Monthly Trend (Last 6 Months - Cross-DB compatible with pgsql, mysql, sqlite)
+        $driver = DB::connection()->getDriverName();
+        if ($driver === 'pgsql') {
+            $ymExpr = "TO_CHAR(quotes.created_at, 'YYYY-MM')";
+            $labelExpr = "TO_CHAR(quotes.created_at, 'Mon YYYY')";
+        } elseif ($driver === 'sqlite') {
+            $ymExpr = "strftime('%Y-%m', quotes.created_at)";
+            $labelExpr = "strftime('%m/%Y', quotes.created_at)";
+        } else {
+            $ymExpr = "DATE_FORMAT(quotes.created_at, '%Y-%m')";
+            $labelExpr = "DATE_FORMAT(quotes.created_at, '%M %Y')";
+        }
+
         $monthlyTrend = Quote::withoutGlobalScopes()
             ->join('quote_versions', 'quotes.id', '=', 'quote_versions.quote_id')
             ->join('quote_snapshots', 'quote_versions.id', '=', 'quote_snapshots.quote_version_id')
             ->select(
-                DB::raw("DATE_FORMAT(quotes.created_at, '%Y-%m') as ym"),
-                DB::raw("DATE_FORMAT(quotes.created_at, '%M %Y') as month_label"),
+                DB::raw("{$ymExpr} as ym"),
+                DB::raw("{$labelExpr} as month_label"),
                 DB::raw('COUNT(DISTINCT quotes.id) as quote_count'),
                 DB::raw('SUM(quote_snapshots.total) as total_value')
             )
-            ->groupBy('ym', 'month_label')
-            ->orderBy('ym', 'desc')
+            ->groupBy(DB::raw($ymExpr), DB::raw($labelExpr))
+            ->orderBy(DB::raw($ymExpr), 'desc')
             ->take(6)
             ->get()
             ->reverse()

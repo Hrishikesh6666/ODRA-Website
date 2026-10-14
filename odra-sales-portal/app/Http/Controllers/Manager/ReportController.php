@@ -47,8 +47,8 @@ class ReportController extends Controller
             DB::raw('SUM(total) as sum_total')
         )
             ->whereNotNull('rep_territory')
-            ->groupBy('state_name')
-            ->orderBy('state_name')
+            ->groupBy(DB::raw("COALESCE(rep_territory, 'Unassigned')"))
+            ->orderBy(DB::raw("COALESCE(rep_territory, 'Unassigned')"))
             ->get();
 
         $pricingBases = PricingBasis::active()->get();
