@@ -19,8 +19,16 @@ class QuoteService
      */
     public function generateNextQuoteNumber(): string
     {
-        $maxQuoteNumber = Quote::withoutGlobalScopes()
-            ->selectRaw('MAX(CAST(quote_number AS UNSIGNED)) as max_num')
+        $driver = DB::connection()->getDriverName();
+        $castType = ($driver === 'pgsql' || $driver === 'sqlite') ? 'INTEGER' : 'UNSIGNED';
+
+        $query = Quote::withoutGlobalScopes();
+        if ($driver === 'pgsql') {
+            $query->whereRaw("quote_number ~ '^[0-9]+$'");
+        }
+
+        $maxQuoteNumber = $query
+            ->selectRaw("MAX(CAST(quote_number AS {$castType})) as max_num")
             ->value('max_num');
 
         $nextNum = $maxQuoteNumber ? (int) $maxQuoteNumber + 1 : 3001;
