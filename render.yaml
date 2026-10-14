@@ -1,0 +1,52 @@
+databases:
+  - name: odra-db
+    databaseName: odra_sales_portal
+    user: odra_admin
+    plan: free
+    region: ohio
+
+services:
+  - type: web
+    name: odra-sales-portal
+    runtime: docker
+    plan: free
+    region: ohio
+    rootDir: odra-sales-portal
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: APP_NAME
+        value: "ODRA Sales Portal"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        value: base64:9caRor2ABjdjUtBPESHGAMZeAIfAEGNhAhYRIR/KIFE=
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: odra-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: odra-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: odra-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: odra-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: odra-db
+          property: password
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: file
