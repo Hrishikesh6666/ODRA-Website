@@ -173,6 +173,154 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(0,0,0,0.06);
 }
+
+/* Modern Interactive State Coverage Selector */
+.state-selector-wrapper {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 14px;
+}
+.state-selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.state-selector-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.state-count-pill {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.state-selector-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.btn-state-action {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.btn-state-action:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+.state-search-box {
+    position: relative;
+    margin-bottom: 10px;
+}
+.state-search-box input {
+    width: 100%;
+    padding: 7px 12px 7px 32px;
+    font-size: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.state-search-box input:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 2px rgba(5,150,105,0.15);
+}
+.state-search-box svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+.state-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 155px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+.state-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 11.5px;
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+}
+.state-chip:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+.state-chip input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+.state-chip .chip-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border: 1.5px solid #94a3b8;
+    border-radius: 50%;
+    background: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    color: transparent;
+    transition: all 0.15s ease;
+}
+.state-chip.active {
+    background: #ecfdf5;
+    border-color: #059669;
+    color: #065f46;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(5,150,105,0.18);
+}
+.state-chip.active .chip-check {
+    background: #059669;
+    border-color: #059669;
+    color: #ffffff;
+}
 </style>
 @endpush
 
@@ -823,45 +971,61 @@
                 <input type="text" name="company_id" class="form-control" placeholder="e.g. REP-JD">
             </div>
 
-            <!-- Mandatory Freight Matrix Location for Sales Rep -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
-                <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
-                    <span>🚚</span>
-                    <span>Assigned Delivery Destination (Freight Matrix)</span>
-                    <span style="color:var(--red); font-size:11px;">* Mandatory</span>
+            <!-- Default Location & Territory Coverage for Sales Rep -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+                <div style="font-size: 12.5px; font-weight: 700; color: #0f172a; margin-bottom: 10px; display:flex; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span>🚚</span>
+                        <span>Primary Location (Default Destination)</span>
+                    </div>
+                    <span style="font-size:11px; color:#64748b; font-weight:normal;">City is optional</span>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div class="form-group" style="margin-bottom:0;">
-                        <label>State / Territory <span style="color:var(--red);">*</span></label>
-                        <select id="add_rep_state" name="state" class="form-control" required onchange="onAddRepStateChange()">
-                            <option value="">-- Select State --</option>
+                        <label>Default State</label>
+                        <select id="add_rep_state" name="state" class="form-control" onchange="onAddRepStateChange()">
+                            <option value="">-- None / Select State --</option>
                             @foreach ($freightStates as $st)
                                 <option value="{{ $st }}">{{ $st }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
-                        <label>City / Delivery Destination <span style="color:var(--red);">*</span></label>
-                        <select id="add_rep_city" name="city" class="form-control" required disabled>
-                            <option value="">-- Select State First --</option>
+                        <label>Default City <span style="font-weight:normal; color:#64748b; font-size:11px;">(Optional)</span></label>
+                        <select id="add_rep_city" name="city" class="form-control" disabled>
+                            <option value="">-- None / Select City --</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Multi-State Assigned Coverage -->
-                <div style="margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
-                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">
-                        Assigned Coverage States (Select all states this representative covers):
-                    </label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; max-height: 120px; overflow-y: auto; background: #fff; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                <!-- Modern Interactive State Coverage Selector -->
+                <div class="state-selector-wrapper">
+                    <div class="state-selector-header">
+                        <div class="state-selector-title">
+                            <span>🗺️ Assigned Coverage States</span>
+                            <span id="add_state_counter" class="state-count-pill">0 selected</span>
+                        </div>
+                        <div class="state-selector-actions">
+                            <button type="button" class="btn-state-action" onclick="selectAllStates('add')">Select All</button>
+                            <button type="button" class="btn-state-action" onclick="clearAllStates('add')">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div class="state-search-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" placeholder="Quick filter states (e.g. Texas, Florida)..." oninput="filterStateChips('add', this.value)">
+                    </div>
+
+                    <div class="state-chips-container" id="add_state_chips_container">
                         @foreach ($freightStates as $st)
-                            <label style="font-size: 11px; display: flex; align-items: center; gap: 4px; font-weight: normal; margin: 0; cursor: pointer;">
-                                <input type="checkbox" name="assigned_states[]" value="{{ $st }}" class="add_rep_assigned_state" id="add_state_{{ Str::slug($st) }}">
+                            <label class="state-chip" id="add_chip_{{ Str::slug($st) }}" data-state="{{ strtolower($st) }}">
+                                <input type="checkbox" name="assigned_states[]" value="{{ $st }}" class="add_rep_assigned_state" onchange="updateStateChipVisual(this)">
+                                <span class="chip-check">&#10003;</span>
                                 <span>{{ $st }}</span>
                             </label>
                         @endforeach
                     </div>
-                    <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;">
+                    <div style="font-size: 11px; color: #64748b; margin-top: 6px;">
                         The representative will be allowed to select customer destinations within all checked states.
                     </div>
                 </div>
@@ -913,45 +1077,61 @@
                 </div>
             </div>
 
-            <!-- Mandatory Freight Matrix Location for Sales Rep in Edit Modal -->
-            <div id="edit_rep_location_group" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
-                <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
-                    <span>🚚</span>
-                    <span>Assigned Delivery Destination (Freight Matrix)</span>
-                    <span style="color:var(--red); font-size:11px;">* Mandatory</span>
+            <!-- Location & State Coverage in Edit Modal -->
+            <div id="edit_rep_location_group" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+                <div style="font-size: 12.5px; font-weight: 700; color: #0f172a; margin-bottom: 10px; display:flex; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span>🚚</span>
+                        <span>Primary Location (Default Destination)</span>
+                    </div>
+                    <span style="font-size:11px; color:#64748b; font-weight:normal;">City is optional</span>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div class="form-group" style="margin-bottom:0;">
-                        <label>Default State <span style="color:var(--red);">*</span></label>
+                        <label>Default State</label>
                         <select id="edit_rep_state" name="state" class="form-control" onchange="onEditRepStateChange()">
-                            <option value="">-- Select State --</option>
+                            <option value="">-- None / Select State --</option>
                             @foreach ($freightStates as $st)
                                 <option value="{{ $st }}">{{ $st }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
-                        <label>Default City <span style="color:var(--red);">*</span></label>
+                        <label>Default City <span style="font-weight:normal; color:#64748b; font-size:11px;">(Optional)</span></label>
                         <select id="edit_rep_city" name="city" class="form-control">
-                            <option value="">-- Select State First --</option>
+                            <option value="">-- None / Select City --</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Multi-State Assigned Coverage in Edit Modal -->
-                <div style="margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
-                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">
-                        Assigned Coverage States (Select all states this representative covers):
-                    </label>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; max-height: 120px; overflow-y: auto; background: #fff; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                <!-- Modern Interactive State Coverage Selector for Edit Modal -->
+                <div class="state-selector-wrapper">
+                    <div class="state-selector-header">
+                        <div class="state-selector-title">
+                            <span>🗺️ Assigned Coverage States</span>
+                            <span id="edit_state_counter" class="state-count-pill">0 selected</span>
+                        </div>
+                        <div class="state-selector-actions">
+                            <button type="button" class="btn-state-action" onclick="selectAllStates('edit')">Select All</button>
+                            <button type="button" class="btn-state-action" onclick="clearAllStates('edit')">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <div class="state-search-box">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" placeholder="Quick filter states (e.g. Texas, Florida)..." oninput="filterStateChips('edit', this.value)">
+                    </div>
+
+                    <div class="state-chips-container" id="edit_state_chips_container">
                         @foreach ($freightStates as $st)
-                            <label style="font-size: 11px; display: flex; align-items: center; gap: 4px; font-weight: normal; margin: 0; cursor: pointer;">
-                                <input type="checkbox" name="assigned_states[]" value="{{ $st }}" class="edit_rep_assigned_state" id="edit_state_{{ Str::slug($st) }}">
+                            <label class="state-chip" id="edit_chip_{{ Str::slug($st) }}" data-state="{{ strtolower($st) }}">
+                                <input type="checkbox" name="assigned_states[]" value="{{ $st }}" class="edit_rep_assigned_state" onchange="updateStateChipVisual(this)">
+                                <span class="chip-check">&#10003;</span>
                                 <span>{{ $st }}</span>
                             </label>
                         @endforeach
                     </div>
-                    <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;">
+                    <div style="font-size: 11px; color: #64748b; margin-top: 6px;">
                         The representative will be allowed to select customer destinations within all checked states.
                     </div>
                 </div>
@@ -1043,6 +1223,70 @@ function filterTableRows(tableBodyId, query) {
 
 const FREIGHT_RULES = @json($freightRules ?? []);
 
+function updateStateChipVisual(checkbox) {
+    if (!checkbox) return;
+    const chip = checkbox.closest('.state-chip');
+    if (chip) {
+        if (checkbox.checked) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    }
+    const prefix = checkbox.classList.contains('add_rep_assigned_state') ? 'add' : 'edit';
+    updateStateCounter(prefix);
+}
+
+function updateStateCounter(prefix) {
+    const checked = document.querySelectorAll(`.${prefix}_rep_assigned_state:checked`).length;
+    const counter = document.getElementById(`${prefix}_state_counter`);
+    if (counter) {
+        counter.textContent = `${checked} selected`;
+        if (checked > 0) {
+            counter.style.background = '#d1fae5';
+            counter.style.color = '#065f46';
+        } else {
+            counter.style.background = '#e2e8f0';
+            counter.style.color = '#475569';
+        }
+    }
+}
+
+function selectAllStates(prefix) {
+    const cbs = document.querySelectorAll(`.${prefix}_rep_assigned_state`);
+    cbs.forEach(cb => {
+        cb.checked = true;
+        const chip = cb.closest('.state-chip');
+        if (chip) chip.classList.add('active');
+    });
+    updateStateCounter(prefix);
+}
+
+function clearAllStates(prefix) {
+    const cbs = document.querySelectorAll(`.${prefix}_rep_assigned_state`);
+    cbs.forEach(cb => {
+        cb.checked = false;
+        const chip = cb.closest('.state-chip');
+        if (chip) chip.classList.remove('active');
+    });
+    updateStateCounter(prefix);
+}
+
+function filterStateChips(prefix, query) {
+    const q = (query || '').toLowerCase().trim();
+    const container = document.getElementById(`${prefix}_state_chips_container`);
+    if (!container) return;
+    const chips = container.querySelectorAll('.state-chip');
+    chips.forEach(chip => {
+        const stateName = chip.getAttribute('data-state') || chip.innerText.toLowerCase();
+        if (!q || stateName.includes(q)) {
+            chip.style.display = 'inline-flex';
+        } else {
+            chip.style.display = 'none';
+        }
+    });
+}
+
 function populateCityDropdown(stateVal, citySelectId, selectedCity = '') {
     const citySel = document.getElementById(citySelectId);
     if (!citySel) return;
@@ -1050,7 +1294,7 @@ function populateCityDropdown(stateVal, citySelectId, selectedCity = '') {
 
     if (!stateVal) {
         citySel.disabled = true;
-        citySel.innerHTML = '<option value="">-- Select State First --</option>';
+        citySel.innerHTML = '<option value="">-- None / Select City --</option>';
         return;
     }
 
@@ -1062,7 +1306,7 @@ function populateCityDropdown(stateVal, citySelectId, selectedCity = '') {
     }
 
     citySel.disabled = false;
-    citySel.innerHTML = '<option value="">-- Select City / Destination --</option>';
+    citySel.innerHTML = '<option value="">-- None / Select City --</option>';
     matchingCities.forEach(r => {
         const opt = document.createElement('option');
         opt.value = r.city;
@@ -1081,8 +1325,13 @@ function onAddRepStateChange() {
     populateCityDropdown(st, 'add_rep_city');
     if (st) {
         document.querySelectorAll('.add_rep_assigned_state').forEach(cb => {
-            if (cb.value === st) cb.checked = true;
+            if (cb.value === st) {
+                cb.checked = true;
+                const chip = cb.closest('.state-chip');
+                if (chip) chip.classList.add('active');
+            }
         });
+        updateStateCounter('add');
     }
 }
 
@@ -1091,8 +1340,13 @@ function onEditRepStateChange() {
     populateCityDropdown(st, 'edit_rep_city');
     if (st) {
         document.querySelectorAll('.edit_rep_assigned_state').forEach(cb => {
-            if (cb.value === st) cb.checked = true;
+            if (cb.value === st) {
+                cb.checked = true;
+                const chip = cb.closest('.state-chip');
+                if (chip) chip.classList.add('active');
+            }
         });
+        updateStateCounter('edit');
     }
 }
 
@@ -1105,6 +1359,12 @@ function openAddManagerModal() {
 }
 
 function openAddRepModal() {
+    document.querySelectorAll('.add_rep_assigned_state').forEach(cb => {
+        cb.checked = false;
+        const chip = cb.closest('.state-chip');
+        if (chip) chip.classList.remove('active');
+    });
+    updateStateCounter('add');
     document.getElementById('addRepModal').style.display = 'flex';
 }
 
@@ -1159,13 +1419,17 @@ function openEditModal(user, roleSlug) {
         territoryInput.required = false;
         
         repLocGroup.style.display = 'block';
-        repStateSel.required = true;
-        repCitySel.required = true;
+        repStateSel.required = false;
+        repCitySel.required = false;
         repStateSel.value = user.state || '';
         populateCityDropdown(user.state, 'edit_rep_city', user.city);
 
-        // Populate assigned_states checkboxes
-        document.querySelectorAll('.edit_rep_assigned_state').forEach(cb => cb.checked = false);
+        // Populate assigned_states checkboxes & chips
+        document.querySelectorAll('.edit_rep_assigned_state').forEach(cb => {
+            cb.checked = false;
+            const chip = cb.closest('.state-chip');
+            if (chip) chip.classList.remove('active');
+        });
         let repStates = [];
         if (Array.isArray(user.assigned_states)) {
             repStates = user.assigned_states;
@@ -1178,8 +1442,11 @@ function openEditModal(user, roleSlug) {
         document.querySelectorAll('.edit_rep_assigned_state').forEach(cb => {
             if (repStates.includes(cb.value)) {
                 cb.checked = true;
+                const chip = cb.closest('.state-chip');
+                if (chip) chip.classList.add('active');
             }
         });
+        updateStateCounter('edit');
     }
 
     document.getElementById('editModal').style.display = 'flex';

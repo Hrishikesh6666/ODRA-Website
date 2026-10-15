@@ -165,8 +165,8 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'company_id' => ['nullable', 'string', 'max:100', 'unique:users,company_id'],
             'rep_code' => ['required', 'string', 'max:10'],
-            'state' => ['required', 'string', 'max:100'],
-            'city' => ['required', 'string', 'max:200'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'city' => ['nullable', 'string', 'max:200'],
             'assigned_states' => ['nullable', 'array'],
             'assigned_states.*' => ['string', 'max:100'],
             'password' => ['required', 'string', 'min:8'],
@@ -175,23 +175,29 @@ class UserController extends Controller
         $salesRole = Role::where('slug', 'sales')->first();
 
         $assignedStates = $request->input('assigned_states', []);
-        if (empty($assignedStates) && !empty($validated['state'])) {
-            $assignedStates = [$validated['state']];
-        }
-        if (!in_array($validated['state'], $assignedStates)) {
-            $assignedStates[] = $validated['state'];
+        $stateVal = $validated['state'] ?? null;
+        if ($stateVal && !in_array($stateVal, $assignedStates)) {
+            $assignedStates[] = $stateVal;
         }
         $assignedStates = array_values(array_unique(array_filter($assignedStates)));
+        if (empty($stateVal) && !empty($assignedStates)) {
+            $stateVal = $assignedStates[0];
+        }
+
+        $cityVal = $validated['city'] ?? null;
+        $territory = ($cityVal && $stateVal)
+            ? ($cityVal . ', ' . $stateVal)
+            : ($stateVal ?: 'Field Sales');
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => strtolower($validated['email']),
             'company_id' => $validated['company_id'] ?? null,
             'rep_code' => strtoupper($validated['rep_code']),
-            'state' => $validated['state'],
-            'city' => $validated['city'],
+            'state' => $stateVal,
+            'city' => $cityVal,
             'assigned_states' => $assignedStates,
-            'territory' => $validated['city'] . ', ' . $validated['state'],
+            'territory' => $territory,
             'password' => Hash::make($validated['password']),
             'role_id' => $salesRole->id,
             'is_active' => true,
@@ -233,8 +239,8 @@ class UserController extends Controller
 
         if ($isRep) {
             $rules['rep_code'] = ['required', 'string', 'max:10'];
-            $rules['state'] = ['required', 'string', 'max:100'];
-            $rules['city'] = ['required', 'string', 'max:200'];
+            $rules['state'] = ['nullable', 'string', 'max:100'];
+            $rules['city'] = ['nullable', 'string', 'max:200'];
             $rules['assigned_states'] = ['nullable', 'array'];
             $rules['assigned_states.*'] = ['string', 'max:100'];
         } else {
@@ -253,14 +259,23 @@ class UserController extends Controller
 
         if ($isRep) {
             $updateData['rep_code'] = strtoupper($validated['rep_code']);
-            $updateData['state'] = $validated['state'];
-            $updateData['city'] = $validated['city'];
             $assignedStates = $request->input('assigned_states', []);
-            if (!in_array($validated['state'], $assignedStates)) {
-                $assignedStates[] = $validated['state'];
+            $stateVal = $validated['state'] ?? null;
+            if ($stateVal && !in_array($stateVal, $assignedStates)) {
+                $assignedStates[] = $stateVal;
             }
-            $updateData['assigned_states'] = array_values(array_unique(array_filter($assignedStates)));
-            $updateData['territory'] = $validated['city'] . ', ' . $validated['state'];
+            $assignedStates = array_values(array_unique(array_filter($assignedStates)));
+            if (empty($stateVal) && !empty($assignedStates)) {
+                $stateVal = $assignedStates[0];
+            }
+
+            $cityVal = $validated['city'] ?? null;
+            $updateData['assigned_states'] = $assignedStates;
+            $updateData['state'] = $stateVal;
+            $updateData['city'] = $cityVal;
+            $updateData['territory'] = ($cityVal && $stateVal)
+                ? ($cityVal . ', ' . $stateVal)
+                : ($stateVal ?: 'Field Sales');
         } else {
             if (isset($validated['territory'])) {
                 $updateData['territory'] = $validated['territory'];
