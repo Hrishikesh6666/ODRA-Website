@@ -653,13 +653,20 @@ table.items tr.totalRow td {
     <div class="row2">
       <div>
         <label>Sales Rep</label>
-        <select id="salesRep" {{ $isReadonly ? 'disabled' : '' }}>
-          <option value="">&mdash; Select &mdash;</option>
-          @foreach($salesReps as $rep)
-            @php $rName = is_array($rep) ? $rep['name'] : $rep->name; @endphp
-            <option value="{{ $rName }}">{{ $rName }}</option>
-          @endforeach
-        </select>
+        @if($user && $user->isAdmin())
+          <select id="salesRep" {{ $isReadonly ? 'disabled' : '' }}>
+            <option value="">&mdash; Select &mdash;</option>
+            @foreach($salesReps as $rep)
+              @php $rName = is_array($rep) ? $rep['name'] : $rep->name; @endphp
+              <option value="{{ $rName }}">{{ $rName }}</option>
+            @endforeach
+          </select>
+        @else
+          <div style="position: relative; display: flex; align-items: center;">
+            <input type="text" id="salesRep" value="{{ $initialState['salesRep'] ?: ($user ? $user->name : '') }}" readonly style="background: #f1f5f9 !important; color: #1e293b !important; font-weight: 600 !important; cursor: not-allowed !important; border: 1px solid #cbd5e1 !important; padding-right: 32px !important;" title="Assigned to your logged-in Sales Representative account">
+            <span style="position: absolute; right: 10px; font-size: 13px; color: #64748b; pointer-events: none;" title="Locked to current logged-in user">&#128274;</span>
+          </div>
+        @endif
       </div>
       <div>
         <label>FOB / Transport</label>
@@ -730,6 +737,8 @@ const INITIAL_STATE = @json($initialState);
 const IS_READONLY = @json($isReadonly);
 const CURRENT_QUOTE_ID = @json($quote?->id);
 const SALES_REPS = @json($salesReps);
+const IS_ADMIN = @json($user ? $user->isAdmin() : false);
+const CURRENT_USER_NAME = @json($user ? $user->name : '');
 
 let ITEMS = CATALOG.items || [];
 let CHASSIS = CATALOG.chassis || [];
@@ -977,6 +986,11 @@ let state = {
 // Safely merge initial state
 if (INITIAL_STATE && typeof INITIAL_STATE === 'object') {
   Object.assign(state, INITIAL_STATE);
+}
+
+// For non-admin Sales Reps, lock salesRep strictly to the logged-in user
+if (!IS_ADMIN && CURRENT_USER_NAME) {
+  state.salesRep = CURRENT_USER_NAME;
 }
 
 // Normalize state.basis to canonical key
@@ -1841,12 +1855,18 @@ function initForm() {
 
   const salesRepEl = document.getElementById('salesRep');
   if (salesRepEl) {
-    salesRepEl.value = state.salesRep || '';
-    salesRepEl.addEventListener('change', e => {
-      state.salesRep = e.target.value;
-      applyRepFreight();
-      render();
-    });
+    if (salesRepEl.tagName === 'SELECT') {
+      salesRepEl.value = state.salesRep || '';
+      salesRepEl.addEventListener('change', e => {
+        state.salesRep = e.target.value;
+        applyRepFreight();
+        render();
+      });
+    } else {
+      // Locked input field for Sales Representative: strictly fixed to current user
+      salesRepEl.value = (!IS_ADMIN && CURRENT_USER_NAME) ? CURRENT_USER_NAME : (state.salesRep || '');
+      state.salesRep = salesRepEl.value;
+    }
   }
 
   bindSimple('po', 'po');
@@ -1918,6 +1938,10 @@ async function saveQuote(isFinalize = false) {
 
   if (isFinalize && !confirm('Finalize this quotation? The saved prices and snapshot will be permanently frozen.')) {
     return;
+  }
+
+  if (!IS_ADMIN && CURRENT_USER_NAME) {
+    state.salesRep = CURRENT_USER_NAME;
   }
 
   const snap = calculateSnapshotData();

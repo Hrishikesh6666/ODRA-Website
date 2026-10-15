@@ -268,7 +268,13 @@ class QuoteService
         $basisName = $state['basis'] ?? $data['pricing_basis'] ?? 'MSRP (Commercial)';
         $fobTerms = $state['fob'] ?? $data['fob_terms'] ?? 'Transport, estimate only noted in quote';
         $baseQty = max(1, (int) ($state['baseQty'] ?? $data['base_qty'] ?? 1));
-        $repName = $state['salesRep'] ?? $data['sales_rep_name'] ?? auth()->user()?->name ?? $version->quote->user?->name ?? '';
+
+        // Authoritative sales rep name: if authenticated user is not an admin, lock strictly to the logged-in user
+        if (auth()->check() && !auth()->user()->isAdmin()) {
+            $repName = auth()->user()->name;
+        } else {
+            $repName = $state['salesRep'] ?? $data['sales_rep_name'] ?? auth()->user()?->name ?? $version->quote->user?->name ?? '';
+        }
 
         // 1. Authoritative Model & Pricing Lookup
         $model = SweeperModel::where('code', $modelCode)->first();

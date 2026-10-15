@@ -81,7 +81,22 @@ class QuoteController extends Controller
             ];
         });
 
-        $defaultRep = $user->isSalesRep() ? $user->name : '';
+        // Ensure currently logged-in user is present in salesReps
+        if ($user && ! $salesReps->firstWhere('id', $user->id)) {
+            $userRule = $user->assignedFreightRule();
+            $salesReps->push([
+                'id' => $user->id,
+                'name' => $user->name,
+                'rep_code' => $user->rep_code,
+                'state' => $user->state,
+                'city' => $user->city,
+                'has_freight' => $userRule !== null,
+                'customer_rate' => $userRule ? (float) $userRule->customer_rate : null,
+                'municipality_rate' => $userRule ? (float) $userRule->municipality_rate : null,
+            ]);
+        }
+
+        $defaultRep = $user->name;
         $userRule = $user->assignedFreightRule();
         $initialFreight = $userRule ? (float) $userRule->customer_rate : 0;
         $initialTerritory = ($user->state && $user->city) ? ($user->city . ', ' . $user->state) : '';
@@ -146,11 +161,29 @@ class QuoteController extends Controller
             ];
         });
 
+        // Ensure quote owner or current user is present in salesReps
+        $targetUser = $quote->user ?: $user;
+        if ($targetUser && ! $salesReps->firstWhere('id', $targetUser->id)) {
+            $rule = $targetUser->assignedFreightRule();
+            $salesReps->push([
+                'id' => $targetUser->id,
+                'name' => $targetUser->name,
+                'rep_code' => $targetUser->rep_code,
+                'state' => $targetUser->state,
+                'city' => $targetUser->city,
+                'has_freight' => $rule !== null,
+                'customer_rate' => $rule ? (float) $rule->customer_rate : null,
+                'municipality_rate' => $rule ? (float) $rule->municipality_rate : null,
+            ]);
+        }
+
         $savedState = is_array($snapshot?->full_state) ? $snapshot->full_state : [];
+
+        $lockedRepName = (! $user->isAdmin()) ? $user->name : ($snapshot?->sales_rep_name ?: $quote->user->name);
 
         $defaultState = [
             'quoteSeq' => (string) $quote->quote_number,
-            'salesRep' => $snapshot?->sales_rep_name ?: $quote->user->name,
+            'salesRep' => $lockedRepName,
             'date' => $snapshot?->created_at ? $snapshot->created_at->format('Y-m-d') : $quote->created_at->format('Y-m-d'),
             'model' => $snapshot?->model_code ?: 'MT4H',
             'basis' => $snapshot?->pricing_basis ?: 'MSRP (Commercial)',
