@@ -167,10 +167,21 @@ class UserController extends Controller
             'rep_code' => ['required', 'string', 'max:10'],
             'state' => ['required', 'string', 'max:100'],
             'city' => ['required', 'string', 'max:200'],
+            'assigned_states' => ['nullable', 'array'],
+            'assigned_states.*' => ['string', 'max:100'],
             'password' => ['required', 'string', 'min:8'],
         ]);
 
         $salesRole = Role::where('slug', 'sales')->first();
+
+        $assignedStates = $request->input('assigned_states', []);
+        if (empty($assignedStates) && !empty($validated['state'])) {
+            $assignedStates = [$validated['state']];
+        }
+        if (!in_array($validated['state'], $assignedStates)) {
+            $assignedStates[] = $validated['state'];
+        }
+        $assignedStates = array_values(array_unique(array_filter($assignedStates)));
 
         $user = User::create([
             'name' => $validated['name'],
@@ -179,6 +190,7 @@ class UserController extends Controller
             'rep_code' => strtoupper($validated['rep_code']),
             'state' => $validated['state'],
             'city' => $validated['city'],
+            'assigned_states' => $assignedStates,
             'territory' => $validated['city'] . ', ' . $validated['state'],
             'password' => Hash::make($validated['password']),
             'role_id' => $salesRole->id,
@@ -196,6 +208,7 @@ class UserController extends Controller
                 'rep_code' => $user->rep_code,
                 'state' => $user->state,
                 'city' => $user->city,
+                'assigned_states' => $user->assigned_states,
             ],
             notes: "Created sales representative account for {$user->name} ({$user->email})"
         );
@@ -222,6 +235,8 @@ class UserController extends Controller
             $rules['rep_code'] = ['required', 'string', 'max:10'];
             $rules['state'] = ['required', 'string', 'max:100'];
             $rules['city'] = ['required', 'string', 'max:200'];
+            $rules['assigned_states'] = ['nullable', 'array'];
+            $rules['assigned_states.*'] = ['string', 'max:100'];
         } else {
             $rules['rep_code'] = ['nullable', 'string', 'max:10'];
             $rules['territory'] = ['nullable', 'string', 'max:255'];
@@ -240,6 +255,11 @@ class UserController extends Controller
             $updateData['rep_code'] = strtoupper($validated['rep_code']);
             $updateData['state'] = $validated['state'];
             $updateData['city'] = $validated['city'];
+            $assignedStates = $request->input('assigned_states', []);
+            if (!in_array($validated['state'], $assignedStates)) {
+                $assignedStates[] = $validated['state'];
+            }
+            $updateData['assigned_states'] = array_values(array_unique(array_filter($assignedStates)));
             $updateData['territory'] = $validated['city'] . ', ' . $validated['state'];
         } else {
             if (isset($validated['territory'])) {

@@ -20,6 +20,7 @@ class User extends Authenticatable
         'territory',
         'state',
         'city',
+        'assigned_states',
         'rep_code',
         'is_active',
         'last_login_at',
@@ -38,6 +39,7 @@ class User extends Authenticatable
         'last_login_at' => 'datetime',
         'locked_until' => 'datetime',
         'password' => 'hashed',
+        'assigned_states' => 'array',
     ];
 
     public function role()
@@ -53,6 +55,57 @@ class User extends Authenticatable
     public function auditLogs()
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    public function territories()
+    {
+        return $this->hasMany(Territory::class, 'assigned_rep_id');
+    }
+
+    /**
+     * Get all states assigned to this representative (supports multiple states).
+     */
+    public function getAssignedStates(): array
+    {
+        // 1. Explicitly assigned states on user profile
+        if (!empty($this->assigned_states) && is_array($this->assigned_states)) {
+            $cleaned = array_values(array_unique(array_filter($this->assigned_states)));
+            if (!empty($cleaned)) {
+                return $cleaned;
+            }
+        }
+
+        // 2. From territories table via assigned_rep_id
+        $states = [];
+        $territories = $this->territories;
+        if ($territories && $territories->count()) {
+            foreach ($territories as $t) {
+                if (!empty($t->states)) {
+                    $s = is_array($t->states) ? $t->states : json_decode($t->states, true);
+                    if (is_array($s)) {
+                        $states = array_merge($states, $s);
+                    }
+                }
+                if (str_contains($t->label, 'Florida') || in_array($t->code, ['NFL', 'SWFL', 'SEFL'])) {
+                    $states[] = 'Florida';
+                }
+                if (str_contains($t->label, 'Texas') || in_array($t->code, ['NTX', 'STX'])) {
+                    $states[] = 'Texas';
+                }
+            }
+        }
+
+        if (!empty($this->state)) {
+            $states[] = $this->state;
+        }
+
+        $states = array_values(array_unique(array_filter($states)));
+        if (!empty($states)) {
+            return $states;
+        }
+
+        // 3. Fallback: all available states from FreightRule
+        return FreightRule::distinct()->orderBy('state')->pluck('state')->toArray();
     }
 
     public function hasRole(string $slug): bool

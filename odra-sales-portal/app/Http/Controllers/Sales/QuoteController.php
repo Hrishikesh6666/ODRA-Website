@@ -75,6 +75,7 @@ class QuoteController extends Controller
                 'rep_code' => $rep->rep_code,
                 'state' => $rep->state,
                 'city' => $rep->city,
+                'assigned_states' => $rep->getAssignedStates(),
                 'has_freight' => $rule !== null,
                 'customer_rate' => $rule ? (float) $rule->customer_rate : null,
                 'municipality_rate' => $rule ? (float) $rule->municipality_rate : null,
@@ -90,6 +91,7 @@ class QuoteController extends Controller
                 'rep_code' => $user->rep_code,
                 'state' => $user->state,
                 'city' => $user->city,
+                'assigned_states' => $user->getAssignedStates(),
                 'has_freight' => $userRule !== null,
                 'customer_rate' => $userRule ? (float) $userRule->customer_rate : null,
                 'municipality_rate' => $userRule ? (float) $userRule->municipality_rate : null,
@@ -97,9 +99,15 @@ class QuoteController extends Controller
         }
 
         $defaultRep = $user->name;
+        $assignedStates = $user ? $user->getAssignedStates() : [];
+        $initialStateName = $user->state ?: ($assignedStates[0] ?? 'Texas');
+        $initialCity = $user->city ?: '';
         $userRule = $user->assignedFreightRule();
+        if (!$userRule && $initialStateName && $initialCity) {
+            $userRule = \App\Models\FreightRule::where('state', $initialStateName)->where('city', $initialCity)->first();
+        }
         $initialFreight = $userRule ? (float) $userRule->customer_rate : 0;
-        $initialTerritory = ($user->state && $user->city) ? ($user->city . ', ' . $user->state) : '';
+        $initialTerritory = ($initialCity && $initialStateName) ? ($initialCity . ', ' . $initialStateName) : '';
 
         return view('sales.quotes.builder', [
             'quote' => null,
@@ -112,6 +120,8 @@ class QuoteController extends Controller
             'initialState' => [
                 'quoteSeq' => (string) $nextQuoteNumber,
                 'salesRep' => $defaultRep,
+                'destState' => $initialStateName,
+                'destCity' => $initialCity,
                 'date' => now()->format('Y-m-d'),
                 'model' => $catalog['items'][0]['model'] ?? 'MT4H',
                 'basis' => 'MSRP (Commercial)',
@@ -155,6 +165,7 @@ class QuoteController extends Controller
                 'rep_code' => $rep->rep_code,
                 'state' => $rep->state,
                 'city' => $rep->city,
+                'assigned_states' => $rep->getAssignedStates(),
                 'has_freight' => $rule !== null,
                 'customer_rate' => $rule ? (float) $rule->customer_rate : null,
                 'municipality_rate' => $rule ? (float) $rule->municipality_rate : null,
@@ -171,6 +182,7 @@ class QuoteController extends Controller
                 'rep_code' => $targetUser->rep_code,
                 'state' => $targetUser->state,
                 'city' => $targetUser->city,
+                'assigned_states' => $targetUser->getAssignedStates(),
                 'has_freight' => $rule !== null,
                 'customer_rate' => $rule ? (float) $rule->customer_rate : null,
                 'municipality_rate' => $rule ? (float) $rule->municipality_rate : null,
@@ -181,9 +193,26 @@ class QuoteController extends Controller
 
         $lockedRepName = (! $user->isAdmin()) ? $user->name : ($snapshot?->sales_rep_name ?: $quote->user->name);
 
+        $destState = $savedState['destState'] ?? '';
+        $destCity = $savedState['destCity'] ?? '';
+        if (empty($destState) && !empty($snapshot?->rep_territory)) {
+            $parts = explode(',', $snapshot->rep_territory);
+            if (count($parts) >= 2) {
+                $destCity = trim($parts[0]);
+                $destState = trim($parts[1]);
+            }
+        }
+        if (empty($destState)) {
+            $assigned = $targetUser ? $targetUser->getAssignedStates() : [];
+            $destState = $targetUser->state ?: ($assigned[0] ?? 'Texas');
+            $destCity = $targetUser->city ?: '';
+        }
+
         $defaultState = [
             'quoteSeq' => (string) $quote->quote_number,
             'salesRep' => $lockedRepName,
+            'destState' => $destState,
+            'destCity' => $destCity,
             'date' => $snapshot?->created_at ? $snapshot->created_at->format('Y-m-d') : $quote->created_at->format('Y-m-d'),
             'model' => $snapshot?->model_code ?: 'MT4H',
             'basis' => $snapshot?->pricing_basis ?: 'MSRP (Commercial)',

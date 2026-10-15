@@ -67,22 +67,22 @@ class UserSeeder extends Seeder
             );
         }
 
-        // 3. Sales Representatives (role_id = 2) - Field quotations with isolated access
+        // 3. Sales Representatives (role_id = 2) - Field quotations with multi-state / multi-city coverage
         $salesReps = [
-            ['name' => 'Carlos Silva', 'rep_code' => 'CS', 'state' => 'Texas', 'city' => 'San Antonio TX 78233'],
-            ['name' => 'Chris Norlin', 'rep_code' => 'CN', 'state' => 'Florida', 'city' => 'Orlando FL 32807'],
-            ['name' => 'Fernando Oliveira', 'rep_code' => 'FO', 'state' => 'California', 'city' => 'Sacramento CA 91750'],
-            ['name' => 'JJ Rickis', 'rep_code' => 'JR', 'state' => 'Alabama', 'city' => 'Birmingham AL 35234'],
-            ['name' => 'John Wells', 'rep_code' => 'JW', 'state' => 'Georgia', 'city' => 'Cartersville GA 30121'],
-            ['name' => 'Juan Oliver', 'rep_code' => 'JO', 'state' => 'Florida', 'city' => 'Miami FL 33172'],
-            ['name' => 'Kerry Briggs', 'rep_code' => 'KB', 'state' => 'Utah', 'city' => 'Valley City UT 84119'],
-            ['name' => 'Kra Whitmore', 'rep_code' => 'KW', 'state' => 'Florida', 'city' => 'Tampa FL 33609'],
-            ['name' => 'Paul Piotrowski', 'rep_code' => 'PP', 'state' => 'Illinois', 'city' => 'Chicago IL 60612'],
-            ['name' => 'Robert Yuska', 'rep_code' => 'RY', 'state' => 'Pennsylvania', 'city' => 'Harrisburg PA 17110'],
-            ['name' => 'Ryan Khosrofian', 'rep_code' => 'RK', 'state' => 'Indiana', 'city' => 'Indianapolis IN 46214'],
-            ['name' => 'Sean Chenoweth', 'rep_code' => 'SC', 'state' => 'Colorado', 'city' => 'Colorado Springs CO 80906'],
-            ['name' => 'Shawn Herringer', 'rep_code' => 'SH', 'state' => 'Texas', 'city' => 'Dallas TX 75247'],
-            ['name' => 'Troy Fisher', 'rep_code' => 'TF', 'state' => 'Arizona', 'city' => 'Phoenix AZ 85009'],
+            ['name' => 'Carlos Silva', 'rep_code' => 'CS', 'state' => 'Texas', 'city' => 'San Antonio TX 78233', 'assigned_states' => ['Texas']],
+            ['name' => 'Chris Norlin', 'rep_code' => 'CN', 'state' => 'Florida', 'city' => 'Orlando FL 32807', 'assigned_states' => ['Florida']],
+            ['name' => 'Fernando Oliveira', 'rep_code' => 'FO', 'state' => 'California', 'city' => 'Sacramento CA 91750', 'assigned_states' => ['California']],
+            ['name' => 'JJ Rickis', 'rep_code' => 'JR', 'state' => 'Alabama', 'city' => 'Birmingham AL 35234', 'assigned_states' => ['Alabama', 'Arkansas', 'Louisiana', 'Mississippi']],
+            ['name' => 'John Wells', 'rep_code' => 'JW', 'state' => 'Georgia', 'city' => 'Cartersville GA 30121', 'assigned_states' => ['Georgia', 'Tennessee']],
+            ['name' => 'Juan Oliver', 'rep_code' => 'JO', 'state' => 'Florida', 'city' => 'Miami FL 33172', 'assigned_states' => ['Florida']],
+            ['name' => 'Kerry Briggs', 'rep_code' => 'KB', 'state' => 'Utah', 'city' => 'Valley City UT 84119', 'assigned_states' => ['Utah']],
+            ['name' => 'Kra Whitmore', 'rep_code' => 'KW', 'state' => 'Florida', 'city' => 'Tampa FL 33609', 'assigned_states' => ['Florida']],
+            ['name' => 'Paul Piotrowski', 'rep_code' => 'PP', 'state' => 'Illinois', 'city' => 'Chicago IL 60612', 'assigned_states' => ['Illinois', 'Wisconsin']],
+            ['name' => 'Robert Yuska', 'rep_code' => 'RY', 'state' => 'Pennsylvania', 'city' => 'Harrisburg PA 17110', 'assigned_states' => ['Pennsylvania']],
+            ['name' => 'Ryan Khosrofian', 'rep_code' => 'RK', 'state' => 'Indiana', 'city' => 'Indianapolis IN 46214', 'assigned_states' => ['Indiana', 'Kentucky']],
+            ['name' => 'Sean Chenoweth', 'rep_code' => 'SC', 'state' => 'Colorado', 'city' => 'Colorado Springs CO 80906', 'assigned_states' => ['Colorado', 'Wyoming']],
+            ['name' => 'Shawn Herringer', 'rep_code' => 'SH', 'state' => 'Texas', 'city' => 'Dallas TX 75247', 'assigned_states' => ['Texas']],
+            ['name' => 'Troy Fisher', 'rep_code' => 'TF', 'state' => 'Arizona', 'city' => 'Phoenix AZ 85009', 'assigned_states' => ['Arizona']],
         ];
 
         foreach ($salesReps as $rep) {
@@ -97,7 +97,8 @@ class UserSeeder extends Seeder
                     'password' => Hash::make('OdraSales2026!'),
                     'state' => $rep['state'],
                     'city' => $rep['city'],
-                    'territory' => $rep['city'] . ', ' . $rep['state'],
+                    'assigned_states' => $rep['assigned_states'],
+                    'territory' => implode(', ', $rep['assigned_states']),
                     'is_active' => true,
                 ]
             );

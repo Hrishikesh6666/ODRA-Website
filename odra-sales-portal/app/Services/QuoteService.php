@@ -383,25 +383,57 @@ class QuoteService
                 $repUser = $version->quote->user;
             }
 
-            if (! $repUser || ! $repUser->state || ! $repUser->city) {
-                throw new Exception("Quotation generation failed: Sales representative '{$repName}' has no assigned State and City in the Freight Matrix. Please assign their delivery destination in the Admin panel.");
+            // Determine destination state and city selected by the representative
+            $destState = $state['destState'] ?? null;
+            $destCity = $state['destCity'] ?? null;
+
+            // If not directly in state, try parsing repTerritory "City, State"
+            if ((!$destState || !$destCity) && !empty($state['repTerritory'])) {
+                $parts = explode(',', $state['repTerritory']);
+                if (count($parts) >= 2) {
+                    $destCity = trim($parts[0]);
+                    $destState = trim($parts[1]);
+                }
             }
 
-            $freightRule = FreightRule::where('state', $repUser->state)
-                ->where('city', $repUser->city)
+            // Fallback to rep's primary state/city if still empty
+            if (!$destState && $repUser) {
+                $assigned = $repUser->getAssignedStates();
+                $destState = $repUser->state ?: ($assigned[0] ?? null);
+            }
+            if (!$destCity && $repUser) {
+                $destCity = $repUser->city;
+            }
+
+            if (! $destState || ! $destCity) {
+                throw new Exception("Quotation generation failed: Please select a valid delivery State and City destination from your assigned coverage area.");
+            }
+
+            // Validate that the chosen state is assigned to the sales rep (unless Admin)
+            if ($repUser && auth()->check() && !auth()->user()->isAdmin()) {
+                $allowedStates = $repUser->getAssignedStates();
+                if (!empty($allowedStates) && !in_array($destState, $allowedStates)) {
+                    throw new Exception("Quotation generation failed: State '{$destState}' is not within sales representative {$repUser->name}'s assigned territories (" . implode(', ', $allowedStates) . ").");
+                }
+            }
+
+            $freightRule = FreightRule::where('state', $destState)
+                ->where('city', $destCity)
                 ->first();
 
             if (! $freightRule) {
-                throw new Exception("Quotation generation failed: No valid freight rule found in the Freight Matrix for '{$repUser->city}, {$repUser->state}'.");
+                throw new Exception("Quotation generation failed: No valid freight rule found in the Freight Matrix for '{$destCity}, {$destState}'.");
             }
 
             $rate = $useMunicipality ? (float) $freightRule->municipality_rate : (float) $freightRule->customer_rate;
             if ($rate <= 0) {
-                throw new Exception("Quotation generation failed: The freight rate for '{$repUser->city}, {$repUser->state}' is $0.00 in the Freight Matrix. A valid rate is required.");
+                throw new Exception("Quotation generation failed: The freight rate for '{$destCity}, {$destState}' is $0.00 in the Freight Matrix. A valid rate is required.");
             }
 
             $freightAmount = $rate;
             $repTerritory = "{$freightRule->city}, {$freightRule->state}";
+            $state['destState'] = $freightRule->state;
+            $state['destCity'] = $freightRule->city;
         }
 
         // 6. Subtotal & Total

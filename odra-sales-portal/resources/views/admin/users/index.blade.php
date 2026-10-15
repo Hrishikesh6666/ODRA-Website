@@ -510,6 +510,16 @@
                                 @else
                                     <span style="color: #64748b;">{{ $u->territory ?? 'Unassigned' }}</span>
                                 @endif
+                                @php
+                                    $repAssigned = $u->getAssignedStates();
+                                @endphp
+                                @if (!empty($repAssigned))
+                                    <div style="margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px;">
+                                        @foreach ($repAssigned as $stTag)
+                                            <span style="font-size: 10.5px; background: #e0f2fe; color: #0369a1; padding: 1px 6px; border-radius: 4px; font-weight: 600;">{{ $stTag }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </td>
                             <td>
                                 <span class="badge {{ $u->is_active ? 'badge-active' : 'badge-inactive' }}">
@@ -837,6 +847,24 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- Multi-State Assigned Coverage -->
+                <div style="margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">
+                        Assigned Coverage States (Select all states this representative covers):
+                    </label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; max-height: 120px; overflow-y: auto; background: #fff; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                        @foreach ($freightStates as $st)
+                            <label style="font-size: 11px; display: flex; align-items: center; gap: 4px; font-weight: normal; margin: 0; cursor: pointer;">
+                                <input type="checkbox" name="assigned_states[]" value="{{ $st }}" class="add_rep_assigned_state" id="add_state_{{ Str::slug($st) }}">
+                                <span>{{ $st }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;">
+                        The representative will be allowed to select customer destinations within all checked states.
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label>Initial Password</label>
@@ -894,7 +922,7 @@
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div class="form-group" style="margin-bottom:0;">
-                        <label>State / Territory <span style="color:var(--red);">*</span></label>
+                        <label>Default State <span style="color:var(--red);">*</span></label>
                         <select id="edit_rep_state" name="state" class="form-control" onchange="onEditRepStateChange()">
                             <option value="">-- Select State --</option>
                             @foreach ($freightStates as $st)
@@ -903,10 +931,28 @@
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
-                        <label>City / Delivery Destination <span style="color:var(--red);">*</span></label>
+                        <label>Default City <span style="color:var(--red);">*</span></label>
                         <select id="edit_rep_city" name="city" class="form-control">
                             <option value="">-- Select State First --</option>
                         </select>
+                    </div>
+                </div>
+
+                <!-- Multi-State Assigned Coverage in Edit Modal -->
+                <div style="margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 10px;">
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">
+                        Assigned Coverage States (Select all states this representative covers):
+                    </label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; max-height: 120px; overflow-y: auto; background: #fff; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px;">
+                        @foreach ($freightStates as $st)
+                            <label style="font-size: 11px; display: flex; align-items: center; gap: 4px; font-weight: normal; margin: 0; cursor: pointer;">
+                                <input type="checkbox" name="assigned_states[]" value="{{ $st }}" class="edit_rep_assigned_state" id="edit_state_{{ Str::slug($st) }}">
+                                <span>{{ $st }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;">
+                        The representative will be allowed to select customer destinations within all checked states.
                     </div>
                 </div>
             </div>
@@ -1033,11 +1079,21 @@ function populateCityDropdown(stateVal, citySelectId, selectedCity = '') {
 function onAddRepStateChange() {
     const st = document.getElementById('add_rep_state').value;
     populateCityDropdown(st, 'add_rep_city');
+    if (st) {
+        document.querySelectorAll('.add_rep_assigned_state').forEach(cb => {
+            if (cb.value === st) cb.checked = true;
+        });
+    }
 }
 
 function onEditRepStateChange() {
     const st = document.getElementById('edit_rep_state').value;
     populateCityDropdown(st, 'edit_rep_city');
+    if (st) {
+        document.querySelectorAll('.edit_rep_assigned_state').forEach(cb => {
+            if (cb.value === st) cb.checked = true;
+        });
+    }
 }
 
 function openAddAdminModal() {
@@ -1107,6 +1163,23 @@ function openEditModal(user, roleSlug) {
         repCitySel.required = true;
         repStateSel.value = user.state || '';
         populateCityDropdown(user.state, 'edit_rep_city', user.city);
+
+        // Populate assigned_states checkboxes
+        document.querySelectorAll('.edit_rep_assigned_state').forEach(cb => cb.checked = false);
+        let repStates = [];
+        if (Array.isArray(user.assigned_states)) {
+            repStates = user.assigned_states;
+        } else if (typeof user.assigned_states === 'string') {
+            try { repStates = JSON.parse(user.assigned_states); } catch (e) {}
+        }
+        if (!repStates.length && user.state) {
+            repStates = [user.state];
+        }
+        document.querySelectorAll('.edit_rep_assigned_state').forEach(cb => {
+            if (repStates.includes(cb.value)) {
+                cb.checked = true;
+            }
+        });
     }
 
     document.getElementById('editModal').style.display = 'flex';

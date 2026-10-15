@@ -694,13 +694,32 @@ table.items tr.totalRow td {
     <div id="enhList"></div>
 
     <h2 class="sec">Freight &amp; Delivery Destination</h2>
-    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:10px;">
+    <div style="margin-bottom:8px; font-size:11.5px; color:#475569;">
+      Select the customer delivery state and city from your assigned coverage territory:
+    </div>
+
+    <div class="row2">
+      <div>
+        <label>Delivery State / Territory</label>
+        <select id="destState" {{ $isReadonly ? 'disabled' : '' }}>
+          <option value="">&mdash; Select State &mdash;</option>
+        </select>
+      </div>
+      <div>
+        <label>Delivery City / Destination</label>
+        <select id="destCity" {{ $isReadonly ? 'disabled' : '' }}>
+          <option value="">&mdash; Select City &mdash;</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-top:10px; margin-bottom:10px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-            <span style="font-size:11px; font-weight:700; color:#1e293b; text-transform:uppercase; letter-spacing:0.5px;">Rep Delivery Destination</span>
+            <span style="font-size:11px; font-weight:700; color:#1e293b; text-transform:uppercase; letter-spacing:0.5px;">Selected Delivery Destination</span>
             <span id="freightStatusBadge" style="font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700; background:#dcfce7; color:#15803d;">Matrix Linked</span>
         </div>
         <div id="freightDestDisplay" style="font-size:13px; font-weight:600; color:#0f172a;">
-            Loading assigned destination...
+            Loading destination...
         </div>
         <div id="freightBasisDisplay" style="font-size:11.5px; color:#64748b; margin-top:3px;">
             <!-- Rate type & price -->
@@ -978,6 +997,8 @@ let state = {
   baseQty: 1,
   freight: 0,
   baseShowDiscount: 0,
+  destState: '',
+  destCity: '',
   repTerritory: '',
   quoteSeq: '3001',
   enh: Array.from({length: 13}, () => ({desc: '', qty: 1}))
@@ -1230,14 +1251,104 @@ function getSelectedRep() {
   return SALES_REPS.find(r => r.name === repName || (r.name && r.name.toLowerCase() === repName.toLowerCase())) || null;
 }
 
-function getFreightRuleForRep(rep) {
-  if (!rep || !rep.state || !rep.city) return null;
-  const repState = String(rep.state).trim().toLowerCase();
-  const repCity = String(rep.city).trim().toLowerCase();
+function getAvailableStatesForRep(rep) {
+  if (rep && Array.isArray(rep.assigned_states) && rep.assigned_states.length > 0) {
+    return rep.assigned_states;
+  }
+  if (rep && rep.state) {
+    return [rep.state];
+  }
+  // Fallback (for Admins or reps without restrictions): all distinct states in FREIGHT_ESTIMATES
+  const allStates = [...new Set(FREIGHT_ESTIMATES.map(f => f.state).filter(Boolean))].sort();
+  return allStates;
+}
+
+function getCitiesForState(stateName) {
+  if (!stateName) return [];
+  const sName = String(stateName).trim().toLowerCase();
+  return FREIGHT_ESTIMATES.filter(f => String(f.state).trim().toLowerCase() === sName);
+}
+
+function populateDestStateDropdown() {
+  const stateSel = document.getElementById('destState');
+  if (!stateSel) return;
+
+  const rep = getSelectedRep();
+  const availableStates = getAvailableStatesForRep(rep);
+
+  stateSel.innerHTML = '';
+  if (!availableStates.length) {
+    stateSel.innerHTML = '<option value="">&mdash; No Assigned States &mdash;</option>';
+    populateDestCityDropdown();
+    return;
+  }
+
+  let selectedState = state.destState;
+  if (!selectedState || !availableStates.includes(selectedState)) {
+    if (rep && rep.state && availableStates.includes(rep.state)) {
+      selectedState = rep.state;
+    } else {
+      selectedState = availableStates[0];
+    }
+  }
+  state.destState = selectedState;
+
+  availableStates.forEach(st => {
+    const opt = document.createElement('option');
+    opt.value = st;
+    opt.textContent = st;
+    if (st === selectedState) opt.selected = true;
+    stateSel.appendChild(opt);
+  });
+
+  populateDestCityDropdown();
+}
+
+function populateDestCityDropdown() {
+  const citySel = document.getElementById('destCity');
+  if (!citySel) return;
+
+  citySel.innerHTML = '';
+  const cities = getCitiesForState(state.destState);
+
+  if (!cities.length) {
+    citySel.innerHTML = '<option value="">&mdash; No Destinations Found &mdash;</option>';
+    state.destCity = '';
+    return;
+  }
+
+  const rep = getSelectedRep();
+  let selectedCity = state.destCity;
+  const cityNames = cities.map(c => c.city);
+
+  if (!selectedCity || !cityNames.includes(selectedCity)) {
+    if (rep && rep.city && cityNames.includes(rep.city)) {
+      selectedCity = rep.city;
+    } else {
+      selectedCity = cities[0].city;
+    }
+  }
+  state.destCity = selectedCity;
+
+  cities.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.city;
+    const commRate = Number(c.customer || 0).toLocaleString();
+    const coopRate = Number(c.municipality || 0).toLocaleString();
+    opt.textContent = `${c.city} (Comm: $${commRate} | Co-op: $${coopRate})`;
+    if (c.city === selectedCity) opt.selected = true;
+    citySel.appendChild(opt);
+  });
+}
+
+function getSelectedFreightRule() {
+  if (!state.destState || !state.destCity) return null;
+  const sName = String(state.destState).trim().toLowerCase();
+  const cName = String(state.destCity).trim().toLowerCase();
 
   return FREIGHT_ESTIMATES.find(r => 
-    String(r.state).trim().toLowerCase() === repState &&
-    String(r.city).trim().toLowerCase() === repCity
+    String(r.state).trim().toLowerCase() === sName &&
+    String(r.city).trim().toLowerCase() === cName
   ) || null;
 }
 
@@ -1303,19 +1414,19 @@ function applyRepFreight() {
     return;
   }
 
-  const rule = getFreightRuleForRep(rep);
+  const rule = getSelectedFreightRule();
   if (!rule) {
-    const locText = (rep.city || rep.state) ? `${rep.city || ''}, ${rep.state || ''}` : 'Unassigned destination';
+    const locText = (state.destCity || state.destState) ? `${state.destCity || ''}, ${state.destState || ''}` : 'Unselected destination';
     if (destDisplay) destDisplay.textContent = locText;
-    if (basisDisplay) basisDisplay.textContent = 'No matching destination found in Freight Matrix';
+    if (basisDisplay) basisDisplay.textContent = 'Please select a delivery state and city destination from the Freight Matrix';
     if (statusBadge) {
       statusBadge.style.background = '#fee2e2';
       statusBadge.style.color = '#991b1b';
-      statusBadge.textContent = 'Missing Rate';
+      statusBadge.textContent = 'Destination Required';
     }
     if (errorBanner) {
       errorBanner.style.display = 'block';
-      if (errorText) errorText.textContent = `No valid freight rate found for ${rep.name} (${locText}) in the Freight Matrix. Quotation generation is disabled.`;
+      if (errorText) errorText.textContent = `No valid freight rate found for destination "${locText}" in the Freight Matrix. Quotation generation is disabled.`;
     }
     state.freight = 0;
     if (freightEl) freightEl.value = 0;
@@ -1339,7 +1450,7 @@ function applyRepFreight() {
     }
     if (errorBanner) {
       errorBanner.style.display = 'block';
-      if (errorText) errorText.textContent = `The freight rate for ${rep.name} at ${rule.city} is $0.00. Quotation generation is disabled.`;
+      if (errorText) errorText.textContent = `The freight rate for ${rule.city}, ${rule.state} is $0.00 in the Freight Matrix. Quotation generation is disabled.`;
     }
     state.freight = 0;
     if (freightEl) freightEl.value = 0;
@@ -1547,7 +1658,10 @@ function calculateSnapshotData() {
     total: totalVal,
     enhancements: enhRows,
     quote_code: currentQuoteCode(),
-    customer: state.toCompany
+    customer: state.toCompany,
+    dest_state: state.destState,
+    dest_city: state.destCity,
+    rep_territory: state.repTerritory
   };
 }
 
@@ -1653,7 +1767,7 @@ function renderPreview() {
   const addrLine2 = esc(TEMPLATE_HEADER.address_line_2 || 't: 844-888-6372 • e: info@odrasweeper.com • odrasweeper.com');
   const quoteTitle = esc(TEMPLATE_HEADER.quote_title || 'QUOTATION');
   const sectionHeading = esc(TEMPLATE_HEADER.section_heading || 'Including Enhancements');
-  const freightRowLabel = esc(TEMPLATE_HEADER.freight_row_label || 'Sweeper Transport / Freight');
+  const freightRowLabel = esc(TEMPLATE_HEADER.freight_row_label || 'Sweeper Transport / Freight') + (state.destCity && !(state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up') ? ` &mdash; ${esc(state.destCity)}, ${esc(state.destState)}` : '');
   const totalRowLabel = esc(TEMPLATE_HEADER.total_row_label || 'TOTAL (USD)');
   const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
 
@@ -1859,6 +1973,7 @@ function initForm() {
       salesRepEl.value = state.salesRep || '';
       salesRepEl.addEventListener('change', e => {
         state.salesRep = e.target.value;
+        populateDestStateDropdown();
         applyRepFreight();
         render();
       });
@@ -1867,6 +1982,25 @@ function initForm() {
       salesRepEl.value = (!IS_ADMIN && CURRENT_USER_NAME) ? CURRENT_USER_NAME : (state.salesRep || '');
       state.salesRep = salesRepEl.value;
     }
+  }
+
+  const destStateEl = document.getElementById('destState');
+  if (destStateEl) {
+    destStateEl.addEventListener('change', e => {
+      state.destState = e.target.value;
+      populateDestCityDropdown();
+      applyRepFreight();
+      render();
+    });
+  }
+
+  const destCityEl = document.getElementById('destCity');
+  if (destCityEl) {
+    destCityEl.addEventListener('change', e => {
+      state.destCity = e.target.value;
+      applyRepFreight();
+      render();
+    });
   }
 
   bindSimple('po', 'po');
@@ -1903,6 +2037,7 @@ function initForm() {
     }
   });
 
+  populateDestStateDropdown();
   render();
 
   // Automatic Print if URL contains ?print=1
@@ -1924,7 +2059,7 @@ async function saveQuote(isFinalize = false) {
   const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
   const isEXW = (state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up');
   if (!isEXW && (!freightValid || Number(state.freight) <= 0)) {
-    alert('Quotation generation is blocked: A valid freight rate could not be found for the selected Sales Representative in the Freight Matrix.\n\nPlease ensure the Sales Representative has an assigned State and City in the Admin panel.');
+    alert('Quotation generation is blocked: A valid freight rate could not be found for the selected delivery destination in the Freight Matrix.\n\nPlease select a valid delivery State and City destination from your assigned coverage area.');
     return;
   }
 
