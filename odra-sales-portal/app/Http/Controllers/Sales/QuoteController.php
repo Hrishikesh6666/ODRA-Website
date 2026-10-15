@@ -67,9 +67,24 @@ class QuoteController extends Controller
 
         $salesReps = \App\Models\User::whereHas('role', function ($q) {
             $q->whereIn('slug', ['sales', 'manager']);
-        })->where('is_active', true)->orderBy('name')->get();
+        })->where('is_active', true)->orderBy('name')->get()->map(function ($rep) {
+            $rule = $rep->assignedFreightRule();
+            return [
+                'id' => $rep->id,
+                'name' => $rep->name,
+                'rep_code' => $rep->rep_code,
+                'state' => $rep->state,
+                'city' => $rep->city,
+                'has_freight' => $rule !== null,
+                'customer_rate' => $rule ? (float) $rule->customer_rate : null,
+                'municipality_rate' => $rule ? (float) $rule->municipality_rate : null,
+            ];
+        });
 
         $defaultRep = $user->isSalesRep() ? $user->name : '';
+        $userRule = $user->assignedFreightRule();
+        $initialFreight = $userRule ? (float) $userRule->customer_rate : 0;
+        $initialTerritory = ($user->state && $user->city) ? ($user->city . ', ' . $user->state) : '';
 
         return view('sales.quotes.builder', [
             'quote' => null,
@@ -94,9 +109,9 @@ class QuoteController extends Controller
                 'acct' => '',
                 'fob' => 'Transport, estimate only noted in quote',
                 'baseQty' => 1,
-                'freight' => 0,
+                'freight' => $initialFreight,
                 'baseShowDiscount' => 0,
-                'repTerritory' => '',
+                'repTerritory' => $initialTerritory,
                 'enh' => array_fill(0, 13, ['desc' => '', 'qty' => 1]),
             ],
         ]);
@@ -117,7 +132,19 @@ class QuoteController extends Controller
 
         $salesReps = \App\Models\User::whereHas('role', function ($q) {
             $q->whereIn('slug', ['sales', 'manager']);
-        })->where('is_active', true)->orderBy('name')->get();
+        })->where('is_active', true)->orderBy('name')->get()->map(function ($rep) {
+            $rule = $rep->assignedFreightRule();
+            return [
+                'id' => $rep->id,
+                'name' => $rep->name,
+                'rep_code' => $rep->rep_code,
+                'state' => $rep->state,
+                'city' => $rep->city,
+                'has_freight' => $rule !== null,
+                'customer_rate' => $rule ? (float) $rule->customer_rate : null,
+                'municipality_rate' => $rule ? (float) $rule->municipality_rate : null,
+            ];
+        });
 
         $savedState = is_array($snapshot?->full_state) ? $snapshot->full_state : [];
 

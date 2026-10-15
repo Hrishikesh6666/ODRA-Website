@@ -490,7 +490,7 @@
                         <th>Rep Code</th>
                         <th>Office Email</th>
                         <th>Company ID</th>
-                        <th>Assigned Territory</th>
+                        <th>Assigned Territory / Freight Destination</th>
                         <th>Status</th>
                         <th>Last Login</th>
                         <th style="text-align: right;">Actions</th>
@@ -503,7 +503,14 @@
                             <td><code>{{ $u->rep_code }}</code></td>
                             <td>{{ $u->email }}</td>
                             <td><code>{{ $u->company_id ?? '&mdash;' }}</code></td>
-                            <td>{{ $u->territory ?? 'Assigned Territories' }}</td>
+                            <td>
+                                @if ($u->state && $u->city)
+                                    <div style="font-weight: 600; color: #1e293b;">{{ $u->city }}</div>
+                                    <div style="font-size: 11.5px; color: #059669; font-weight: 600;">{{ $u->state }} &middot; Freight Linked</div>
+                                @else
+                                    <span style="color: #64748b;">{{ $u->territory ?? 'Unassigned' }}</span>
+                                @endif
+                            </td>
                             <td>
                                 <span class="badge {{ $u->is_active ? 'badge-active' : 'badge-inactive' }}">
                                     {{ $u->is_active ? 'Active' : 'Deactivated' }}
@@ -801,14 +808,34 @@
                     <input type="text" name="rep_code" class="form-control" required maxlength="4" placeholder="e.g. JD">
                 </div>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <div class="form-group">
-                    <label>Company ID (Optional)</label>
-                    <input type="text" name="company_id" class="form-control" placeholder="e.g. REP-JD">
+            <div class="form-group">
+                <label>Company ID (Optional)</label>
+                <input type="text" name="company_id" class="form-control" placeholder="e.g. REP-JD">
+            </div>
+
+            <!-- Mandatory Freight Matrix Location for Sales Rep -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
+                    <span>🚚</span>
+                    <span>Assigned Delivery Destination (Freight Matrix)</span>
+                    <span style="color:var(--red); font-size:11px;">* Mandatory</span>
                 </div>
-                <div class="form-group">
-                    <label>Territory / Region</label>
-                    <input type="text" name="territory" class="form-control" placeholder="e.g. Midwest, Illinois">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>State / Territory <span style="color:var(--red);">*</span></label>
+                        <select id="add_rep_state" name="state" class="form-control" required onchange="onAddRepStateChange()">
+                            <option value="">-- Select State --</option>
+                            @foreach ($freightStates as $st)
+                                <option value="{{ $st }}">{{ $st }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>City / Delivery Destination <span style="color:var(--red);">*</span></label>
+                        <select id="add_rep_city" name="city" class="form-control" required disabled>
+                            <option value="">-- Select State First --</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="form-group">
@@ -855,6 +882,32 @@
                 <div class="form-group" id="edit_territory_group">
                     <label id="edit_territory_label">Territory / Region</label>
                     <input type="text" id="edit_territory" name="territory" class="form-control">
+                </div>
+            </div>
+
+            <!-- Mandatory Freight Matrix Location for Sales Rep in Edit Modal -->
+            <div id="edit_rep_location_group" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+                <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 8px; display:flex; align-items:center; gap:6px;">
+                    <span>🚚</span>
+                    <span>Assigned Delivery Destination (Freight Matrix)</span>
+                    <span style="color:var(--red); font-size:11px;">* Mandatory</span>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>State / Territory <span style="color:var(--red);">*</span></label>
+                        <select id="edit_rep_state" name="state" class="form-control" onchange="onEditRepStateChange()">
+                            <option value="">-- Select State --</option>
+                            @foreach ($freightStates as $st)
+                                <option value="{{ $st }}">{{ $st }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>City / Delivery Destination <span style="color:var(--red);">*</span></label>
+                        <select id="edit_rep_city" name="city" class="form-control">
+                            <option value="">-- Select State First --</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="form-group">
@@ -942,6 +995,51 @@ function filterTableRows(tableBodyId, query) {
     }
 }
 
+const FREIGHT_RULES = @json($freightRules ?? []);
+
+function populateCityDropdown(stateVal, citySelectId, selectedCity = '') {
+    const citySel = document.getElementById(citySelectId);
+    if (!citySel) return;
+    citySel.innerHTML = '';
+
+    if (!stateVal) {
+        citySel.disabled = true;
+        citySel.innerHTML = '<option value="">-- Select State First --</option>';
+        return;
+    }
+
+    const matchingCities = FREIGHT_RULES.filter(r => r.state === stateVal);
+    if (!matchingCities.length) {
+        citySel.disabled = true;
+        citySel.innerHTML = '<option value="">No destinations found in Freight Matrix</option>';
+        return;
+    }
+
+    citySel.disabled = false;
+    citySel.innerHTML = '<option value="">-- Select City / Destination --</option>';
+    matchingCities.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.city;
+        const commRate = Number(r.customer_rate || 0).toLocaleString();
+        const coopRate = Number(r.municipality_rate || 0).toLocaleString();
+        opt.textContent = `${r.city} (Comm: $${commRate} | Co-op: $${coopRate})`;
+        if (selectedCity && r.city === selectedCity) {
+            opt.selected = true;
+        }
+        citySel.appendChild(opt);
+    });
+}
+
+function onAddRepStateChange() {
+    const st = document.getElementById('add_rep_state').value;
+    populateCityDropdown(st, 'add_rep_city');
+}
+
+function onEditRepStateChange() {
+    const st = document.getElementById('edit_rep_state').value;
+    populateCityDropdown(st, 'edit_rep_city');
+}
+
 function openAddAdminModal() {
     document.getElementById('addAdminModal').style.display = 'flex';
 }
@@ -969,6 +1067,9 @@ function openEditModal(user, roleSlug) {
     const territoryGroup = document.getElementById('edit_territory_group');
     const territoryLabel = document.getElementById('edit_territory_label');
     const territoryInput = document.getElementById('edit_territory');
+    const repLocGroup = document.getElementById('edit_rep_location_group');
+    const repStateSel = document.getElementById('edit_rep_state');
+    const repCitySel = document.getElementById('edit_rep_city');
     const modalTitle = document.getElementById('editModalTitle');
 
     if (roleSlug === 'admin') {
@@ -976,22 +1077,36 @@ function openEditModal(user, roleSlug) {
         repCodeGroup.style.display = 'none';
         repCodeInput.required = false;
         repCodeInput.value = '';
+        territoryGroup.style.display = 'block';
         territoryLabel.innerText = 'Technical Scope';
         territoryInput.value = user.territory || 'Technical Operations';
+        repLocGroup.style.display = 'none';
+        repStateSel.required = false;
+        repCitySel.required = false;
     } else if (roleSlug === 'manager') {
         modalTitle.innerText = 'Edit Commercial Manager';
         repCodeGroup.style.display = 'none';
         repCodeInput.required = false;
         repCodeInput.value = '';
+        territoryGroup.style.display = 'block';
         territoryLabel.innerText = 'Manager Scope / Title';
         territoryInput.value = user.territory || 'Commercial Management';
+        repLocGroup.style.display = 'none';
+        repStateSel.required = false;
+        repCitySel.required = false;
     } else {
         modalTitle.innerText = 'Edit Sales Representative';
         repCodeGroup.style.display = 'block';
         repCodeInput.required = true;
         repCodeInput.value = user.rep_code || '';
-        territoryLabel.innerText = 'Assigned Territory';
-        territoryInput.value = user.territory || '';
+        territoryGroup.style.display = 'none';
+        territoryInput.required = false;
+        
+        repLocGroup.style.display = 'block';
+        repStateSel.required = true;
+        repCitySel.required = true;
+        repStateSel.value = user.state || '';
+        populateCityDropdown(user.state, 'edit_rep_city', user.city);
     }
 
     document.getElementById('editModal').style.display = 'flex';

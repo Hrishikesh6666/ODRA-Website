@@ -18,6 +18,8 @@ class User extends Authenticatable
         'entra_object_id',
         'role_id',
         'territory',
+        'state',
+        'city',
         'rep_code',
         'is_active',
         'last_login_at',
@@ -80,6 +82,20 @@ class User extends Authenticatable
     public function canSeeFinancials(): bool
     {
         return $this->isManager();
+    }
+
+    /**
+     * Get the FreightRule corresponding to the user's assigned state and city.
+     */
+    public function assignedFreightRule()
+    {
+        if (! $this->state || ! $this->city) {
+            return null;
+        }
+
+        return FreightRule::where('state', $this->state)
+            ->where('city', $this->city)
+            ->first();
     }
 
     public function isLocked(): bool

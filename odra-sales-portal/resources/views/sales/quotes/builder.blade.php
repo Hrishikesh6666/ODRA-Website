@@ -656,7 +656,8 @@ table.items tr.totalRow td {
         <select id="salesRep" {{ $isReadonly ? 'disabled' : '' }}>
           <option value="">&mdash; Select &mdash;</option>
           @foreach($salesReps as $rep)
-            <option value="{{ $rep->name }}">{{ $rep->name }}</option>
+            @php $rName = is_array($rep) ? $rep['name'] : $rep->name; @endphp
+            <option value="{{ $rName }}">{{ $rName }}</option>
           @endforeach
         </select>
       </div>
@@ -685,14 +686,32 @@ table.items tr.totalRow td {
     <h2 class="sec">Enhancements <span class="smallnote">(pick up to 13 options)</span></h2>
     <div id="enhList"></div>
 
-    <h2 class="sec">Freight</h2>
-    <label>Rep Territory <span class="smallnote">internal only &mdash; auto-calculates freight below; never shown on the customer quote</span></label>
-    <select id="repTerritory" {{ $isReadonly ? 'disabled' : '' }}></select>
+    <h2 class="sec">Freight &amp; Delivery Destination</h2>
+    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:11px; font-weight:700; color:#1e293b; text-transform:uppercase; letter-spacing:0.5px;">Rep Delivery Destination</span>
+            <span id="freightStatusBadge" style="font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700; background:#dcfce7; color:#15803d;">Matrix Linked</span>
+        </div>
+        <div id="freightDestDisplay" style="font-size:13px; font-weight:600; color:#0f172a;">
+            Loading assigned destination...
+        </div>
+        <div id="freightBasisDisplay" style="font-size:11.5px; color:#64748b; margin-top:3px;">
+            <!-- Rate type & price -->
+        </div>
+    </div>
 
-    <label style="margin-top:10px;display:block;">Sweeper Transport / Freight Estimate (USD) <span class="smallnote">auto-filled from territory</span></label>
+    <!-- Hidden compatibility input -->
+    <input type="hidden" id="repTerritory" value="">
+
+    <label style="margin-top:10px;display:block;">Sweeper Transport / Freight Estimate (USD) <span class="smallnote">automatically populated from Freight Matrix</span></label>
     <input type="number" id="freight" value="0" min="0" readonly>
-    <div id="exwFreightNote" style="display:none;color:#666;font-size:11px;margin-top:4px;font-style:italic;">FOB is set to {{ $exwFob }} &mdash; freight is $0.</div>
+    <div id="exwFreightNote" style="display:none;color:#666;font-size:11px;margin-top:4px;font-style:italic;">FOB is set to {{ $exwFob }} &mdash; freight is $0.00.</div>
 
+    <!-- Critical Freight Rate Error Banner (Prevents quotation generation) -->
+    <div id="freightErrorBanner" style="display:none; background:#fee2e2; border:1px solid #fca5a5; border-radius:6px; padding:10px 12px; margin-top:10px; color:#991b1b; font-size:12px; line-height:1.45;">
+        <div style="font-weight:700; margin-bottom:2px;">⚠️ Freight Rate Error &mdash; Quote Generation Disabled</div>
+        <span id="freightErrorText">A valid freight rate could not be found for this sales representative's assigned delivery destination in the Freight Matrix.</span>
+    </div>
 
   </div>
 
@@ -710,6 +729,7 @@ const CATALOG = @json($catalog);
 const INITIAL_STATE = @json($initialState);
 const IS_READONLY = @json($isReadonly);
 const CURRENT_QUOTE_ID = @json($quote?->id);
+const SALES_REPS = @json($salesReps);
 
 let ITEMS = CATALOG.items || [];
 let CHASSIS = CATALOG.chassis || [];
@@ -1188,46 +1208,152 @@ function populateChassis() {
   state.chassis = keep;
 }
 
-function populateRepTerritory() {
-  const sel = document.getElementById('repTerritory');
-  if (!sel) return;
-  const rep = state.salesRep;
-  const repHasTerritories = TERRITORIES.some(t => t.rep === rep);
-  const opts = repHasTerritories ? TERRITORIES.filter(t => t.rep === rep) : TERRITORIES;
-  const keep = opts.some(o => o.code === state.repTerritory) ? state.repTerritory : (opts[0] ? opts[0].code : '');
-  sel.innerHTML = opts.map(t => `<option value="${t.code}" ${t.code === keep ? 'selected' : ''}>${esc(t.rep)} \u2014 ${esc(t.label)}</option>`).join('');
-  sel.value = keep;
-  state.repTerritory = keep;
+let freightValid = true;
+
+function getSelectedRep() {
+  const repName = (state.salesRep || '').trim();
+  if (!repName) return null;
+  return SALES_REPS.find(r => r.name === repName || (r.name && r.name.toLowerCase() === repName.toLowerCase())) || null;
 }
 
-function territoryMaxFreight(code, useMunicipality) {
-  const t = TERRITORIES.find(x => x.code === code);
-  if (!t) return 0;
-  const rows = t.cities && t.cities.length
-    ? FREIGHT_ESTIMATES.filter(r => t.cities.includes(r.city))
-    : FREIGHT_ESTIMATES.filter(r => t.states && t.states.includes(r.state));
-  if (!rows.length) return 0;
-  const vals = rows.map(r => useMunicipality ? (r.municipality || 0) : (r.customer || 0));
-  return Math.max(...vals);
+function getFreightRuleForRep(rep) {
+  if (!rep || !rep.state || !rep.city) return null;
+  const repState = String(rep.state).trim().toLowerCase();
+  const repCity = String(rep.city).trim().toLowerCase();
+
+  return FREIGHT_ESTIMATES.find(r => 
+    String(r.state).trim().toLowerCase() === repState &&
+    String(r.city).trim().toLowerCase() === repCity
+  ) || null;
 }
 
-function applyTerritoryFreight() {
+function applyRepFreight() {
   const freightEl = document.getElementById('freight');
   const exwNoteEl = document.getElementById('exwFreightNote');
+  const errorBanner = document.getElementById('freightErrorBanner');
+  const errorText = document.getElementById('freightErrorText');
+  const destDisplay = document.getElementById('freightDestDisplay');
+  const basisDisplay = document.getElementById('freightBasisDisplay');
+  const statusBadge = document.getElementById('freightStatusBadge');
+  const saveDraftBtn = document.getElementById('btnSaveDraft');
+  const finalizeBtn = document.getElementById('btnFinalize');
+
   const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
-  if (state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up') {
+  const isEXW = (state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up');
+
+  const rep = getSelectedRep();
+  const basisInfo = resolveBasis(state.basis);
+  const useMunicipality = !!(basisInfo && basisInfo.useMunicipalityFreight);
+
+  if (isEXW) {
     state.freight = 0;
     if (freightEl) freightEl.value = 0;
     if (exwNoteEl) exwNoteEl.style.display = 'block';
+    if (errorBanner) errorBanner.style.display = 'none';
+    if (statusBadge) {
+      statusBadge.style.background = '#e2e8f0';
+      statusBadge.style.color = '#475569';
+      statusBadge.textContent = 'EXW (Pick-up)';
+    }
+    if (destDisplay) {
+      destDisplay.textContent = 'Factory Pick-up (Freight $0.00)';
+    }
+    if (basisDisplay) {
+      basisDisplay.textContent = 'Customer arranged transport';
+    }
+    freightValid = true;
+    if (saveDraftBtn) { saveDraftBtn.disabled = false; saveDraftBtn.style.opacity = '1'; saveDraftBtn.style.cursor = 'pointer'; }
+    if (finalizeBtn) { finalizeBtn.disabled = false; finalizeBtn.style.opacity = '1'; finalizeBtn.style.cursor = 'pointer'; }
     return;
   }
+
   if (exwNoteEl) exwNoteEl.style.display = 'none';
-  if (!state.repTerritory) return;
-  const basisInfo = resolveBasis(state.basis);
-  const useMunicipality = !!(basisInfo && basisInfo.useMunicipalityFreight);
-  const val = territoryMaxFreight(state.repTerritory, useMunicipality);
-  state.freight = val;
-  if (freightEl) freightEl.value = val;
+
+  if (!rep) {
+    if (destDisplay) destDisplay.textContent = 'Please select a Sales Representative above';
+    if (basisDisplay) basisDisplay.textContent = '';
+    if (statusBadge) {
+      statusBadge.style.background = '#fef3c7';
+      statusBadge.style.color = '#92400e';
+      statusBadge.textContent = 'Rep Required';
+    }
+    if (errorBanner) {
+      errorBanner.style.display = 'block';
+      if (errorText) errorText.textContent = 'Please select a Sales Representative to calculate freight from the Freight Matrix.';
+    }
+    state.freight = 0;
+    if (freightEl) freightEl.value = 0;
+    freightValid = false;
+    if (saveDraftBtn) { saveDraftBtn.disabled = true; saveDraftBtn.style.opacity = '0.5'; saveDraftBtn.style.cursor = 'not-allowed'; }
+    if (finalizeBtn) { finalizeBtn.disabled = true; finalizeBtn.style.opacity = '0.5'; finalizeBtn.style.cursor = 'not-allowed'; }
+    return;
+  }
+
+  const rule = getFreightRuleForRep(rep);
+  if (!rule) {
+    const locText = (rep.city || rep.state) ? `${rep.city || ''}, ${rep.state || ''}` : 'Unassigned destination';
+    if (destDisplay) destDisplay.textContent = locText;
+    if (basisDisplay) basisDisplay.textContent = 'No matching destination found in Freight Matrix';
+    if (statusBadge) {
+      statusBadge.style.background = '#fee2e2';
+      statusBadge.style.color = '#991b1b';
+      statusBadge.textContent = 'Missing Rate';
+    }
+    if (errorBanner) {
+      errorBanner.style.display = 'block';
+      if (errorText) errorText.textContent = `No valid freight rate found for ${rep.name} (${locText}) in the Freight Matrix. Quotation generation is disabled.`;
+    }
+    state.freight = 0;
+    if (freightEl) freightEl.value = 0;
+    freightValid = false;
+    if (saveDraftBtn) { saveDraftBtn.disabled = true; saveDraftBtn.style.opacity = '0.5'; saveDraftBtn.style.cursor = 'not-allowed'; }
+    if (finalizeBtn) { finalizeBtn.disabled = true; finalizeBtn.style.opacity = '0.5'; finalizeBtn.style.cursor = 'not-allowed'; }
+    return;
+  }
+
+  // Rate lookup based on pricing basis
+  const rate = useMunicipality ? (Number(rule.municipality) || 0) : (Number(rule.customer) || 0);
+  const rateLabel = useMunicipality ? 'Municipality Rate (Cooperative)' : 'Customer Rate (Commercial)';
+
+  if (rate <= 0) {
+    if (destDisplay) destDisplay.textContent = `${rule.city}, ${rule.state}`;
+    if (basisDisplay) basisDisplay.textContent = `${rateLabel}: $0.00`;
+    if (statusBadge) {
+      statusBadge.style.background = '#fee2e2';
+      statusBadge.style.color = '#991b1b';
+      statusBadge.textContent = '$0 Rate Error';
+    }
+    if (errorBanner) {
+      errorBanner.style.display = 'block';
+      if (errorText) errorText.textContent = `The freight rate for ${rep.name} at ${rule.city} is $0.00. Quotation generation is disabled.`;
+    }
+    state.freight = 0;
+    if (freightEl) freightEl.value = 0;
+    freightValid = false;
+    if (saveDraftBtn) { saveDraftBtn.disabled = true; saveDraftBtn.style.opacity = '0.5'; saveDraftBtn.style.cursor = 'not-allowed'; }
+    if (finalizeBtn) { finalizeBtn.disabled = true; finalizeBtn.style.opacity = '0.5'; finalizeBtn.style.cursor = 'not-allowed'; }
+    return;
+  }
+
+  // All valid!
+  freightValid = true;
+  state.freight = rate;
+  state.repTerritory = `${rule.city}, ${rule.state}`;
+  if (freightEl) freightEl.value = rate;
+  if (errorBanner) errorBanner.style.display = 'none';
+  if (statusBadge) {
+    statusBadge.style.background = '#dcfce7';
+    statusBadge.style.color = '#15803d';
+    statusBadge.textContent = 'Matrix Linked';
+  }
+  if (destDisplay) {
+    destDisplay.innerHTML = `<strong>${esc(rule.city)}</strong>, ${esc(rule.state)}`;
+  }
+  if (basisDisplay) {
+    basisDisplay.innerHTML = `<strong>${rateLabel}:</strong> ${fmt(rate)}`;
+  }
+  if (saveDraftBtn) { saveDraftBtn.disabled = false; saveDraftBtn.style.opacity = '1'; saveDraftBtn.style.cursor = 'pointer'; }
+  if (finalizeBtn) { finalizeBtn.disabled = false; finalizeBtn.style.opacity = '1'; finalizeBtn.style.cursor = 'pointer'; }
 }
 
 function quoteCodePrefix() {
@@ -1342,9 +1468,14 @@ function calculateSnapshotData() {
   const bp = priceForItem(base);
   const baseQty = Number(state.baseQty) || 1;
   const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
-  const showDiscount = Math.min(maxDisc, Number(state.baseShowDiscount) || 0);
-  const baseList = (bp.list || 0) + showDiscount;
-  const baseUnit = bp.unit || 0;
+  const rawDiscount = Number(state.baseShowDiscount) || 0;
+  const showDiscount = Math.min(maxDisc, Math.max(0, rawDiscount));
+
+  // Base MSRP / List is the TRUE price - never artificially inflated
+  const baseMsrp = bp.msrp || base.msrp || 0;
+  const baseList = bp.list || baseMsrp;
+  // Unit price customer pays is discounted by the extra discount
+  const baseUnit = Math.max(0, (bp.unit || baseList) - showDiscount);
   const baseExt = baseQty * baseUnit;
 
   // Chassis upgrade if priced
@@ -1395,7 +1526,7 @@ function calculateSnapshotData() {
   const totalVal = subtotalVal + freightVal;
 
   return {
-    base_msrp: bp.msrp || base.msrp || 0,
+    base_msrp: baseMsrp,
     base_list_price: baseList,
     base_unit_price: baseUnit,
     subtotal: subtotalVal,
@@ -1418,13 +1549,20 @@ function renderPreview() {
   const bp = priceForItem(base);
   const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
   const rawDiscount = Number(state.baseShowDiscount) || 0;
-  const showDiscount = Math.min(maxDisc, rawDiscount);
+  const showDiscount = Math.min(maxDisc, Math.max(0, rawDiscount));
   const discWarnEl = document.getElementById('discountWarning');
-  if (discWarnEl) discWarnEl.style.display = rawDiscount > maxDisc ? 'block' : 'none';
+  if (discWarnEl) {
+    discWarnEl.style.display = rawDiscount > maxDisc ? 'block' : 'none';
+    if (rawDiscount > maxDisc) {
+      discWarnEl.textContent = `Maximum limit allowed is $${maxDisc.toLocaleString()}. You entered $${rawDiscount.toLocaleString()}.`;
+    }
+  }
 
-  const displayBaseList = (bp.list || 0) + showDiscount;
-  const baseExt = state.baseQty * bp.unit;
-  const baseDisc = bp.discountPercent > 0 ? (bp.discountPercent / 100) : (displayBaseList ? 1 - (bp.unit / displayBaseList) : 0);
+  // True MSRP / List - never inflated
+  const displayBaseList = bp.list || bp.msrp || 0;
+  const baseUnit = Math.max(0, (bp.unit || displayBaseList) - showDiscount);
+  const baseExt = state.baseQty * baseUnit;
+  const baseDisc = displayBaseList > 0 ? (1 - (baseUnit / displayBaseList)) : 0;
 
   // Chassis configuration upgrade if priced
   const chassisRawPrice = (CATALOG.chassis_prices && CATALOG.chassis_prices[state.chassis]) ? Number(CATALOG.chassis_prices[state.chassis]) : 0;
@@ -1573,7 +1711,7 @@ function renderPreview() {
           <td class="num">${state.baseQty}</td>
           <td class="num">${fmtMSRP(displayBaseList)}</td>
           ${anyDisc ? `<td class="num">${baseDisc > 0 ? pctFmt(baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
-          <td class="num">${fmt(bp.unit)}</td>
+          <td class="num">${fmt(baseUnit)}</td>
           <td class="num">${fmt(baseExt)}</td>
         </tr>
         ${chassisRowHtml}
@@ -1607,8 +1745,7 @@ function renderPreview() {
 
 function render() {
   populateChassis();
-  populateRepTerritory();
-  applyTerritoryFreight();
+  applyRepFreight();
   buildEnhRows();
   renderPreview();
 }
@@ -1689,7 +1826,7 @@ function initForm() {
     populatePricingBases();
     basisEl.addEventListener('change', e => {
       state.basis = e.target.value;
-      applyTerritoryFreight();
+      applyRepFreight();
       render();
     });
   }
@@ -1707,14 +1844,12 @@ function initForm() {
     salesRepEl.value = state.salesRep || '';
     salesRepEl.addEventListener('change', e => {
       state.salesRep = e.target.value;
-      populateRepTerritory();
-      applyTerritoryFreight();
+      applyRepFreight();
       render();
     });
   }
 
   bindSimple('po', 'po');
-  bindSimple('fob', 'fob');
   bindSimple('acct', 'acct');
   bindSimple('toContact', 'toContact');
   bindSimple('toCompany', 'toCompany');
@@ -1722,13 +1857,19 @@ function initForm() {
   bindSimple('toAddr2', 'toAddr2');
   bindSimple('baseQty', 'baseQty', v => Math.max(1, parseInt(v) || 1));
   bindSimple('baseShowDiscount', 'baseShowDiscount', v => Math.max(0, parseFloat(v) || 0));
-  bindSimple('freight', 'freight', v => Math.max(0, parseFloat(v) || 0));
 
-  const repTerritoryEl = document.getElementById('repTerritory');
-  if (repTerritoryEl) {
-    repTerritoryEl.addEventListener('change', e => {
-      state.repTerritory = e.target.value;
-      applyTerritoryFreight();
+  const fobEl = document.getElementById('fob');
+  if (fobEl) {
+    if (state.fob && !Array.from(fobEl.options).some(o => o.value === state.fob)) {
+      const opt = document.createElement('option');
+      opt.value = state.fob;
+      opt.textContent = state.fob;
+      fobEl.appendChild(opt);
+    }
+    if (state.fob) fobEl.value = state.fob;
+    fobEl.addEventListener('change', e => {
+      state.fob = e.target.value;
+      applyRepFreight();
       render();
     });
   }
@@ -1741,17 +1882,6 @@ function initForm() {
       el.value = state[id];
     }
   });
-
-  const fobEl = document.getElementById('fob');
-  if (fobEl && state.fob) {
-    if (!Array.from(fobEl.options).some(o => o.value === state.fob)) {
-      const opt = document.createElement('option');
-      opt.value = state.fob;
-      opt.textContent = state.fob;
-      fobEl.appendChild(opt);
-    }
-    fobEl.value = state.fob;
-  }
 
   render();
 
@@ -1768,6 +1898,21 @@ async function saveQuote(isFinalize = false) {
   if (!state.toCompany || !state.toCompany.trim()) {
     alert('Please enter a Customer Company name before saving.');
     document.getElementById('toCompany')?.focus();
+    return;
+  }
+
+  const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
+  const isEXW = (state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up');
+  if (!isEXW && (!freightValid || Number(state.freight) <= 0)) {
+    alert('Quotation generation is blocked: A valid freight rate could not be found for the selected Sales Representative in the Freight Matrix.\n\nPlease ensure the Sales Representative has an assigned State and City in the Admin panel.');
+    return;
+  }
+
+  const rawDiscount = Number(state.baseShowDiscount) || 0;
+  const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
+  if (rawDiscount > maxDisc) {
+    alert(`Extra discount cannot exceed the maximum permitted limit of $${maxDisc.toLocaleString()}. Please adjust before saving.`);
+    document.getElementById('baseShowDiscount')?.focus();
     return;
   }
 

@@ -3,10 +3,15 @@
 namespace App\Services;
 
 use App\Models\Enhancement;
+use App\Models\FreightRule;
+use App\Models\ModelConfiguration;
+use App\Models\ModelPrice;
+use App\Models\PricingBasis;
 use App\Models\Quote;
 use App\Models\QuoteItem;
 use App\Models\QuoteSnapshot;
 use App\Models\QuoteVersion;
+use App\Models\SweeperModel;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -251,12 +256,156 @@ class QuoteService
     }
 
     /**
-     * Helper to populate or update snapshot record.
+     * Helper to populate or update snapshot record with authoritative server recalculation.
      */
     protected function createOrUpdateSnapshot(QuoteVersion $version, array $data): QuoteSnapshot
     {
         $state = $data['state'] ?? [];
-        $enhancements = $data['enhancements'] ?? $state['enh'] ?? [];
+        $rawEnhancements = $data['enhancements'] ?? $state['enh'] ?? [];
+
+        $modelCode = $state['model'] ?? $data['model_code'] ?? 'MT4H';
+        $chassisLabel = $state['chassis'] ?? $data['chassis_configuration'] ?? '';
+        $basisName = $state['basis'] ?? $data['pricing_basis'] ?? 'MSRP (Commercial)';
+        $fobTerms = $state['fob'] ?? $data['fob_terms'] ?? 'Transport, estimate only noted in quote';
+        $baseQty = max(1, (int) ($state['baseQty'] ?? $data['base_qty'] ?? 1));
+        $repName = $state['salesRep'] ?? $data['sales_rep_name'] ?? auth()->user()?->name ?? $version->quote->user?->name ?? '';
+
+        // 1. Authoritative Model & Pricing Lookup
+        $model = SweeperModel::where('code', $modelCode)->first();
+        $modelPrice = $model ? ModelPrice::where('sweeper_model_id', $model->id)->current()->latest('effective_from')->first() : null;
+        if (! $modelPrice && $model) {
+            $modelPrice = ModelPrice::where('sweeper_model_id', $model->id)->latest('id')->first();
+        }
+
+        $basis = PricingBasis::where('name', $basisName)
+            ->orWhere('slug', strtolower($basisName))
+            ->first();
+        $isCoop = $basis ? ($basis->price_field === 'sw_net' || $basis->show_discount) : (! str_contains(strtolower($basisName), 'msrp'));
+        $useMunicipality = $basis ? (bool) $basis->use_municipality_freight : $isCoop;
+
+        $baseMsrp = $modelPrice ? (float) $modelPrice->msrp : (float) ($data['base_msrp'] ?? 0);
+        $baseList = $isCoop ? ($modelPrice ? (float) $modelPrice->sw_list : $baseMsrp) : $baseMsrp;
+
+        // Calculate cooperative unit price or commercial unit price
+        if ($isCoop) {
+            $discPct = $basis && $basis->discount_percent !== null ? (float) $basis->discount_percent : 12.00;
+            $stdBaseUnitPrice = round($baseList * (1 - ($discPct / 100)), 2);
+        } else {
+            $stdBaseUnitPrice = $baseMsrp;
+        }
+
+        // 2. Extra Discount Validation and Deduction
+        $showDiscount = max(0, (float) ($state['baseShowDiscount'] ?? $data['show_discount_amount'] ?? 0));
+        if ($showDiscount > 20000.00) {
+            throw new Exception("Extra discount cannot exceed the maximum permitted cap of $20,000.00 (entered: $" . number_format($showDiscount, 2) . ").");
+        }
+
+        // Apply discount directly so the customer actually benefits from the price reduction
+        $baseUnitPrice = max(0, round($stdBaseUnitPrice - $showDiscount, 2));
+        $baseExtended = round($baseUnitPrice * $baseQty, 2);
+
+        // 3. Chassis Upgrade Calculation
+        $chassisCfg = ModelConfiguration::where('label', $chassisLabel)->first();
+        $chassisRawPrice = $chassisCfg ? (float) $chassisCfg->price : 0.00;
+        $chassisUnitPrice = 0.00;
+        $chassisExtended = 0.00;
+        if ($chassisRawPrice > 0) {
+            $chassisDiscPct = $isCoop ? 12.00 : 0.00;
+            $chassisUnitPrice = round($chassisRawPrice * (1 - ($chassisDiscPct / 100)), 2);
+            $chassisExtended = round($chassisUnitPrice * $baseQty, 2);
+        }
+
+        // 4. Authoritative Enhancements Calculation
+        $enhancementsSnapshot = [];
+        $enhancementsTotal = 0.00;
+
+        if ($chassisRawPrice > 0) {
+            $enhancementsSnapshot[] = [
+                'desc' => "Chassis Option: {$chassisLabel}",
+                'category' => 'CHASSIS CONFIGURATION',
+                'qty' => $baseQty,
+                'msrp' => $chassisRawPrice,
+                'list' => $chassisRawPrice,
+                'unit' => $chassisUnitPrice,
+                'extended' => $chassisExtended,
+            ];
+        }
+
+        foreach ($rawEnhancements as $enh) {
+            $desc = is_array($enh) ? ($enh['desc'] ?? '') : '';
+            if (empty($desc) || str_starts_with($desc, 'Chassis Option:')) {
+                continue;
+            }
+
+            $qty = max(1, (int) ($enh['qty'] ?? 1));
+            $dbEnh = Enhancement::where('description', $desc)->first();
+
+            if ($dbEnh) {
+                $enhMsrp = (float) $dbEnh->msrp;
+                $enhList = (float) $dbEnh->sw_list ?: $enhMsrp;
+                if ($isCoop) {
+                    $enhUnit = (float) $dbEnh->sw_net ?: $enhList;
+                } else {
+                    $enhUnit = $enhMsrp;
+                }
+                $enhExt = round($enhUnit * $qty, 2);
+                $enhancementsTotal += $enhExt;
+
+                $enhancementsSnapshot[] = [
+                    'desc' => $dbEnh->description,
+                    'category' => $dbEnh->category,
+                    'qty' => $qty,
+                    'msrp' => $enhMsrp,
+                    'list' => $enhList,
+                    'unit' => $enhUnit,
+                    'extended' => $enhExt,
+                ];
+            }
+        }
+
+        // 5. Authoritative Freight Matrix Calculation
+        $isExw = str_contains(strtolower($fobTerms), 'exw') || str_contains(strtolower($fobTerms), 'factory pick-up');
+        $freightAmount = 0.00;
+        $repTerritory = $state['repTerritory'] ?? null;
+
+        if ($isExw) {
+            $freightAmount = 0.00;
+        } else {
+            // Find sales rep and their assigned location
+            $repUser = User::where('name', $repName)->first();
+            if (! $repUser && $version->quote && $version->quote->user) {
+                $repUser = $version->quote->user;
+            }
+
+            if (! $repUser || ! $repUser->state || ! $repUser->city) {
+                throw new Exception("Quotation generation failed: Sales representative '{$repName}' has no assigned State and City in the Freight Matrix. Please assign their delivery destination in the Admin panel.");
+            }
+
+            $freightRule = FreightRule::where('state', $repUser->state)
+                ->where('city', $repUser->city)
+                ->first();
+
+            if (! $freightRule) {
+                throw new Exception("Quotation generation failed: No valid freight rule found in the Freight Matrix for '{$repUser->city}, {$repUser->state}'.");
+            }
+
+            $rate = $useMunicipality ? (float) $freightRule->municipality_rate : (float) $freightRule->customer_rate;
+            if ($rate <= 0) {
+                throw new Exception("Quotation generation failed: The freight rate for '{$repUser->city}, {$repUser->state}' is $0.00 in the Freight Matrix. A valid rate is required.");
+            }
+
+            $freightAmount = $rate;
+            $repTerritory = "{$freightRule->city}, {$freightRule->state}";
+        }
+
+        // 6. Subtotal & Total
+        $subtotal = round($baseExtended + $chassisExtended + $enhancementsTotal, 2);
+        $total = round($subtotal + $freightAmount, 2);
+
+        // Keep state synchronized with authoritative values
+        $state['freight'] = $freightAmount;
+        $state['baseShowDiscount'] = $showDiscount;
+        $state['repTerritory'] = $repTerritory;
 
         return QuoteSnapshot::updateOrCreate(
             ['quote_version_id' => $version->id],
@@ -265,25 +414,25 @@ class QuoteService
                 'customer_contact' => $state['toContact'] ?? null,
                 'customer_address_1' => $state['toAddr1'] ?? null,
                 'customer_address_2' => $state['toAddr2'] ?? null,
-                'model_code' => $state['model'] ?? 'MT4H',
-                'model_description' => $data['model_description'] ?? '',
-                'chassis_configuration' => $state['chassis'] ?? '',
-                'pricing_basis' => $state['basis'] ?? 'MSRP (Commercial)',
-                'sales_rep_name' => $state['salesRep'] ?? auth()->user()?->name ?? $version->quote->user?->name ?? 'Sales Representative',
-                'rep_territory' => $state['repTerritory'] ?? null,
+                'model_code' => $modelCode,
+                'model_description' => $data['model_description'] ?? ($model ? $model->description : ''),
+                'chassis_configuration' => $chassisLabel,
+                'pricing_basis' => $basisName,
+                'sales_rep_name' => $repName ?: 'Sales Representative',
+                'rep_territory' => $repTerritory,
                 'po_number' => $state['po'] ?? null,
                 'customer_account' => $state['acct'] ?? null,
-                'fob_terms' => $state['fob'] ?? null,
-                'base_qty' => (int) ($state['baseQty'] ?? 1),
-                'base_msrp' => (float) ($data['base_msrp'] ?? 0),
-                'base_list_price' => (float) ($data['base_list_price'] ?? 0),
-                'base_unit_price' => (float) ($data['base_unit_price'] ?? 0),
-                'show_discount_amount' => (float) ($state['baseShowDiscount'] ?? 0),
-                'freight_amount' => (float) ($state['freight'] ?? 0),
-                'subtotal' => (float) ($data['subtotal'] ?? 0),
-                'total' => (float) ($data['total'] ?? 0),
+                'fob_terms' => $fobTerms,
+                'base_qty' => $baseQty,
+                'base_msrp' => $baseMsrp,
+                'base_list_price' => $baseList,
+                'base_unit_price' => $baseUnitPrice,
+                'show_discount_amount' => $showDiscount,
+                'freight_amount' => $freightAmount,
+                'subtotal' => $subtotal,
+                'total' => $total,
                 'quote_code' => $data['quote_code'] ?? null,
-                'enhancements_snapshot' => $enhancements,
+                'enhancements_snapshot' => $enhancementsSnapshot,
                 'full_state' => $state,
             ]
         );

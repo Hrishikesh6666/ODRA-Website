@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\FreightRule;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditService;
@@ -46,7 +47,10 @@ class UserController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('company_id', 'like', "%{$search}%")
-                    ->orWhere('rep_code', 'like', "%{$search}%");
+                    ->orWhere('rep_code', 'like', "%{$search}%")
+                    ->orWhere('state', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('territory', 'like', "%{$search}%");
             });
         }
 
@@ -65,7 +69,14 @@ class UserController extends Controller
             }
         }
 
-        return view('admin.users.index', compact('users', 'admins', 'managers', 'activeTab'));
+        // Distinct states and all freight rules for dynamic rep territory selection
+        $freightStates = FreightRule::distinct()->orderBy('state')->pluck('state');
+        $freightRules = FreightRule::select('state', 'city', 'customer_rate', 'municipality_rate')
+            ->orderBy('state')
+            ->orderBy('city')
+            ->get();
+
+        return view('admin.users.index', compact('users', 'admins', 'managers', 'activeTab', 'freightStates', 'freightRules'));
     }
 
     /**
@@ -154,7 +165,8 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'company_id' => ['nullable', 'string', 'max:100', 'unique:users,company_id'],
             'rep_code' => ['required', 'string', 'max:10'],
-            'territory' => ['nullable', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:100'],
+            'city' => ['required', 'string', 'max:200'],
             'password' => ['required', 'string', 'min:8'],
         ]);
 
@@ -165,7 +177,9 @@ class UserController extends Controller
             'email' => strtolower($validated['email']),
             'company_id' => $validated['company_id'] ?? null,
             'rep_code' => strtoupper($validated['rep_code']),
-            'territory' => $validated['territory'] ?? null,
+            'state' => $validated['state'],
+            'city' => $validated['city'],
+            'territory' => $validated['city'] . ', ' . $validated['state'],
             'password' => Hash::make($validated['password']),
             'role_id' => $salesRole->id,
             'is_active' => true,
@@ -180,6 +194,8 @@ class UserController extends Controller
                 'email' => $user->email,
                 'role' => 'sales',
                 'rep_code' => $user->rep_code,
+                'state' => $user->state,
+                'city' => $user->city,
             ],
             notes: "Created sales representative account for {$user->name} ({$user->email})"
         );
@@ -204,7 +220,8 @@ class UserController extends Controller
 
         if ($isRep) {
             $rules['rep_code'] = ['required', 'string', 'max:10'];
-            $rules['territory'] = ['nullable', 'string', 'max:255'];
+            $rules['state'] = ['required', 'string', 'max:100'];
+            $rules['city'] = ['required', 'string', 'max:200'];
         } else {
             $rules['rep_code'] = ['nullable', 'string', 'max:10'];
             $rules['territory'] = ['nullable', 'string', 'max:255'];
@@ -221,7 +238,9 @@ class UserController extends Controller
 
         if ($isRep) {
             $updateData['rep_code'] = strtoupper($validated['rep_code']);
-            $updateData['territory'] = $validated['territory'] ?? null;
+            $updateData['state'] = $validated['state'];
+            $updateData['city'] = $validated['city'];
+            $updateData['territory'] = $validated['city'] . ', ' . $validated['state'];
         } else {
             if (isset($validated['territory'])) {
                 $updateData['territory'] = $validated['territory'];

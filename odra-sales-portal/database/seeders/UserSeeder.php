@@ -69,20 +69,20 @@ class UserSeeder extends Seeder
 
         // 3. Sales Representatives (role_id = 2) - Field quotations with isolated access
         $salesReps = [
-            ['name' => 'Carlos Silva', 'rep_code' => 'CS'],
-            ['name' => 'Chris Norlin', 'rep_code' => 'CN'],
-            ['name' => 'Fernando Oliveira', 'rep_code' => 'FO'],
-            ['name' => 'JJ Rickis', 'rep_code' => 'JR'],
-            ['name' => 'John Wells', 'rep_code' => 'JW'],
-            ['name' => 'Juan Oliver', 'rep_code' => 'JO'],
-            ['name' => 'Kerry Briggs', 'rep_code' => 'KB'],
-            ['name' => 'Kra Whitmore', 'rep_code' => 'KW'],
-            ['name' => 'Paul Piotrowski', 'rep_code' => 'PP'],
-            ['name' => 'Robert Yuska', 'rep_code' => 'RY'],
-            ['name' => 'Ryan Khosrofian', 'rep_code' => 'RK'],
-            ['name' => 'Sean Chenoweth', 'rep_code' => 'SC'],
-            ['name' => 'Shawn Herringer', 'rep_code' => 'SH'],
-            ['name' => 'Troy Fisher', 'rep_code' => 'TF'],
+            ['name' => 'Carlos Silva', 'rep_code' => 'CS', 'state' => 'Texas', 'city' => 'San Antonio TX 78233'],
+            ['name' => 'Chris Norlin', 'rep_code' => 'CN', 'state' => 'Florida', 'city' => 'Orlando FL 32807'],
+            ['name' => 'Fernando Oliveira', 'rep_code' => 'FO', 'state' => 'California', 'city' => 'Sacramento CA 91750'],
+            ['name' => 'JJ Rickis', 'rep_code' => 'JR', 'state' => 'Alabama', 'city' => 'Birmingham AL 35234'],
+            ['name' => 'John Wells', 'rep_code' => 'JW', 'state' => 'Georgia', 'city' => 'Cartersville GA 30121'],
+            ['name' => 'Juan Oliver', 'rep_code' => 'JO', 'state' => 'Florida', 'city' => 'Miami FL 33172'],
+            ['name' => 'Kerry Briggs', 'rep_code' => 'KB', 'state' => 'Utah', 'city' => 'Valley City UT 84119'],
+            ['name' => 'Kra Whitmore', 'rep_code' => 'KW', 'state' => 'Florida', 'city' => 'Tampa FL 33609'],
+            ['name' => 'Paul Piotrowski', 'rep_code' => 'PP', 'state' => 'Illinois', 'city' => 'Chicago IL 60612'],
+            ['name' => 'Robert Yuska', 'rep_code' => 'RY', 'state' => 'Pennsylvania', 'city' => 'Harrisburg PA 17110'],
+            ['name' => 'Ryan Khosrofian', 'rep_code' => 'RK', 'state' => 'Indiana', 'city' => 'Indianapolis IN 46214'],
+            ['name' => 'Sean Chenoweth', 'rep_code' => 'SC', 'state' => 'Colorado', 'city' => 'Colorado Springs CO 80906'],
+            ['name' => 'Shawn Herringer', 'rep_code' => 'SH', 'state' => 'Texas', 'city' => 'Dallas TX 75247'],
+            ['name' => 'Troy Fisher', 'rep_code' => 'TF', 'state' => 'Arizona', 'city' => 'Phoenix AZ 85009'],
         ];
 
         foreach ($salesReps as $rep) {
@@ -95,6 +95,9 @@ class UserSeeder extends Seeder
                     'company_id' => 'REP-' . $rep['rep_code'],
                     'role_id' => 2,
                     'password' => Hash::make('OdraSales2026!'),
+                    'state' => $rep['state'],
+                    'city' => $rep['city'],
+                    'territory' => $rep['city'] . ', ' . $rep['state'],
                     'is_active' => true,
                 ]
             );
