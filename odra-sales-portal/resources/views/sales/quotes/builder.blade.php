@@ -1669,7 +1669,8 @@ function renderPreview() {
   const p = document.getElementById('preview');
   if (!p) return;
 
-  const qcode = currentQuoteCode();
+  try {
+    const qcode = currentQuoteCode();
   const seqEl = document.getElementById('quoteSeq');
   if (seqEl && document.activeElement !== seqEl) seqEl.value = state.quoteSeq || '';
 
@@ -1763,13 +1764,13 @@ function renderPreview() {
     ? `<span class="toLines">${toLines.map(l => `<div>${l}</div>`).join('')}</span>`
     : ' &mdash;';
 
+  const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
   const addrLine1 = esc(TEMPLATE_HEADER.address_line_1 || '705 South 48th Street, Grand Forks, ND 58201');
   const addrLine2 = esc(TEMPLATE_HEADER.address_line_2 || 't: 844-888-6372 • e: info@odrasweeper.com • odrasweeper.com');
   const quoteTitle = esc(TEMPLATE_HEADER.quote_title || 'QUOTATION');
   const sectionHeading = esc(TEMPLATE_HEADER.section_heading || 'Including Enhancements');
   const freightRowLabel = esc(TEMPLATE_HEADER.freight_row_label || 'Sweeper Transport / Freight') + (state.destCity && !(state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up') ? ` &mdash; ${esc(state.destCity)}, ${esc(state.destState)}` : '');
   const totalRowLabel = esc(TEMPLATE_HEADER.total_row_label || 'TOTAL (USD)');
-  const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
 
   p.innerHTML = `
     <div class="docHeaderTop">
@@ -1869,6 +1870,13 @@ function renderPreview() {
 
     ${legalHtml(state.model)}
   `;
+  } catch (err) {
+    console.error('Error rendering quotation preview:', err);
+    p.innerHTML = `<div style="padding:24px; color:#991b1b; background:#fee2e2; border-radius:6px; font-family:sans-serif;">
+      <h3 style="margin-top:0;">Preview Render Error</h3>
+      <p>${err.message}</p>
+    </div>`;
+  }
 }
 
 function render() {
