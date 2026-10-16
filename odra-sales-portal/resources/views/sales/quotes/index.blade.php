@@ -170,6 +170,7 @@
                 <tr>
                     <th>Quote #</th>
                     <th>Customer / Account</th>
+                    <th>Sales Person</th>
                     <th>Model</th>
                     <th>Version</th>
                     <th>Status</th>
@@ -194,6 +195,12 @@
                             <strong>{{ $snapshot?->customer_company ?? 'Untitled Customer' }}</strong>
                             @if ($snapshot?->customer_contact)
                                 <div style="font-size: 12px; color: var(--text-muted);">Attn: {{ $snapshot->customer_contact }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            <strong>{{ $snapshot?->sales_rep_name ?: ($quote->user?->name ?? 'Sales Representative') }}</strong>
+                            @if ($quote->user?->rep_code)
+                                <div style="font-size: 11px; color: var(--text-muted);">Code: {{ $quote->user->rep_code }}</div>
                             @endif
                         </td>
                         <td>{{ $snapshot?->model_code ?? 'MT4H' }}</td>

@@ -21,7 +21,7 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         // Representative's personal quote statistics (using global scope 'owned')
-        $quotesQuery = Quote::with('latestVersion.snapshot');
+        $quotesQuery = Quote::with(['user', 'latestVersion.snapshot']);
 
         $allUserQuotes = (clone $quotesQuery)->latest('updated_at')->get();
 

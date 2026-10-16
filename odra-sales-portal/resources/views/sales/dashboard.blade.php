@@ -698,7 +698,7 @@
 
                 <div class="search-input-wrap">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="quoteTableSearch" placeholder="Search by #, customer, or model...">
+                    <input type="text" id="quoteTableSearch" placeholder="Search by #, customer, sales person, or model...">
                 </div>
             </div>
 
@@ -709,6 +709,7 @@
                         <tr>
                             <th>Quote #</th>
                             <th>Customer &amp; Agency</th>
+                            <th>Sales Person</th>
                             <th>Sweeper Model</th>
                             <th>Status</th>
                             <th style="text-align:right;">Total Quoted</th>
@@ -728,6 +729,12 @@
                                 <td>
                                     <div style="font-weight:600;color:#1e293b;">{{ $snap?->customer_company ?? 'Draft Customer' }}</div>
                                     <div style="font-size:11.5px;color:#64748b;">{{ $snap?->customer_contact ?? 'Direct Inquiry' }}</div>
+                                </td>
+                                <td>
+                                    <div style="font-weight:600;color:#1e293b;">{{ $snap?->sales_rep_name ?: ($q->user?->name ?? 'Sales Representative') }}</div>
+                                    @if ($q->user?->rep_code)
+                                        <div style="font-size:11px;color:#64748b;">Code: {{ $q->user->rep_code }}</div>
+                                    @endif
                                 </td>
                                 <td>
                                     <span class="badge" style="background:#f1f5f9;color:#334155;font-weight:700;">{{ $snap?->model_code ?? 'MT4H' }}</span>
@@ -774,13 +781,13 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align:center;padding:36px;color:#94a3b8;">
+                                <td colspan="7" style="text-align:center;padding:36px;color:#94a3b8;">
                                     No quotations found. <a href="{{ route('sales.quotes.create') }}" style="color:var(--amg-red);font-weight:600;">Create your first quote &rarr;</a>
                                 </td>
                             </tr>
                         @endforelse
                         <tr id="noQuotesMatchRow" style="display:none;">
-                            <td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">
+                            <td colspan="7" style="text-align:center;padding:32px;color:#94a3b8;">
                                 No quotations match the active search or status filter.
                             </td>
                         </tr>
