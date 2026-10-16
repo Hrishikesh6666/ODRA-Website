@@ -80,7 +80,7 @@ class ManagerReportingAndRbacTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Commercial Overview');
-        $response->assertSee('Total Quoted Value');
+        $response->assertSee('TOTAL QUOTATIONS');
         $response->assertSee('Open Draft Pipeline');
     }
 

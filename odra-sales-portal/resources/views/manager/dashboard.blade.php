@@ -107,11 +107,11 @@
 <div class="kpi-grid">
     <div class="kpi-card" style="border-top: 4px solid var(--red);">
         <div>
-            <div class="kpi-title">Total Quoted Value</div>
-            <div class="kpi-value">${{ number_format($totalQuotedValue, 0) }}</div>
+            <div class="kpi-title">TOTAL QUOTATIONS</div>
+            <div class="kpi-value">{{ number_format($totalQuotesCount) }}</div>
         </div>
         <div class="kpi-sub">
-            <span>{{ $totalQuotesCount }} Total Proposals Generated</span>
+            <span>Total Quotations Generated</span>
             <span>All Teams</span>
         </div>
     </div>
