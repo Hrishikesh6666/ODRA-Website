@@ -103,17 +103,14 @@
                 <select name="state" class="form-control">
                     <option value="">-- All States --</option>
                     @foreach ($statesList as $st)
-                        <option value="{{ $st->state_name }}" {{ ($filters['state'] ?? '') == $st->state_name ? 'selected' : '' }}>
-                            {{ $st->state_name }} ({{ $st->count }})
+                        @php
+                            $stateVal = is_object($st) ? ($st->state_name ?? '') : (string)$st;
+                        @endphp
+                        <option value="{{ $stateVal }}" {{ ($filters['state'] ?? '') == $stateVal ? 'selected' : '' }}>
+                            {{ $stateVal }}
                         </option>
                     @endforeach
                 </select>
-            </div>
-
-            <!-- Customer / Contractor -->
-            <div class="form-group">
-                <label>Customer / Contractor</label>
-                <input type="text" name="customer" class="form-control" placeholder="Company or municipality..." value="{{ $filters['customer'] ?? '' }}">
             </div>
 
             <!-- Status Filter -->
@@ -150,12 +147,6 @@
             <div class="form-group">
                 <label>Date To</label>
                 <input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}">
-            </div>
-
-            <!-- Min Amount -->
-            <div class="form-group">
-                <label>Min Amount ($)</label>
-                <input type="number" name="min_amount" class="form-control" placeholder="Min $" step="1000" value="{{ $filters['min_amount'] ?? '' }}">
             </div>
         </div>
 

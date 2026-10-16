@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Models\FreightRule;
 use App\Models\PricingBasis;
 use App\Models\Quote;
 use App\Models\QuoteSnapshot;
@@ -41,15 +42,22 @@ class ReportController extends Controller
         // Fixed-field options & aggregations for dropdown inspection
         $repsList = User::whereHas('role', fn ($q) => $q->where('slug', 'sales'))->orderBy('name')->get();
 
-        $statesList = QuoteSnapshot::select(
-            DB::raw("COALESCE(rep_territory, 'Unassigned') as state_name"),
-            DB::raw('COUNT(*) as count'),
-            DB::raw('SUM(total) as sum_total')
-        )
-            ->whereNotNull('rep_territory')
-            ->groupBy(DB::raw("COALESCE(rep_territory, 'Unassigned')"))
-            ->orderBy(DB::raw("COALESCE(rep_territory, 'Unassigned')"))
-            ->get();
+        $allUsStates = [
+            'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 
+            'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 
+            'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 
+            'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 
+            'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 
+            'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 
+            'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 
+            'Washington D.C.', 'West Virginia', 'Wisconsin', 'Wyoming'
+        ];
+        $freightStates = FreightRule::distinct()->pluck('state')->toArray();
+        $statesList = collect(array_merge($allUsStates, $freightStates))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
 
         $pricingBases = PricingBasis::active()->get();
 
@@ -152,7 +160,12 @@ class ReportController extends Controller
 
         // Filter: State / Territory
         if ($request->filled('state')) {
-            $query->where('quote_snapshots.rep_territory', $request->input('state'));
+            $state = $request->input('state');
+            $query->where(function ($sq) use ($state) {
+                $sq->where('quote_snapshots.rep_territory', $state)
+                    ->orWhere('quote_snapshots.rep_territory', 'like', "%{$state}%")
+                    ->orWhere('quote_snapshots.customer_address_2', 'like', "%{$state}%");
+            });
         }
 
         // Filter: Status (Draft, Finalized, Revised)
