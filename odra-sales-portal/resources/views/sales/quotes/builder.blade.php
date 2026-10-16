@@ -363,31 +363,38 @@ table.items td {
 table.items th {
   background: var(--red) !important;
   color: #ffffff !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
-  padding: 8px 10px !important;
+  letter-spacing: 0.25px !important;
+  padding: 8px 6px !important;
   text-align: left !important;
   border: none !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
 }
 table.items th.num {
   text-align: right !important;
   white-space: nowrap !important;
+  padding-right: 6px !important;
+  padding-left: 4px !important;
 }
 
 table.items td {
-  padding: 7px 10px !important;
+  padding: 7px 6px !important;
   border-bottom: 1px solid #eeeeee !important;
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   vertical-align: top !important;
   color: #1a1a1a !important;
   line-height: 1.45 !important;
+  box-sizing: border-box !important;
 }
 table.items td.num {
   text-align: right !important;
   white-space: nowrap !important;
   font-variant-numeric: tabular-nums !important;
+  padding-right: 6px !important;
+  padding-left: 4px !important;
 }
 
 table.items tr.baseRow td {
@@ -416,6 +423,10 @@ table.items tr.sectionRow td {
   padding-top: 14px !important;
   padding-bottom: 6px !important;
   background: transparent !important;
+}
+
+table.items tr.coopRow td {
+  border-bottom: 2px solid #1a1a1a !important;
 }
 
 table.items tr.subtotalRow td {
@@ -1899,18 +1910,18 @@ function renderPreview() {
     <table class="items">
       <colgroup>
         ${anyDisc ? `
+          <col style="width: 38%;">
+          <col style="width: 6%;">
+          <col style="width: 14%;">
+          <col style="width: 13%;">
+          <col style="width: 14%;">
+          <col style="width: 15%;">
+        ` : `
           <col style="width: 48%;">
           <col style="width: 7%;">
-          <col style="width: 11%;">
-          <col style="width: 10%;">
-          <col style="width: 12%;">
-          <col style="width: 12%;">
-        ` : `
-          <col style="width: 54%;">
-          <col style="width: 8%;">
-          <col style="width: 12%;">
-          <col style="width: 13%;">
-          <col style="width: 13%;">
+          <col style="width: 15%;">
+          <col style="width: 15%;">
+          <col style="width: 15%;">
         `}
       </colgroup>
       <thead>

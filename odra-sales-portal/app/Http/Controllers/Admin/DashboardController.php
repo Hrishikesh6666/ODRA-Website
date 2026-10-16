@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $enhancementsCount = Enhancement::active()->count();
         $salesRepsCount = User::whereHas('role', fn ($q) => $q->where('slug', 'sales'))->where('is_active', true)->count();
         $totalQuotesCount = Quote::withoutGlobalScopes()->count();
-        $recentAuditLogs = AuditLog::with('user')->latest('created_at')->take(8)->get();
+        $recentAuditLogs = AuditLog::with('user')->latest('id')->take(8)->get();
         $recentQuotes = Quote::withoutGlobalScopes()->with(['user', 'latestVersion.snapshot'])->latest('updated_at')->take(6)->get();
 
         return view('admin.dashboard', [

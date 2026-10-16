@@ -135,16 +135,18 @@ button{cursor:pointer;border:none;border-radius:6px;padding:10px 14px;font-size:
 .infoGrid .col>div{margin-bottom:2px;}
 .infoGrid .k{color:var(--gray);font-weight:bold;display:inline-block;min-width:110px;}
 .infoGrid .toBlock .toLines{display:inline-block;vertical-align:top;}.infoGrid .toBlock .toLines>div{margin-bottom:2px;}
-table.items{width:100%;border-collapse:collapse;margin-bottom:4px;}
-table.items th{background:var(--red);color:#fff;font-size:10.5px;text-transform:uppercase;padding:7px 8px;text-align:left;}
-table.items th.num,table.items td.num{text-align:right;}
-table.items td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11.5px;vertical-align:top;}
+table.items{width:100%;max-width:100%;table-layout:fixed;border-collapse:collapse;margin-top:10px;margin-bottom:8px;box-sizing:border-box;}
+table.items th{background:var(--red);color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.25px;padding:8px 6px;text-align:left;border:none;box-sizing:border-box;white-space:nowrap;}
+table.items th.num{text-align:right;white-space:nowrap;padding-right:6px;padding-left:4px;}
+table.items td{padding:7px 6px;border-bottom:1px solid #eee;font-size:11px;vertical-align:top;box-sizing:border-box;line-height:1.45;}
+table.items td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;padding-right:6px;padding-left:4px;}
 table.items tr.baseRow td{font-weight:bold;background:#faf6f6;}
+table.items tr.baseRow td:first-child{white-space:normal;word-wrap:break-word;overflow-wrap:break-word;padding-right:10px;}
 table.items tr.noteRow td{font-style:italic;color:var(--muted);font-size:10.5px;border-bottom:1px solid #eee;padding-top:2px;padding-bottom:8px;}
 table.items tr.sectionRow td{font-weight:bold;color:var(--red);border-bottom:1px solid #eee;padding-top:10px;}
-table.items tr.subtotalRow td{border-top:2px solid var(--ink);font-weight:bold;padding-top:8px;}
-table.items tr.totalRow td{font-weight:bold;font-size:13.5px;color:var(--red);border-top:1px solid #ccc;}
-table.items tr.subtotalRow td,table.items tr.totalRow td{white-space:nowrap;}
+table.items tr.coopRow td{border-bottom:2px solid var(--ink);}
+table.items tr.subtotalRow td{border-top:2px solid var(--ink);font-weight:bold;padding-top:10px;padding-bottom:6px;white-space:nowrap;}
+table.items tr.totalRow td{font-weight:bold;font-size:13.5px;color:var(--red);border-top:1px solid #ccc;padding-top:10px;padding-bottom:10px;white-space:nowrap;}
 .legal{margin-top:16px;border-top:1px solid var(--line);padding-top:10px;}
 .legal p{font-size:9.7px;color:var(--gray);margin:0 0 6px;}
 .legal p b{color:#1a1a1a;}
@@ -1257,7 +1259,7 @@ function renderPreview(){
 
   const anyDisc = Math.abs(baseDisc) >= 0.0005 || enhRowData.some(r=>Math.abs(r.disc) >= 0.0005);
   const cols = anyDisc ? 6 : 5;
-  const discTh = anyDisc ? '<th class="num">Discount</th>' : '';
+  const discTh = anyDisc ? '<th class="num">DISCOUNT (%)</th>' : '';
   const enhRowsHtml = enhRowData.map(r=>
     `<tr><td>${esc(r.desc)}</td><td class="num">${r.qty}</td><td class="num">${fmt(r.list)}</td>${anyDisc?`<td class="num">${pctFmt(r.disc)}</td>`:''}<td class="num">${fmt(r.unit)}</td><td class="num">${fmt(r.ext)}</td></tr>`
   ).join('');
@@ -1308,15 +1310,40 @@ function renderPreview(){
       </div>
     </div>
     <table class="items">
-      <thead><tr><th>Description</th><th class="num">Qty</th><th class="num">MSRP</th>${discTh}<th class="num">Unit Price</th><th class="num">Extended</th></tr></thead>
+      <colgroup>
+        ${anyDisc ? `
+          <col style="width: 38%;">
+          <col style="width: 6%;">
+          <col style="width: 14%;">
+          <col style="width: 13%;">
+          <col style="width: 14%;">
+          <col style="width: 15%;">
+        ` : `
+          <col style="width: 48%;">
+          <col style="width: 7%;">
+          <col style="width: 15%;">
+          <col style="width: 15%;">
+          <col style="width: 15%;">
+        `}
+      </colgroup>
+      <thead>
+        <tr>
+          <th>PRICING BASIS / DESCRIPTION</th>
+          <th class="num">QTY</th>
+          <th class="num">MSRP ($)</th>
+          ${discTh}
+          <th class="num">UNIT PRICE ($)</th>
+          <th class="num">EXTENDED ($)</th>
+        </tr>
+      </thead>
       <tbody>
         <tr class="baseRow"><td>${esc(dynamicBaseDesc(base, state.chassis, state.model))}</td><td class="num">${state.baseQty}</td><td class="num">${fmt(displayBaseList)}</td>${anyDisc?`<td class="num">${pctFmt(baseDisc)}</td>`:''}<td class="num">${fmt(bp.unit)}</td><td class="num">${fmt(baseExt)}</td></tr>
         <tr class="sectionRow"><td colspan="${cols}">Including Enhancements</td></tr>
         ${enhRowsHtml || `<tr><td colspan="${cols}" style="color:#999;font-style:italic;">No enhancements selected</td></tr>`}
         ${coopRowHtml}
-        <tr class="subtotalRow"><td colspan="${cols-2}"></td><td class="num">${subtotalLabel}</td><td class="num">${fmt(subtotal)}</td></tr>
+        <tr class="subtotalRow"><td colspan="${cols-1}" class="num">${esc(subtotalLabel)}</td><td class="num">${fmt(subtotal)}</td></tr>
         <tr><td>Sweeper Transport / Freight</td><td class="num">${state.fob === 'EXW, Factory pick-up' ? 0 : 1}</td><td class="num"></td>${anyDisc?'<td class="num"></td>':''}<td class="num">${fmt(freight)}</td><td class="num">${fmt(freight)}</td></tr>
-        <tr class="totalRow"><td colspan="${cols-2}"></td><td class="num">TOTAL (USD)</td><td class="num">${fmt(total)}</td></tr>
+        <tr class="totalRow"><td colspan="${cols-1}" class="num">TOTAL (USD)</td><td class="num">${fmt(total)}</td></tr>
       </tbody>
     </table>
     ${legalHtml(state.model)}
