@@ -33,7 +33,7 @@ class AuthorizationTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/admin/dashboard');
         $response->assertStatus(200);
-        $response->assertSee('Headquarters Overview');
+        $response->assertSee('Administration Center');
     }
 
     public function test_sales_rep_can_access_sales_dashboard(): void

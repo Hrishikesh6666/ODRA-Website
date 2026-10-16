@@ -305,7 +305,7 @@
     <aside class="sidebar">
         <div class="sidebar-brand">
             <img src="{{ asset('images/logo.jpg') }}" alt="ODRA">
-            <div class="sidebar-brand-text">ODRA Executive</div>
+            <div class="sidebar-brand-text">Business Management Center</div>
             <div class="sidebar-brand-badge">Financials</div>
         </div>
 
@@ -360,7 +360,7 @@
             </div>
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <a href="{{ route('sales.dashboard') }}" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">Dashboard</a>
-                <a href="{{ route('manager.dashboard') }}" class="btn-secondary {{ request()->routeIs('manager.dashboard') ? 'active' : '' }}" style="font-size: 12px; padding: 6px 12px; font-weight: 700; color: #047857; text-decoration: none;">Manager HQ</a>
+                <a href="{{ route('manager.dashboard') }}" class="btn-secondary {{ request()->routeIs('manager.dashboard') ? 'active' : '' }}" style="font-size: 12px; padding: 6px 12px; font-weight: 700; color: #047857; text-decoration: none;">Business Management Center</a>
                 <a href="{{ route('sales.quotes.index') }}" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">My Quotations</a>
                 <a href="{{ route('sales.quotes.create') }}" class="btn-primary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">+ New Quotation</a>
             </div>

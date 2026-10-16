@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'HQ Dashboard')
-@section('header-title', 'Headquarters Overview')
+@section('title', 'Administration Center')
+@section('header-title', 'Administration Center Overview')
 
 @push('styles')
 <style>

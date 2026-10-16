@@ -53,7 +53,7 @@ class AdminPanelTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/admin/dashboard');
         $response->assertStatus(200);
-        $response->assertSee('Headquarters Overview');
+        $response->assertSee('Administration Center Overview');
 
         $response = $this->actingAs($admin)->get('/admin/models');
         $response->assertStatus(200);

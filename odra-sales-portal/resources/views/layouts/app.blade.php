@@ -174,15 +174,15 @@
         <nav class="nav-links">
             @auth
                 @if (auth()->user()->isManager())
-                    {{-- Manager Navbar: 1) Dashboard 2) Manager HQ 3) My Quotations 4) + New Quotation (Sweeper Models removed) --}}
+                    {{-- Manager Navbar: 1) Dashboard 2) Business Management Center 3) My Quotations 4) + New Quotation (Sweeper Models removed) --}}
                     <a href="{{ route('sales.dashboard') }}" class="nav-link {{ request()->routeIs('sales.dashboard') ? 'active' : '' }}">Dashboard</a>
-                    <a href="{{ route('manager.dashboard') }}" class="nav-link {{ request()->routeIs('manager.dashboard') ? 'active' : '' }}" style="color: #6ee7b7; font-weight: 600;">Manager HQ</a>
+                    <a href="{{ route('manager.dashboard') }}" class="nav-link {{ request()->routeIs('manager.dashboard') ? 'active' : '' }}" style="color: #6ee7b7; font-weight: 600;">Business Management Center</a>
                     <a href="{{ route('sales.quotes.index') }}" class="nav-link {{ request()->routeIs('sales.quotes.index') ? 'active' : '' }}">My Quotations</a>
                     <a href="{{ route('sales.quotes.create') }}" class="nav-link {{ request()->routeIs('sales.quotes.create') ? 'active' : '' }}">+ New Quotation</a>
                 @elseif (auth()->user()->isAdmin())
-                    {{-- Administrator Navbar: 1) Dashboard 2) Administrator / Admin HQ 3) My Quotations 4) + New Quotation --}}
+                    {{-- Administrator Navbar: 1) Dashboard 2) Administration Center 3) My Quotations 4) + New Quotation --}}
                     <a href="{{ route('sales.dashboard') }}" class="nav-link {{ request()->routeIs('sales.dashboard') ? 'active' : '' }}">Dashboard</a>
-                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" style="color: #fca5a5; font-weight: 600;">Admin HQ</a>
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" style="color: #fca5a5; font-weight: 600;">Administration Center</a>
                     <a href="{{ route('sales.quotes.index') }}" class="nav-link {{ request()->routeIs('sales.quotes.index') ? 'active' : '' }}">My Quotations</a>
                     <a href="{{ route('sales.quotes.create') }}" class="nav-link {{ request()->routeIs('sales.quotes.create') ? 'active' : '' }}">+ New Quotation</a>
                 @else

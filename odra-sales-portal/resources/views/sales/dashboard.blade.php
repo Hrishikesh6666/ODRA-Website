@@ -794,64 +794,6 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-
-    <!-- Bottom Balanced Layout: Assigned Territories & Pre-Approved Cooperatives -->
-    <div class="dashboard-bottom-grid amg-slide-up amg-delay-3">
-        <!-- Card 1: My Assigned Territories -->
-        <div class="dash-card" style="margin-bottom:0;">
-            <div class="dash-card-header">
-                <h3 class="dash-card-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
-                    <span>Assigned Coverage Territories</span>
-                </h3>
-            </div>
-            <div style="padding: 20px 24px;">
-                @if ($repTerritories->count() > 0)
-                    <div class="territory-chip-list">
-                        @foreach ($repTerritories as $t)
-                            <div class="territory-badge-pill">
-                                <span>{{ $t->label }}</span>
-                                <span class="territory-code">{{ $t->code }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <p style="font-size: 13px; color: #64748b; margin: 0 0 12px;">
-                        Nationwide municipal &amp; contractor quoting coverage active across assigned coverage states.
-                    </p>
-                    <div class="territory-chip-list">
-                        <span class="territory-badge-pill">Assigned State: {{ $user->state ?? 'Texas' }} <span class="territory-code">ACTIVE</span></span>
-                        <span class="territory-badge-pill">Freight Matrix: Auto-Matched <span class="territory-code">LIVE</span></span>
-                    </div>
-                @endif
-            </div>
-        </div>
-
-        <!-- Card 2: Pre-Approved Cooperatives -->
-        <div class="dash-card" style="margin-bottom:0;">
-            <div class="dash-card-header">
-                <h3 class="dash-card-title">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>Pre-Approved Cooperative Contracts</span>
-                </h3>
-            </div>
-            <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
-                    <img src="{{ asset('images/logo-sourcewell.png') }}" alt="Sourcewell" style="height:22px;object-fit:contain;">
-                    <div style="font-size:12px;color:#334155;"><strong>Contract #093021-ODR</strong><br><span style="color:#64748b;">Class 5-8 Street Sweepers &middot; 12% Discount</span></div>
-                </div>
-                <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
-                    <img src="{{ asset('images/logo-hgac.png') }}" alt="H-GAC" style="height:20px;object-fit:contain;">
-                    <div style="font-size:12px;color:#334155;"><strong>H-GACBuy Contract</strong><br><span style="color:#64748b;">Municipal Road Equipment &middot; Pre-negotiated</span></div>
-                </div>
-                <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
-                    <img src="{{ asset('images/logo-buyboard.png') }}" alt="BuyBoard" style="height:20px;object-fit:contain;">
-                    <div style="font-size:12px;color:#334155;"><strong>BuyBoard National</strong><br><span style="color:#64748b;">Local Government Purchasing Cooperative</span></div>
-                </div>
-            </div>
-        </div>
     </div>
 
 </div>
