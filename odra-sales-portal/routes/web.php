@@ -141,6 +141,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Quotation Page & Pricing Basis Master Settings
     Route::get('/quotation-settings', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'index'])->name('quotation-settings.index');
     Route::put('/quotation-settings', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'update'])->name('quotation-settings.update');
+    Route::post('/quotation-settings/upload-logo', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'uploadLogo'])->name('quotation-settings.upload-logo');
+    Route::post('/quotation-settings/add-configuration', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'addConfiguration'])->name('quotation-settings.add-configuration');
     Route::post('/quotation-settings/reset', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'reset'])->name('quotation-settings.reset');
     Route::post('/quotation-settings/reset-model/{model}', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'resetModel'])->name('quotation-settings.reset-model');
     // Master Pricing shortcut in Admin

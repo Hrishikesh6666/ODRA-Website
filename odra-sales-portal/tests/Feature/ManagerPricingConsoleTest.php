@@ -167,5 +167,13 @@ class ManagerPricingConsoleTest extends TestCase
         $this->assertEquals(1200, (float) $enhancement->sw_list);
         $this->assertEquals(20, (float) $enhancement->discount_percent);
         $this->assertEquals(960, (float) $enhancement->sw_net); // 1,200 * (1 - 0.20) = 960
+
+        // Restore original pricing
+        $enhancement->update([
+            'msrp' => 529,
+            'sw_list' => 567,
+            'sw_net' => 556,
+            'discount_percent' => 1.94,
+        ]);
     }
 }

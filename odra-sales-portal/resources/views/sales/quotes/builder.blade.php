@@ -910,8 +910,66 @@ function getLegalForModel(m) {
 
 function resolveBasis(basisVal, modelCode) {
   const mCode = modelCode || (typeof state !== 'undefined' ? state.model : null);
-  const mBases = getBasesForModel(mCode);
+  const chassisStr = typeof state !== 'undefined' ? state.chassis : null;
   const searchVal = String(basisVal || '').trim().toLowerCase();
+
+  // 1. Check configuration-specific pricing bases first
+  if (mCode && chassisStr && CATALOG.configurations_data && CATALOG.configurations_data[mCode] && CATALOG.configurations_data[mCode][chassisStr]) {
+    const cfgData = CATALOG.configurations_data[mCode][chassisStr];
+    const cfgBases = cfgData.pricing_bases_list || Object.values(cfgData.pricing_bases || {});
+    if (cfgBases && cfgBases.length > 0) {
+      let foundCfg = null;
+      if (searchVal) {
+        foundCfg = cfgBases.find(b => {
+          const k = String(b.key || b.name || b.label || '').toLowerCase().trim();
+          const l = String(b.label || b.name || '').toLowerCase().trim();
+          const s = String(b.slug || '').toLowerCase().trim();
+          return k === searchVal || l === searchVal || s === searchVal;
+        });
+      } else {
+        foundCfg = cfgBases[0];
+      }
+
+      if (foundCfg) {
+        const key = foundCfg.key || foundCfg.name || foundCfg.label;
+        const label = foundCfg.label || foundCfg.name || key;
+        const tier = foundCfg.price_tier || foundCfg.price_field || (foundCfg.is_coop ? 'sw_net' : 'msrp');
+        const isCoop = foundCfg.is_coop !== undefined ? !!foundCfg.is_coop : (tier === 'sw_net');
+        let logoUrl = null;
+        if (foundCfg.logo_key && foundCfg.logo_key !== 'none') {
+          logoUrl = (CATALOG.available_logos && CATALOG.available_logos[foundCfg.logo_key])
+            ? CATALOG.available_logos[foundCfg.logo_key].url
+            : (LOGO_MAP[String(foundCfg.logo_key).toLowerCase()] || foundCfg.logo_key);
+        }
+        const msrp = Number(foundCfg.msrp) || 0;
+        const discPct = Number(foundCfg.discount_percent) || 0;
+        const calcPrice = (foundCfg.calculated_price !== undefined && foundCfg.calculated_price !== null && Number(foundCfg.calculated_price) > 0)
+          ? Number(foundCfg.calculated_price)
+          : Math.round(msrp * (1 - (discPct / 100)));
+
+        return {
+          key: key,
+          label: label,
+          slug: foundCfg.slug || String(key).toLowerCase(),
+          priceTier: tier,
+          isCoop: isCoop,
+          msrp: msrp,
+          discountPercent: discPct,
+          calculatedPrice: calcPrice,
+          descriptionTemplate: foundCfg.description_template || foundCfg.caption || '',
+          subtotalLabel: foundCfg.subtotal_label || (isCoop ? (label + ' Contract Price') : 'MSRP Subtotal'),
+          disclaimer: foundCfg.disclaimer || '',
+          logo: logoUrl,
+          caption: foundCfg.caption || '',
+          useMunicipalityFreight: foundCfg.use_municipality_freight !== undefined ? !!foundCfg.use_municipality_freight : isCoop,
+          standardFeatures: foundCfg.standard_features || []
+        };
+      }
+    }
+  }
+
+  // 2. Fallback to model/global pricing bases
+  const mBases = getBasesForModel(mCode);
 
   if (searchVal) {
     const found = mBases.find(b => {
@@ -927,7 +985,12 @@ function resolveBasis(basisVal, modelCode) {
       const slug = (found.slug || '').toLowerCase();
       const tier = found.price_tier || found.price_field || (found.is_coop ? 'sw_net' : 'msrp');
       const isCoop = found.is_coop !== undefined ? !!found.is_coop : (tier === 'sw_net');
-      const logoUrl = found.logo_key ? (LOGO_MAP[String(found.logo_key).toLowerCase()] || null) : null;
+      let logoUrl = null;
+      if (found.logo_key && found.logo_key !== 'none') {
+        logoUrl = (CATALOG.available_logos && CATALOG.available_logos[found.logo_key])
+          ? CATALOG.available_logos[found.logo_key].url
+          : (LOGO_MAP[String(found.logo_key).toLowerCase()] || found.logo_key);
+      }
       const discPct = (found.discount_percent !== undefined && found.discount_percent !== null && !isNaN(found.discount_percent))
         ? Number(found.discount_percent)
         : (isCoop ? 12.00 : 0.00);
@@ -943,7 +1006,8 @@ function resolveBasis(basisVal, modelCode) {
         disclaimer: found.disclaimer || '',
         logo: logoUrl,
         caption: found.caption || '',
-        useMunicipalityFreight: found.use_municipality_freight !== undefined ? !!found.use_municipality_freight : isCoop
+        useMunicipalityFreight: found.use_municipality_freight !== undefined ? !!found.use_municipality_freight : isCoop,
+        standardFeatures: found.standard_features || []
       };
     }
   }
@@ -1138,15 +1202,17 @@ function priceForItem(item, basisOverride) {
   if (isCoop) {
     if (item.isBase) {
       // BASE EQUIPMENT / SWEEPER MACHINE
-      const msrp = Number(item.swList) || Number(item.msrp) || 0;
+      const msrp = (basisInfo && basisInfo.msrp > 0) ? basisInfo.msrp : (Number(item.swList) || Number(item.msrp) || 0);
       let discPct = (basisInfo && basisInfo.discountPercent !== undefined && basisInfo.discountPercent !== null)
         ? Number(basisInfo.discountPercent)
         : 12.00;
       if (item.discount_percent !== undefined && item.discount_percent !== null && !isNaN(item.discount_percent)) {
         discPct = Number(item.discount_percent);
       }
-      // Unit Price = MSRP * (1 - Discount / 100)
-      const unitPrice = Math.round((msrp * (1 - (discPct / 100))) * 100) / 100;
+      // Unit Price = calculatedPrice if present or MSRP * (1 - Discount / 100)
+      const unitPrice = (basisInfo && basisInfo.calculatedPrice > 0)
+        ? basisInfo.calculatedPrice
+        : Math.round((msrp * (1 - (discPct / 100))) * 100) / 100;
       return {
         list: msrp,
         msrp: msrp,
@@ -1181,39 +1247,44 @@ function priceForItem(item, basisOverride) {
   }
 
   // Commercial / MSRP (Discount is 0 / Hidden)
-  const msrp = Number(item.msrp) || 0;
+  const msrp = (item.isBase && basisInfo && basisInfo.msrp > 0) ? basisInfo.msrp : (Number(item.msrp) || 0);
+  const unit = (item.isBase && basisInfo && basisInfo.calculatedPrice > 0) ? basisInfo.calculatedPrice : msrp;
   return {
     list: msrp,
     msrp: msrp,
-    unit: msrp,
+    unit: unit,
     discountPercent: 0
   };
 }
 
 function dynamicBaseDesc(base, chassisStr, model, basisVal) {
-  let desc = (base && base.desc) ? base.desc : '';
+  const mCode = model || (typeof state !== 'undefined' ? state.model : '');
+  const cStr = chassisStr || (typeof state !== 'undefined' ? state.chassis : '');
+  const cfgData = (mCode && cStr && CATALOG.configurations_data) ? CATALOG.configurations_data?.[mCode]?.[cStr] : null;
+
+  let desc = cfgData?.description || (base && base.desc ? base.desc : '');
   if (!desc) {
-    return '';
+    desc = mCode === 'MS5H' ? MS5H_BASE_FALLBACK_DESC : MT4H_BASE_FALLBACK_DESC;
   }
-  if (chassisStr) {
-    const sideMatch = chassisStr.match(/(LEFT|RIGHT) side dumping hopper/i);
+  if (!cfgData?.description && cStr) {
+    const sideMatch = cStr.match(/(LEFT|RIGHT) side dumping hopper/i);
     if (sideMatch) {
       const side = /RIGHT/i.test(sideMatch[1]) ? 'Right' : 'Left';
       desc = desc.replace(/(Left|Right)-side dump sweeper/i, `${side}-side dump sweeper`);
     }
-    if (/Ford F-550XL/i.test(chassisStr)) {
+    if (/Ford F-550XL/i.test(cStr)) {
       desc = desc.replace(/Isuzu NRR/gi, 'Ford F-550XL');
       desc = desc.replace(/19,500/gi, '19,000');
-    } else if (/Isuzu NRR/i.test(chassisStr)) {
+    } else if (/Isuzu NRR/i.test(cStr)) {
       desc = desc.replace(/Ford F-550XL/gi, 'Isuzu NRR');
     }
-    if (/Class 7|CDL-required/i.test(chassisStr)) {
+    if (/Class 7|CDL-required/i.test(cStr)) {
       desc = desc.replace(/non-CDL,\s*148"\s*WB\s*Class\s*6/i, 'CDL-required, 148" WB Class 7');
     }
   }
 
   // Automatically append contract reference description note when pricing basis changes
-  const basisInfo = resolveBasis(basisVal || state.basis);
+  const basisInfo = resolveBasis(basisVal || state.basis, mCode);
   if (basisInfo && basisInfo.isCoop) {
     const rawNote = basisInfo.descriptionTemplate || basisInfo.caption || basisInfo.disclaimer || '';
     if (rawNote) {
@@ -1498,6 +1569,24 @@ function currentQuoteCode() {
 }
 
 function standardInclusionsHtml(model) {
+  const mCode = model || (typeof state !== 'undefined' ? state.model : '');
+  const cfgData = (mCode && typeof state !== 'undefined' && state.chassis && CATALOG.configurations_data)
+    ? CATALOG.configurations_data?.[mCode]?.[state.chassis]
+    : null;
+  const basisKey = typeof state !== 'undefined' ? state.basis : null;
+  let customFeatures = null;
+
+  if (cfgData && basisKey) {
+    const basisObj = cfgData.pricing_bases?.[basisKey] || (cfgData.pricing_bases_list || []).find(b => (b.label || b.name || b.key) === basisKey);
+    if (basisObj && Array.isArray(basisObj.standard_features) && basisObj.standard_features.length > 0) {
+      customFeatures = basisObj.standard_features;
+    }
+  }
+
+  if (customFeatures && customFeatures.length > 0) {
+    return customFeatures.map(f => `<p>${f}</p>`).join('\n  ');
+  }
+
   const legal = getLegalForModel(model);
   const p1 = legal.standard_features_p1 || TEMPLATE_LEGAL.standard_features_p1 || '<b>Standard Features:</b> ODRA Sweepers are fully loaded with standard features including rear air ride suspension, squeegee elevator design, variable displacement load-sensing hydraulic pump, dual hydraulically driven side brooms, and electric backup alarm.';
   const p2 = legal.standard_features_p2 || TEMPLATE_LEGAL.standard_features_p2 || 'Sweeper has single, one button sweeping operation, greaseless composite bushings with chromed shafts. The elevator raises automatically when chassis is put into reverse. The elevator is reversible when stall alarm is activated. Heavy duty, 8-flight squeegee style elevator. Sweeper features dual side brooms that feature tilt adjustment and down pressure adjustment from inside cab. Water system includes our polyethylene water tank, an electrical diaphragm water pump, and 4 spray bars for dust control suppression that can be controlled from inside the cab.';
@@ -1889,7 +1978,14 @@ function render() {
 function populatePricingBases() {
   const basisEl = document.getElementById('basis');
   if (!basisEl) return;
-  const mBases = getBasesForModel(state.model);
+
+  const mCode = state.model;
+  const chassisStr = state.chassis;
+  const cfgData = (mCode && chassisStr && CATALOG.configurations_data) ? CATALOG.configurations_data[mCode]?.[chassisStr] : null;
+  const mBases = (cfgData && cfgData.pricing_bases_list && cfgData.pricing_bases_list.length > 0)
+    ? cfgData.pricing_bases_list
+    : getBasesForModel(state.model);
+
   const currentVal = state.basis;
 
   basisEl.innerHTML = '';
@@ -1971,6 +2067,7 @@ function initForm() {
   if (chassisEl) {
     chassisEl.addEventListener('change', e => {
       state.chassis = e.target.value;
+      populatePricingBases();
       render();
     });
   }

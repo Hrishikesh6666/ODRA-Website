@@ -462,7 +462,7 @@ class QuoteService
                 'customer_account' => $state['acct'] ?? null,
                 'fob_terms' => $fobTerms,
                 'base_qty' => $baseQty,
-                'base_msrp' => $baseMsrp,
+                'base_msrp' => $isCoop ? $baseList : $baseMsrp,
                 'base_list_price' => $baseList,
                 'base_unit_price' => $baseUnitPrice,
                 'show_discount_amount' => $showDiscount,

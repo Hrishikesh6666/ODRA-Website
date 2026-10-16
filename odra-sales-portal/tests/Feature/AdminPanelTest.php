@@ -84,6 +84,16 @@ class AdminPanelTest extends TestCase
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'MODEL_UPDATED',
         ]);
+
+        // Restore original MT4H pricing so subsequent feature tests remain isolated
+        $this->actingAs($admin)->put("/admin/models/{$model->id}", [
+            'category' => 'MECHANICAL BROOM SWEEPER',
+            'description' => $model->description,
+            'msrp' => 257493,
+            'sw_list' => 307378,
+            'sw_net' => 270493,
+            'is_active' => 1,
+        ]);
     }
 
     public function test_admin_can_add_and_toggle_enhancement(): void

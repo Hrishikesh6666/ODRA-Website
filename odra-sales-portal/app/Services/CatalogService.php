@@ -222,6 +222,19 @@ class CatalogService
             ];
         }
 
+        // Hierarchical configurations data (chassis descriptions, pricing tables, standard features per config)
+        $configurationsData = [];
+        foreach ($modelsList as $m) {
+            $mCode = $m['code'];
+            $configurationsData[$mCode] = $this->quoteTemplateService->getConfigurationsDataForModel(
+                $mCode,
+                $chassisByModel[$mCode] ?? [],
+                $m['description']
+            );
+        }
+
+        $availableLogos = $this->quoteTemplateService->getAvailableLogos();
+
         return [
             'models' => $modelsList,
             'items' => $items,
@@ -232,6 +245,8 @@ class CatalogService
             'freight' => $freightRules,
             'pricing_bases' => $pricingBases,
             'model_templates' => $modelTemplates,
+            'configurations_data' => $configurationsData,
+            'available_logos' => $availableLogos,
             'quote_template' => $templateSettings,
             'territories' => $territories,
             'sr_codes' => $srCodes,
