@@ -220,14 +220,30 @@ class UserSeeder extends Seeder
             );
         }
 
-        // Purge former sales reps no longer in master sales list
+        // Purge or deactivate former sales reps no longer in master sales list
+        $defaultRep = User::where('role_id', 2)->whereIn('email', $activeSalesEmails)->first()
+            ?? User::where('role_id', 1)->first();
+
         User::where('role_id', 2)
             ->whereNotIn('email', $activeSalesEmails)
             ->get()
-            ->each(function ($oldRep) {
+            ->each(function ($oldRep) use ($defaultRep) {
                 \App\Models\Territory::where('assigned_rep_id', $oldRep->id)->update(['assigned_rep_id' => null]);
                 \App\Models\AuditLog::where('user_id', $oldRep->id)->update(['user_id' => null]);
-                $oldRep->delete();
+
+                if ($defaultRep) {
+                    \App\Models\Quote::withoutGlobalScopes()
+                        ->where('user_id', $oldRep->id)
+                        ->update(['user_id' => $defaultRep->id]);
+                }
+
+                $oldRep->update(['is_active' => false]);
+
+                try {
+                    $oldRep->delete();
+                } catch (\Throwable $e) {
+                    // Preserved as inactive account if referenced by database constraints
+                }
             });
     }
 }
