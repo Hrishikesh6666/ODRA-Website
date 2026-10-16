@@ -110,12 +110,19 @@ class QuoteApiController extends Controller
             'version' => $quote->current_version,
             'status' => $quote->status,
             'is_readonly' => $version?->isFinalized() ?? false,
-            'owner_name' => $quote->user->name,
+            'owner_name' => $quote->user?->name ?? 'Sales Representative',
+            'created_at' => $quote->created_at ? $quote->created_at->format('M d, Y h:i A') : null,
+            'updated_at' => $quote->updated_at ? $quote->updated_at->format('M d, Y h:i A') : null,
+            'finalized_at' => $version?->finalized_at ? $version->finalized_at->format('M d, Y h:i A') : null,
             'state' => $snapshot?->full_state ?? [
                 'quoteSeq' => $quote->quote_number,
-                'salesRep' => $quote->user->name,
+                'salesRep' => $quote->user?->name ?? 'Sales Representative',
             ],
             'snapshot' => $snapshot,
+            'view_url' => route('sales.quotes.show', $quote),
+            'print_url' => route('sales.quotes.show', $quote) . '?print=1',
+            'pdf_url' => route('sales.quotes.pdf', $quote),
+            'can_download' => ($quote->status === 'Finalized'),
         ]);
     }
 

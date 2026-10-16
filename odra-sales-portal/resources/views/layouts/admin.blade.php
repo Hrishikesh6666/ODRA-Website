@@ -435,10 +435,11 @@
     <div class="content-area">
         <header class="topbar">
             <h2>@yield('header-title', 'Administration')</h2>
-            <div class="topbar-right">
-                <a href="{{ route('sales.quotes.index') }}" class="btn-view-portal" target="_blank">
-                    &rarr; Open Sales Portal
-                </a>
+            <div class="topbar-right" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <a href="{{ route('sales.dashboard') }}" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">Dashboard</a>
+                <a href="{{ route('admin.dashboard') }}" class="btn-secondary {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" style="font-size: 12px; padding: 6px 12px; font-weight: 700; color: #ac2529; text-decoration: none;">Admin HQ</a>
+                <a href="{{ route('sales.quotes.index') }}" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">My Quotations</a>
+                <a href="{{ route('sales.quotes.create') }}" class="btn-primary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">+ New Quotation</a>
             </div>
         </header>
 

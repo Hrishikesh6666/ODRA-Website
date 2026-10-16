@@ -98,22 +98,76 @@
     transform: translateY(-2px);
 }
 
-/* Interactive KPI Grid */
-.stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+/* Quotation Pipeline Summary Section */
+.pipeline-summary-container {
     margin-bottom: 28px;
 }
-@media (max-width: 1024px) {
-    .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.pipeline-summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
 }
-@media (max-width: 600px) {
-    .stats-row {
+.pipeline-summary-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+.pipeline-summary-subtitle {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin: 2px 0 0 0;
+}
+.pipeline-conversion-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.pipeline-cards-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+@media (max-width: 900px) {
+    .pipeline-cards-row {
         grid-template-columns: 1fr;
     }
+}
+
+.kpi-count-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+.pill-draft {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+.pill-finalized {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+.pill-total {
+    background: #f1f5f9;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
 }
 
 .kpi-card {
@@ -145,7 +199,6 @@
 .kpi-card.kpi-total:hover::after { background: var(--amg-red); }
 .kpi-card.kpi-draft:hover::after { background: #f59e0b; }
 .kpi-card.kpi-finalized:hover::after { background: #10b981; }
-.kpi-card.kpi-pipeline:hover::after { background: #6366f1; }
 
 .kpi-header {
     display: flex;
@@ -177,34 +230,40 @@
     line-height: 1.1;
     margin-bottom: 6px;
 }
-.kpi-sub {
-    font-size: 12px;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
 .kpi-filter-hint {
     font-size: 11px;
     color: var(--amg-red);
     font-weight: 600;
-    margin-top: 6px;
+    margin-top: 8px;
     display: flex;
     align-items: center;
     gap: 4px;
     opacity: 0.8;
 }
 
-/* Dashboard Main Grid */
-.dashboard-grid {
+/* Bottom Grid for Territories & Cooperatives */
+.dashboard-bottom-grid {
     display: grid;
-    grid-template-columns: 2.1fr 1fr;
-    gap: 28px;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 4px;
 }
-@media (max-width: 1080px) {
-    .dashboard-grid {
+@media (max-width: 900px) {
+    .dashboard-bottom-grid {
         grid-template-columns: 1fr;
     }
+}
+
+.btn-table-download {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+    font-weight: 700 !important;
+}
+.btn-table-download:hover {
+    background: #0369a1 !important;
+    color: #ffffff !important;
+    border-color: #0369a1 !important;
 }
 
 /* Interactive Card Container */
@@ -546,374 +605,247 @@
         </div>
 
         <div class="welcome-actions">
-            <a href="{{ route('sales.models') }}" class="btn-hero-secondary amg-btn-shimmer">
-                <span>Explore Sweeper Lineup (Showcase)</span>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </a>
             <a href="{{ route('sales.quotes.create') }}" class="btn-hero-primary amg-btn-shimmer">
-                <span>+ Launch Quote Builder</span>
+                <span>+ Generate New Quote</span>
             </a>
         </div>
     </div>
 
-    <!-- Interactive KPI Stat Cards (With CountUp & Click-to-Filter) -->
-    <div class="stats-row">
-        <!-- 1. Total Quotes -->
-        <div class="kpi-card kpi-total amg-slide-up amg-delay-1 kpi-trigger" data-kpi-filter="all" title="Click to view all quotations">
-            <div class="kpi-header">
-                <span class="kpi-label">Total Quotations</span>
-                <div class="kpi-icon-badge" style="background:#fee2e2;color:#ac2529;">&equiv;</div>
+    <!-- Quotation Pipeline Summary Section -->
+    <div class="pipeline-summary-container amg-slide-up amg-delay-1">
+        <div class="pipeline-summary-header">
+            <div>
+                <h2 class="pipeline-summary-title">Quotation Pipeline Summary</h2>
+                <p class="pipeline-summary-subtitle">Real-time commercial valuation and deal breakdown for your sales territory</p>
             </div>
-            <div class="kpi-val amg-counter" data-target="{{ $totalQuotes }}">{{ $totalQuotes }}</div>
-            <div class="kpi-sub">
-                <span>All lifetime quotations generated</span>
-            </div>
-            <div class="kpi-filter-hint">&rarr; Click to show all</div>
+            @if ($totalQuotedCount > 0)
+                <div class="pipeline-conversion-badge">
+                    <span class="amg-pulse-dot pulse-emerald"></span>
+                    <span>{{ $conversionRate }}% Conversion Rate ({{ $finalizedQuotesCount }} of {{ $totalQuotedCount }})</span>
+                </div>
+            @endif
         </div>
 
-        <!-- 2. Active Drafts -->
-        <div class="kpi-card kpi-draft amg-slide-up amg-delay-2 kpi-trigger" data-kpi-filter="draft" title="Click to filter active drafts">
-            <div class="kpi-header">
-                <span class="kpi-label">Active Drafts</span>
-                <div class="kpi-icon-badge" style="background:#fef3c7;color:#b45309;">&bull;</div>
+        <div class="pipeline-cards-row">
+            <!-- Card A: Draft Quotation Value -->
+            <div class="kpi-card kpi-draft kpi-trigger" data-kpi-filter="draft" title="Click to filter active draft quotations">
+                <div class="kpi-header">
+                    <span class="kpi-label">Draft Quotation Value</span>
+                    <div class="kpi-icon-badge" style="background:#fef3c7;color:#b45309;">&bull;</div>
+                </div>
+                <div class="kpi-val amg-counter" style="color:#d97706;" data-target="{{ $draftQuotedValue }}" data-currency="true">
+                    ${{ number_format($draftQuotedValue) }}
+                </div>
+                <div class="kpi-count-pill pill-draft">
+                    {{ $draftQuotesCount }} {{ Str::plural('Draft Quotation', $draftQuotesCount) }}
+                </div>
+                <div class="kpi-filter-hint" style="color:#d97706;">&rarr; Filter drafts only</div>
             </div>
-            <div class="kpi-val amg-counter" style="color:#d97706;" data-target="{{ $draftQuotes }}">{{ $draftQuotes }}</div>
-            <div class="kpi-sub">
-                <span class="amg-pulse-dot pulse-amber"></span> In-progress builder drafts
-            </div>
-            <div class="kpi-filter-hint" style="color:#d97706;">&rarr; Filter drafts only</div>
-        </div>
 
-        <!-- 3. Finalized Quotes -->
-        <div class="kpi-card kpi-finalized amg-slide-up amg-delay-3 kpi-trigger" data-kpi-filter="finalized" title="Click to filter finalized quotes">
-            <div class="kpi-header">
-                <span class="kpi-label">Finalized Quotations</span>
-                <div class="kpi-icon-badge" style="background:#dcfce7;color:#15803d;">&#10003;</div>
+            <!-- Card B: Finalized Quotation Value -->
+            <div class="kpi-card kpi-finalized kpi-trigger" data-kpi-filter="finalized" title="Click to filter finalized quotations">
+                <div class="kpi-header">
+                    <span class="kpi-label">Finalized Quotation Value</span>
+                    <div class="kpi-icon-badge" style="background:#dcfce7;color:#15803d;">&#10003;</div>
+                </div>
+                <div class="kpi-val amg-counter" style="color:#16a34a;" data-target="{{ $finalizedQuotedValue }}" data-currency="true">
+                    ${{ number_format($finalizedQuotedValue) }}
+                </div>
+                <div class="kpi-count-pill pill-finalized">
+                    {{ $finalizedQuotesCount }} {{ Str::plural('Finalized Quotation', $finalizedQuotesCount) }}
+                </div>
+                <div class="kpi-filter-hint" style="color:#16a34a;">&rarr; Filter finalized only</div>
             </div>
-            <div class="kpi-val amg-counter" style="color:#16a34a;" data-target="{{ $finalizedQuotes }}">{{ $finalizedQuotes }}</div>
-            <div class="kpi-sub">
-                <span class="amg-pulse-dot pulse-emerald"></span> Locked PDFs ready for customer
-            </div>
-            <div class="kpi-filter-hint" style="color:#16a34a;">&rarr; Filter finalized only</div>
-        </div>
 
-        <!-- 4. Total Quoted Pipeline Value -->
-        <div class="kpi-card kpi-pipeline amg-slide-up amg-delay-4" title="Total cumulative pipeline amount">
-            <div class="kpi-header">
-                <span class="kpi-label">Quoted Pipeline Value</span>
-                <div class="kpi-icon-badge" style="background:#e0e7ff;color:#4338ca;">$</div>
-            </div>
-            <div class="kpi-val amg-counter" style="color:#4338ca;" data-target="{{ $totalQuotedAmount }}" data-currency="true">
-                ${{ number_format($totalQuotedAmount) }}
-            </div>
-            <div class="kpi-sub">
-                <span>{{ $conversionRate }}% Conversion Rate ({{ $finalizedQuotes }} of {{ $totalQuotes }})</span>
-            </div>
-            <div class="ratio-progress-bar">
-                <div class="ratio-fill-finalized" style="width: {{ $conversionRate }}%;" title="Finalized: {{ $conversionRate }}%"></div>
-                <div class="ratio-fill-draft" style="width: {{ 100 - $conversionRate }}%;" title="Draft: {{ 100 - $conversionRate }}%"></div>
+            <!-- Card C: Total Quoted Value -->
+            <div class="kpi-card kpi-total kpi-trigger" data-kpi-filter="all" title="Click to show all quotations">
+                <div class="kpi-header">
+                    <span class="kpi-label">Total Quoted Value</span>
+                    <div class="kpi-icon-badge" style="background:#fee2e2;color:#ac2529;">$</div>
+                </div>
+                <div class="kpi-val amg-counter" style="color:#0f172a;" data-target="{{ $totalQuotedValue }}" data-currency="true">
+                    ${{ number_format($totalQuotedValue) }}
+                </div>
+                <div class="kpi-count-pill pill-total">
+                    {{ $totalQuotedCount }} {{ Str::plural('Quotation', $totalQuotedCount) }}
+                </div>
+                <div class="kpi-filter-hint">&rarr; Show all quotations</div>
             </div>
         </div>
     </div>
 
-    <!-- Dashboard Main Grid -->
-    <div class="dashboard-grid">
+    <!-- Recent Quotations Full-Width Command Panel -->
+    <div class="amg-slide-up amg-delay-2" style="margin-bottom: 28px;">
+        <div class="dash-card" id="quotesTableCard">
+            <div class="dash-card-header">
+                <h3 class="dash-card-title">
+                    <span>Recent Quotations</span>
+                    <span class="dash-card-title-badge" id="filteredQuotesCount">Showing {{ $recentQuotes->count() }} quotes</span>
+                </h3>
+                <a href="{{ route('sales.quotes.index') }}" style="font-size: 13px; color: var(--amg-red); text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                    <span>View All Quotations</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
 
-        <!-- Left Column: Interactive Quotations Command Panel -->
-        <div class="amg-slide-up amg-delay-3">
-            <div class="dash-card" id="quotesTableCard">
-                <div class="dash-card-header">
-                    <h3 class="dash-card-title">
-                        <span>Recent Quotations</span>
-                        <span class="dash-card-title-badge" id="filteredQuotesCount">Showing {{ $recentQuotes->count() }} quotes</span>
-                    </h3>
-                    <a href="{{ route('sales.quotes.index') }}" style="font-size: 13px; color: var(--amg-red); text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                        <span>View All Quotations</span>
-                        <span>&rarr;</span>
-                    </a>
+            <!-- Table Filter & Live Search Toolbar -->
+            <div class="table-toolbar">
+                <div class="filter-pills-row">
+                    <button type="button" class="quote-filter-pill active" data-filter="all">All ({{ $totalQuotes }})</button>
+                    <button type="button" class="quote-filter-pill" data-filter="finalized">Finalized ({{ $finalizedQuotes }})</button>
+                    <button type="button" class="quote-filter-pill" data-filter="draft">Drafts ({{ $draftQuotes }})</button>
                 </div>
 
-                <!-- Table Filter & Live Search Toolbar -->
-                <div class="table-toolbar">
-                    <div class="filter-pills-row">
-                        <button type="button" class="quote-filter-pill active" data-filter="all">All ({{ $totalQuotes }})</button>
-                        <button type="button" class="quote-filter-pill" data-filter="finalized">Finalized ({{ $finalizedQuotes }})</button>
-                        <button type="button" class="quote-filter-pill" data-filter="draft">Drafts ({{ $draftQuotes }})</button>
-                    </div>
-
-                    <div class="search-input-wrap">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" id="quoteTableSearch" placeholder="Search by #, customer, or model...">
-                    </div>
+                <div class="search-input-wrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="quoteTableSearch" placeholder="Search by #, customer, or model...">
                 </div>
+            </div>
 
-                <!-- Table Content -->
-                <div class="table-scroll-container">
-                    <table class="data-table-interactive" id="recentQuotesTable">
-                        <thead>
-                            <tr>
-                                <th>Quote #</th>
-                                <th>Customer &amp; Agency</th>
-                                <th>Sweeper Model</th>
-                                <th>Status</th>
-                                <th style="text-align:right;">Total Quoted</th>
-                                <th style="text-align:right;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($recentQuotes as $q)
-                                @php
-                                    $snap = $q->latestVersion?->snapshot;
-                                    $quoteDataJson = htmlspecialchars(json_encode([
-                                        'number' => $q->quote_number,
-                                        'status' => $q->status,
-                                        'customer' => $snap?->customer_company ?? 'Unassigned Customer',
-                                        'contact' => $snap?->customer_contact ?? 'Direct',
-                                        'address' => trim(($snap?->customer_address_1 ?? '') . ' ' . ($snap?->customer_address_2 ?? '')),
-                                        'model' => $snap?->model_code ?? 'MT4H',
-                                        'chassis' => $snap?->chassis_configuration ?? 'Standard Chassis',
-                                        'subtotal' => $snap?->subtotal ?? 0,
-                                        'freight' => $snap?->freight_amount ?? 0,
-                                        'total' => $snap?->total ?? 0,
-                                        'viewUrl' => route('sales.quotes.show', $q),
-                                        'pdfUrl' => route('sales.quotes.pdf', $q),
-                                    ]), ENT_QUOTES, 'UTF-8');
-                                @endphp
-                                <tr data-status="{{ strtolower($q->status) }}">
-                                    <td>
-                                        <strong style="color:#0f172a;">{{ $q->quote_number }}</strong>
-                                        <div style="font-size:11px;color:#94a3b8;">v{{ $q->current_version }} &middot; {{ $q->updated_at->format('M d, Y') }}</div>
-                                    </td>
-                                    <td>
-                                        <div style="font-weight:600;color:#1e293b;">{{ $snap?->customer_company ?? 'Draft Customer' }}</div>
-                                        <div style="font-size:11.5px;color:#64748b;">{{ $snap?->customer_contact ?? 'Direct Inquiry' }}</div>
-                                    </td>
-                                    <td>
-                                        <span class="badge" style="background:#f1f5f9;color:#334155;font-weight:700;">{{ $snap?->model_code ?? 'MT4H' }}</span>
-                                        <div style="font-size:11px;color:#64748b;margin-top:2px;">{{ Str::limit($snap?->chassis_configuration ?? 'Standard Chassis', 28) }}</div>
-                                    </td>
-                                    <td>
+            <!-- Table Content -->
+            <div class="table-scroll-container">
+                <table class="data-table-interactive" id="recentQuotesTable">
+                    <thead>
+                        <tr>
+                            <th>Quote #</th>
+                            <th>Customer &amp; Agency</th>
+                            <th>Sweeper Model</th>
+                            <th>Status</th>
+                            <th style="text-align:right;">Total Quoted</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($recentQuotes as $q)
+                            @php
+                                $snap = $q->latestVersion?->snapshot;
+                            @endphp
+                            <tr data-status="{{ strtolower($q->status) }}">
+                                <td>
+                                    <strong style="color:#0f172a;">{{ $q->quote_number }}</strong>
+                                    <div style="font-size:11px;color:#94a3b8;">v{{ $q->current_version }} &middot; {{ $q->updated_at->format('M d, Y') }}</div>
+                                </td>
+                                <td>
+                                    <div style="font-weight:600;color:#1e293b;">{{ $snap?->customer_company ?? 'Draft Customer' }}</div>
+                                    <div style="font-size:11.5px;color:#64748b;">{{ $snap?->customer_contact ?? 'Direct Inquiry' }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background:#f1f5f9;color:#334155;font-weight:700;">{{ $snap?->model_code ?? 'MT4H' }}</span>
+                                    <div style="font-size:11px;color:#64748b;margin-top:2px;">{{ Str::limit($snap?->chassis_configuration ?? 'Standard Chassis', 36) }}</div>
+                                </td>
+                                <td>
+                                    @if ($q->status === 'Finalized')
+                                        <span class="badge-status-finalized">&#10003; Finalized</span>
+                                    @else
+                                        <span class="badge-status-draft">&bull; Draft</span>
+                                    @endif
+                                </td>
+                                <td style="text-align:right;font-weight:700;color:#0f172a;">
+                                    ${{ number_format($snap?->total ?? 0) }}
+                                </td>
+                                <td style="text-align:right;">
+                                    <div style="display:inline-flex;gap:6px;align-items:center;">
+                                        {{-- 1. Inspect button (works for both Draft & Finalized) --}}
+                                        <button type="button" class="btn-table-action" onclick="inspectQuote({{ $q->id }})" title="Inspect Quotation Details">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                            <span>Inspect</span>
+                                        </button>
+
+                                        {{-- 2. Print button --}}
+                                        <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-table-action" target="_blank" title="Print Quotation" style="background:#f8fafc;color:#0f172a;border-color:#cbd5e1;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                            <span>Print</span>
+                                        </a>
+
+                                        {{-- 3. Status-based button: Download for Finalized, Open for Draft --}}
                                         @if ($q->status === 'Finalized')
-                                            <span class="badge-status-finalized">&#10003; Finalized</span>
-                                        @else
-                                            <span class="badge-status-draft">&bull; Draft</span>
-                                        @endif
-                                    </td>
-                                    <td style="text-align:right;font-weight:700;color:#0f172a;">
-                                        ${{ number_format($snap?->total ?? 0) }}
-                                    </td>
-                                    <td style="text-align:right;">
-                                        <div style="display:inline-flex;gap:4px;">
-                                            <button type="button" class="btn-table-action" onclick="openQuickQuoteModal({{ $quoteDataJson }})" title="Quick Inspect">
-                                                <span>Inspect</span>
-                                            </button>
-                                            <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-table-action" target="_blank" title="Print Quotation" style="background:#f8fafc;color:#0f172a;border-color:#cbd5e1;">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                                                <span>Print</span>
+                                            <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-table-action btn-table-download" title="Download Finalized PDF" download="ODRA_Quotation_{{ $q->quote_number }}.pdf">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                                <span>Download</span>
                                             </a>
-                                            <a href="{{ route('sales.quotes.show', $q) }}" class="btn-table-action btn-table-primary" title="Open in Quote Builder">
+                                        @else
+                                            <a href="{{ route('sales.quotes.show', $q) }}" class="btn-table-action btn-table-primary" title="Open and Edit Draft Quotation">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                                 <span>Open</span>
                                             </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" style="text-align:center;padding:36px;color:#94a3b8;">
-                                        No quotations found. <a href="{{ route('sales.quotes.create') }}" style="color:var(--amg-red);font-weight:600;">Create your first quote &rarr;</a>
-                                    </td>
-                                </tr>
-                            @endforelse
-                            <tr id="noQuotesMatchRow" style="display:none;">
-                                <td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">
-                                    No quotations match the active search or status filter.
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
+                        @empty
+                            <tr>
+                                <td colspan="6" style="text-align:center;padding:36px;color:#94a3b8;">
+                                    No quotations found. <a href="{{ route('sales.quotes.create') }}" style="color:var(--amg-red);font-weight:600;">Create your first quote &rarr;</a>
+                                </td>
+                            </tr>
+                        @endforelse
+                        <tr id="noQuotesMatchRow" style="display:none;">
+                            <td colspan="6" style="text-align:center;padding:32px;color:#94a3b8;">
+                                No quotations match the active search or status filter.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Balanced Layout: Assigned Territories & Pre-Approved Cooperatives -->
+    <div class="dashboard-bottom-grid amg-slide-up amg-delay-3">
+        <!-- Card 1: My Assigned Territories -->
+        <div class="dash-card" style="margin-bottom:0;">
+            <div class="dash-card-header">
+                <h3 class="dash-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                    <span>Assigned Coverage Territories</span>
+                </h3>
+            </div>
+            <div style="padding: 20px 24px;">
+                @if ($repTerritories->count() > 0)
+                    <div class="territory-chip-list">
+                        @foreach ($repTerritories as $t)
+                            <div class="territory-badge-pill">
+                                <span>{{ $t->label }}</span>
+                                <span class="territory-code">{{ $t->code }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p style="font-size: 13px; color: #64748b; margin: 0 0 12px;">
+                        Nationwide municipal &amp; contractor quoting coverage active across assigned coverage states.
+                    </p>
+                    <div class="territory-chip-list">
+                        <span class="territory-badge-pill">Assigned State: {{ $user->state ?? 'Texas' }} <span class="territory-code">ACTIVE</span></span>
+                        <span class="territory-badge-pill">Freight Matrix: Auto-Matched <span class="territory-code">LIVE</span></span>
+                    </div>
+                @endif
             </div>
         </div>
 
-        <!-- Right Column: Mercedes-AMG Sweeper Showcase & Territory Explorer -->
-        <div class="amg-slide-up amg-delay-4">
-
-            <!-- Card 1: Interactive Sweeper Lineup Showcase -->
-            <div class="dash-card">
-                <div class="dash-card-header">
-                    <h3 class="dash-card-title">
-                        <span>Sweeper Models Lineup</span>
-                    </h3>
-                    <a href="{{ route('sales.models') }}" style="font-size:12px;color:var(--amg-red);font-weight:700;text-decoration:none;">
-                        All Specs &rarr;
-                    </a>
+        <!-- Card 2: Pre-Approved Cooperatives -->
+        <div class="dash-card" style="margin-bottom:0;">
+            <div class="dash-card-header">
+                <h3 class="dash-card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Pre-Approved Cooperative Contracts</span>
+                </h3>
+            </div>
+            <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
+                    <img src="{{ asset('images/logo-sourcewell.png') }}" alt="Sourcewell" style="height:22px;object-fit:contain;">
+                    <div style="font-size:12px;color:#334155;"><strong>Contract #093021-ODR</strong><br><span style="color:#64748b;">Class 5-8 Street Sweepers &middot; 12% Discount</span></div>
                 </div>
-
-                <div style="padding: 16px;">
-                    <!-- Mini Sweeper Card: MT4H -->
-                    <div class="sweeper-mini-card">
-                        <div class="sweeper-mini-img-wrap">
-                            <img src="{{ asset('images/models/landing-mt4h-diesel.webp') }}" alt="ODRA MT4H" class="sweeper-mini-img">
-                        </div>
-                        <div class="sweeper-mini-title">
-                            <span>ODRA MT4H</span>
-                            <span class="badge" style="background:rgba(16,185,129,0.2);color:#34d399;font-size:10px;">NON-CDL</span>
-                        </div>
-                        <div class="sweeper-mini-desc">
-                            Dual-engine agility with 4 yd&sup3; variable 10' high-dump on Isuzu NRR cabover.
-                        </div>
-                        <div class="sweeper-mini-chips">
-                            <span class="sweeper-chip">4.0 yd&sup3; Hopper</span>
-                            <span class="sweeper-chip">220 Gal Water</span>
-                            <span class="sweeper-chip">65HP Tier 4-F</span>
-                        </div>
-                        <div class="sweeper-mini-actions">
-                            <a href="{{ route('sales.quotes.create') }}?model=MT4H" class="btn-mini-primary">Build MT4H Quote &rarr;</a>
-                            <a href="{{ route('sales.models') }}" class="btn-mini-secondary">Specs</a>
-                        </div>
-                    </div>
-
-                    <!-- Mini Sweeper Card: MS5H -->
-                    <div class="sweeper-mini-card">
-                        <div class="sweeper-mini-img-wrap">
-                            <img src="{{ asset('images/models/landing-ms5h.webp') }}" alt="ODRA MS5H" class="sweeper-mini-img">
-                        </div>
-                        <div class="sweeper-mini-title">
-                            <span>ODRA MS5H</span>
-                            <span class="badge" style="background:rgba(59,130,246,0.2);color:#60a5fa;font-size:10px;">CLASS 6/7</span>
-                        </div>
-                        <div class="sweeper-mini-desc">
-                            Single-engine highway powerhouse powered by 300HP Cummins B6.7 on Freightliner M2 Plus.
-                        </div>
-                        <div class="sweeper-mini-chips">
-                            <span class="sweeper-chip">5.0 yd&sup3; Hopper</span>
-                            <span class="sweeper-chip">355 Gal Water</span>
-                            <span class="sweeper-chip">300HP Cummins</span>
-                        </div>
-                        <div class="sweeper-mini-actions">
-                            <a href="{{ route('sales.quotes.create') }}?model=MS5H" class="btn-mini-primary">Build MS5H Quote &rarr;</a>
-                            <a href="{{ route('sales.models') }}" class="btn-mini-secondary">Specs</a>
-                        </div>
-                    </div>
+                <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
+                    <img src="{{ asset('images/logo-hgac.png') }}" alt="H-GAC" style="height:20px;object-fit:contain;">
+                    <div style="font-size:12px;color:#334155;"><strong>H-GACBuy Contract</strong><br><span style="color:#64748b;">Municipal Road Equipment &middot; Pre-negotiated</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
+                    <img src="{{ asset('images/logo-buyboard.png') }}" alt="BuyBoard" style="height:20px;object-fit:contain;">
+                    <div style="font-size:12px;color:#334155;"><strong>BuyBoard National</strong><br><span style="color:#64748b;">Local Government Purchasing Cooperative</span></div>
                 </div>
             </div>
-
-            <!-- Card 2: My Assigned Territories -->
-            <div class="dash-card">
-                <div class="dash-card-header">
-                    <h3 class="dash-card-title">
-                        <span>Assigned Territories</span>
-                    </h3>
-                </div>
-                <div style="padding: 18px 20px;">
-                    @if ($repTerritories->count() > 0)
-                        <div class="territory-chip-list">
-                            @foreach ($repTerritories as $t)
-                                <div class="territory-badge-pill">
-                                    <span>{{ $t->label }}</span>
-                                    <span class="territory-code">{{ $t->code }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <p style="font-size: 13px; color: #64748b; margin: 0 0 10px;">
-                            Nationwide municipal &amp; contractor quoting coverage active across all 50 US States.
-                        </p>
-                        <div class="territory-chip-list">
-                            <span class="territory-badge-pill">US National Coverage <span class="territory-code">50-ST</span></span>
-                            <span class="territory-badge-pill">Standard Freight Rates <span class="territory-code">AUTO</span></span>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Card 3: Pre-Approved Cooperatives -->
-            <div class="dash-card">
-                <div class="dash-card-header">
-                    <h3 class="dash-card-title">
-                        <span>Pre-Approved Cooperatives</span>
-                    </h3>
-                </div>
-                <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 10px;">
-                    <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
-                        <img src="{{ asset('images/logo-sourcewell.png') }}" alt="Sourcewell" style="height:22px;object-fit:contain;">
-                        <div style="font-size:12px;color:#334155;"><strong>Contract #093021-ODR</strong><br><span style="color:#64748b;">Class 5-8 Street Sweepers</span></div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
-                        <img src="{{ asset('images/logo-hgac.png') }}" alt="H-GAC" style="height:20px;object-fit:contain;">
-                        <div style="font-size:12px;color:#334155;"><strong>H-GACBuy Contract</strong><br><span style="color:#64748b;">Municipal Road Equipment</span></div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
-                        <img src="{{ asset('images/logo-buyboard.png') }}" alt="BuyBoard" style="height:20px;object-fit:contain;">
-                        <div style="font-size:12px;color:#334155;"><strong>BuyBoard National</strong><br><span style="color:#64748b;">Local Government Purchasing</span></div>
-                    </div>
-                </div>
-            </div>
-
         </div>
-
     </div>
 
 </div>
-
-<!-- Quick Quote Inspection Modal Dialog -->
-<div class="amg-drawer-backdrop" id="quickQuoteModal" onclick="if(event.target===this) closeQuickQuoteModal()">
-    <div class="amg-drawer-card">
-        <div style="padding: 20px 24px; border-bottom: 1px solid #334155; background: #111827; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <h3 style="margin: 0; font-size: 18px; font-weight: 800; color: white;" id="modalQuoteNumber">Quote Inspection</h3>
-                <span id="modalQuoteStatus" class="badge">Draft</span>
-            </div>
-            <button type="button" onclick="closeQuickQuoteModal()" style="background: rgba(255,255,255,0.1); border: none; color: #94a3b8; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
-        </div>
-
-        <div style="padding: 24px; overflow-y: auto; color: #cbd5e1; font-size: 13.5px; line-height: 1.6;">
-            <!-- Customer Card -->
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 18px;">
-                <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px;">Customer / Agency</div>
-                <div style="font-size: 16px; font-weight: 700; color: white;" id="modalQuoteCustomer">City of Miami Public Works</div>
-                <div style="color: #94a3b8; margin-top: 2px;">Contact: <span id="modalQuoteContact" style="color:white;">Direct</span></div>
-                <div style="color: #94a3b8; margin-top: 2px;">Delivery: <span id="modalQuoteAddress" style="color:#e2e8f0;">Miami, FL</span></div>
-            </div>
-
-            <!-- Equipment Card -->
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 18px;">
-                <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px;">Configured Equipment</div>
-                <div style="font-size: 16px; font-weight: 700; color: white;" id="modalQuoteModel">ODRA MT4H Sweeper</div>
-                <div style="color: #cbd5e1; margin-top: 4px;" id="modalQuoteChassis">Isuzu NRR Cabover 19,500 GVWR - Left Dump</div>
-            </div>
-
-            <!-- Pricing Breakdown -->
-            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px;">
-                <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-                    <span style="color:#94a3b8;">Equipment Subtotal</span>
-                    <strong style="color:white;" id="modalQuoteSubtotal">$0</strong>
-                </div>
-                <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin-top:4px;">
-                    <span style="color:#94a3b8;">Freight / Delivery</span>
-                    <strong style="color:white;" id="modalQuoteFreight">$0</strong>
-                </div>
-                <div style="display:flex;justify-content:space-between;padding:8px 0 0;margin-top:6px;font-size:16px;">
-                    <span style="color:white;font-weight:700;">Total Quotation Value</span>
-                    <strong style="color:#34d399;" id="modalQuoteTotal">$0</strong>
-                </div>
-            </div>
-        </div>
-
-        <div style="padding: 16px 24px; border-top: 1px solid #334155; background: #111827; display: flex; justify-content: flex-end; gap: 10px;">
-            <button type="button" class="btn-table-action" onclick="closeQuickQuoteModal()">Close</button>
-            <a id="modalQuotePrintBtn" href="#" class="btn-table-action" target="_blank" style="background:#f1f5f9;color:#0f172a;border-color:#cbd5e1;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                <span>Print</span>
-            </a>
-            <a id="modalQuotePdfBtn" href="#" class="btn-table-action" target="_blank" style="background:#0284c7;color:white;border-color:#0284c7;">
-                <span>Download PDF &darr;</span>
-            </a>
-            <a id="modalQuoteViewBtn" href="#" class="btn-table-action btn-table-primary">
-                <span>Open in Quote Builder &rarr;</span>
-            </a>
-        </div>
-    </div>
-</div>
-
 @endsection

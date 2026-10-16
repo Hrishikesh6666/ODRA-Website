@@ -37,7 +37,7 @@
                         <th>Pricing Basis</th>
                         <th>Status</th>
                         <th style="text-align: right;">Total Quoted ($)</th>
-                        <th style="text-align: right; width: 130px;">Actions</th>
+                        <th style="text-align: right; width: 200px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,10 +61,15 @@
                                 ${{ number_format($snap?->total ?? 0, 2) }}
                             </td>
                             <td style="text-align: right;">
-                                <a href="{{ route('sales.quotes.show', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Inspect</a>
-                                @if ($q->status === 'Finalized')
-                                    <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">PDF</a>
-                                @endif
+                                <div style="display: inline-flex; gap: 4px; justify-content: flex-end;">
+                                    <button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" onclick="inspectQuote({{ $q->id }})" title="Quick Inspect Quote Details">Inspect</button>
+                                    <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" target="_blank" title="Print Quotation">Print</a>
+                                    @if ($q->status === 'Finalized')
+                                        <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; background: #ecfdf5; color: #065f46; border-color: #a7f3d0; text-decoration: none;" target="_blank" download="ODRA_Quotation_{{ $q->quote_number }}.pdf" title="Download Finalized PDF">Download</a>
+                                    @else
+                                        <a href="{{ route('sales.quotes.show', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" title="Open in Quote Builder">Open</a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforeach

@@ -59,11 +59,12 @@ class PdfController extends Controller
             notes: "Downloaded PDF for Q-{$quote->quote_number} v{$quote->current_version}"
         );
 
-        $filename = "ODRA_Quotation_Q-{$quote->quote_number}_v{$quote->current_version}.pdf";
+        $filename = "ODRA_Quotation_{$quote->quote_number}.pdf";
+        $disposition = request()->has('inline') ? 'inline' : 'attachment';
 
         return response($content, 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+            'Content-Disposition' => "{$disposition}; filename=\"{$filename}\"",
             'Content-Length' => strlen($content),
             'Cache-Control' => 'private, must-revalidate, post-check=0, pre-check=0',
             'Pragma' => 'public',

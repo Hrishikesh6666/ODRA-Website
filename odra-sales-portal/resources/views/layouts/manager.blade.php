@@ -331,10 +331,6 @@
             </a>
 
             <div class="nav-heading">Commercial Master</div>
-            <a href="{{ route('manager.models') }}" class="nav-link {{ request()->routeIs('manager.models*') ? 'active' : '' }}">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                Sweeper Models Showcase
-            </a>
             <a href="{{ route('manager.pricing.index') }}" class="nav-link {{ request()->routeIs('manager.pricing.*') ? 'active' : '' }}">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="18" x2="12" y2="6"></line></svg>
                 Model &amp; Option Pricing
@@ -362,10 +358,11 @@
                 @yield('header-title', 'Executive Management Console')
                 <span class="topbar-badge">Financial Authority Active</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <span style="font-size: 13px; color: var(--text-muted);">
-                    {{ auth()->user()->territory ?? 'Executive Office' }}
-                </span>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <a href="{{ route('sales.dashboard') }}" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">Dashboard</a>
+                <a href="{{ route('manager.dashboard') }}" class="btn-secondary {{ request()->routeIs('manager.dashboard') ? 'active' : '' }}" style="font-size: 12px; padding: 6px 12px; font-weight: 700; color: #047857; text-decoration: none;">Manager HQ</a>
+                <a href="{{ route('sales.quotes.index') }}" class="btn-secondary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">My Quotations</a>
+                <a href="{{ route('sales.quotes.create') }}" class="btn-primary" style="font-size: 12px; padding: 6px 12px; text-decoration: none;">+ New Quotation</a>
             </div>
         </header>
 
@@ -385,6 +382,8 @@
             @yield('content')
         </main>
     </div>
+
+    @include('partials.quote-inspect-modal')
 
     <script src="{{ asset('js/amg-animations.js') }}"></script>
     @stack('scripts')

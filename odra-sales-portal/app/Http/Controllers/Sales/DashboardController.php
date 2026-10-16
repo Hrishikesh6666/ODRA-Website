@@ -23,22 +23,30 @@ class DashboardController extends Controller
         // Representative's personal quote statistics (using global scope 'owned')
         $quotesQuery = Quote::with('latestVersion.snapshot');
 
-        $allQuotes = (clone $quotesQuery)->latest('updated_at')->take(20)->get();
+        $allUserQuotes = (clone $quotesQuery)->latest('updated_at')->get();
 
-        $totalQuotes = (clone $quotesQuery)->count();
-        $draftQuotes = (clone $quotesQuery)->where('status', 'Draft')->count();
-        $finalizedQuotes = (clone $quotesQuery)->where('status', 'Finalized')->count();
+        $draftQuotesList = $allUserQuotes->where('status', 'Draft');
+        $draftQuotesCount = $draftQuotesList->count();
+        $draftQuotedValue = (float) $draftQuotesList->sum(fn ($q) => (float) ($q->latestVersion?->snapshot?->total ?? 0));
 
-        $totalQuotedAmount = $allQuotes->sum(function ($q) {
-            return (float) ($q->latestVersion?->snapshot?->total ?? 0);
-        });
+        $finalizedQuotesList = $allUserQuotes->where('status', 'Finalized');
+        $finalizedQuotesCount = $finalizedQuotesList->count();
+        $finalizedQuotedValue = (float) $finalizedQuotesList->sum(fn ($q) => (float) ($q->latestVersion?->snapshot?->total ?? 0));
 
-        $conversionRate = $totalQuotes > 0 ? round(($finalizedQuotes / $totalQuotes) * 100) : 0;
+        $totalQuotedValue = $draftQuotedValue + $finalizedQuotedValue;
+        $totalQuotedCount = $draftQuotesCount + $finalizedQuotesCount;
 
-        $mt4hCount = $allQuotes->filter(fn ($q) => ($q->latestVersion?->snapshot?->model_code ?? '') === 'MT4H')->count();
-        $ms5hCount = $allQuotes->filter(fn ($q) => ($q->latestVersion?->snapshot?->model_code ?? '') === 'MS5H')->count();
+        $totalQuotes = $allUserQuotes->count();
+        $draftQuotes = $draftQuotesCount;
+        $finalizedQuotes = $finalizedQuotesCount;
+        $totalQuotedAmount = $totalQuotedValue;
 
-        $recentQuotes = $allQuotes->take(10);
+        $conversionRate = $totalQuotedCount > 0 ? round(($finalizedQuotesCount / $totalQuotedCount) * 100) : 0;
+
+        $mt4hCount = $allUserQuotes->filter(fn ($q) => ($q->latestVersion?->snapshot?->model_code ?? '') === 'MT4H')->count();
+        $ms5hCount = $allUserQuotes->filter(fn ($q) => ($q->latestVersion?->snapshot?->model_code ?? '') === 'MS5H')->count();
+
+        $recentQuotes = $allUserQuotes->take(15);
 
         // Territory details for current rep
         $repTerritories = Territory::where('assigned_rep_id', $user->id)->get();
@@ -49,6 +57,12 @@ class DashboardController extends Controller
             'totalQuotes',
             'draftQuotes',
             'finalizedQuotes',
+            'draftQuotesCount',
+            'finalizedQuotesCount',
+            'totalQuotedCount',
+            'draftQuotedValue',
+            'finalizedQuotedValue',
+            'totalQuotedValue',
             'totalQuotedAmount',
             'conversionRate',
             'mt4hCount',

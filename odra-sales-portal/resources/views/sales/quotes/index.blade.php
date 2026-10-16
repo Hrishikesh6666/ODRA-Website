@@ -203,15 +203,19 @@
                         <td>{{ $quote->updated_at->format('M d, Y') }}</td>
                         <td>
                             <div class="actions-cell">
-                                <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action">
-                                    {{ $quote->status === 'Finalized' ? 'View Quote' : 'Edit Draft' }}
-                                </a>
+                                <button type="button" class="btn-action" onclick="inspectQuote({{ $quote->id }})" title="Quick Inspect Quote Details">
+                                    Inspect
+                                </button>
                                 <a href="{{ route('sales.quotes.show', $quote) }}?print=1" class="btn-action" target="_blank" title="Print Quotation">
                                     Print
                                 </a>
-                                @if ($snapshot?->pdf_path)
-                                    <a href="{{ route('sales.quotes.pdf', $quote) }}" class="btn-action btn-pdf" target="_blank">
-                                        Download PDF
+                                @if ($quote->status === 'Finalized')
+                                    <a href="{{ route('sales.quotes.pdf', $quote) }}" class="btn-action btn-pdf" target="_blank" download="ODRA_Quotation_{{ $quote->quote_number }}.pdf" title="Download Finalized PDF">
+                                        Download
+                                    </a>
+                                @else
+                                    <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action" title="Open and Edit Draft Quotation">
+                                        Open
                                     </a>
                                 @endif
                             </div>
