@@ -174,6 +174,19 @@ class FreightSeeder extends Seeder
             ['state' => 'Wyoming', 'city' => 'Thermopolis WY 82443', 'customer_rate' => 3300, 'municipality_rate' => 3475],
             ['state' => 'Wyoming', 'city' => 'Lander WY 82520', 'customer_rate' => 3515, 'municipality_rate' => 3700],
             ['state' => 'Wyoming', 'city' => 'Worland WY 82401', 'customer_rate' => 3140, 'municipality_rate' => 3305],
+            ['state' => 'Alaska', 'city' => 'Anchorage AK 99501', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Hawaii', 'city' => 'Honolulu HI 96813', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'International', 'city' => 'International Export Point', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Alberta', 'city' => 'Calgary AB', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'British Columbia', 'city' => 'Vancouver BC', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Manitoba', 'city' => 'Winnipeg MB', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Newfoundland and Labrador', 'city' => "St. John's NL", 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Ontario', 'city' => 'Toronto ON', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Quebec', 'city' => 'Montreal QC', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Saskatchewan', 'city' => 'Regina SK', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Prince Edward', 'city' => 'Charlottetown PE', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'New Brunswick', 'city' => 'Fredericton NB', 'customer_rate' => 0, 'municipality_rate' => 0],
+            ['state' => 'Nova Scotia', 'city' => 'Halifax NS', 'customer_rate' => 0, 'municipality_rate' => 0],
         ];
 
         foreach ($freightRules as $rule) {

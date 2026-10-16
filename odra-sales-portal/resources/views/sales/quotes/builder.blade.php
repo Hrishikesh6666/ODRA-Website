@@ -1049,11 +1049,11 @@ function resolveBasis(basisVal, modelCode) {
 }
 
 const SR_CODES = Object.assign({
-  "Carlos Silva":"CS", "John Wells":"JW", "Kerry Briggs":"KB",
-  "Paul Piotrowski":"PP", "Ryan Khosrofian":"RK", "Shawn Herringer":"SH", "Juan Oliver":"JO",
-  "Robert Yuska":"RY", "Chris Norlin":"CN", "Kra Whitmore":"KW", "Fernando Oliveira":"FO",
-  "Troy Fisher":"TF", "Sean Chenoweth":"SC", "Jason Coover":"JC", "Alex Byczynski":"AB",
-  "JJ Rickis":"JR"
+  "Bud Earp":"BE", "Carlos Silva":"CS", "Chris Norlin":"CN", "Fernando Oliveira":"FO",
+  "Jason Coover":"JC", "John Wells":"JW", "Juan Oliver":"JO", "Kra Whitmore":"KW",
+  "Marcin Strojny":"MS", "Paul Piotrowski":"PP", "Robert Yuska":"RY", "Ryan Khosrofian":"RK",
+  "Sales Management":"SM", "Sean Chenoweth":"SC", "Shawn Herringer":"SH", "Ted Bartolo":"TB",
+  "Troy Fisher":"TF", "Alex Byczynski":"AB"
 }, CATALOG.sr_codes || {});
 
 let state = {

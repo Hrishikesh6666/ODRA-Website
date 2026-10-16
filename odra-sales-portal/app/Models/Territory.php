@@ -15,6 +15,10 @@ class Territory extends Model
         'assigned_rep_id',
         'states',
         'cities',
+        'channel',
+        'dealer_name',
+        'region',
+        'country',
     ];
 
     protected $casts = [
