@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends(auth()->user()->isAdmin() ? 'layouts.admin' : 'layouts.manager')
 
 @section('title', 'Quotation Configuration & Pricing Basis Master')
 @section('header-title', 'Quotation Configuration & Pricing Basis Master')

@@ -16,11 +16,9 @@
         <a href="{{ route('sales.quotes.create') }}" target="_blank" class="btn-primary" style="padding: 9px 16px; font-size: 13px;">
             &#128065; Preview Live Quote Builder
         </a>
-        @if(auth()->user()->isAdmin())
-            <a href="{{ route('admin.quotation-settings.index') }}" class="btn-secondary" style="padding: 9px 14px; font-size: 13px;">
-                &#9998; Edit Quotation Page Layout &amp; Text
-            </a>
-        @endif
+        <a href="{{ auth()->user()->isAdmin() ? route('admin.quotation-settings.index') : route('manager.quotation-settings.index') }}" class="btn-secondary" style="padding: 9px 14px; font-size: 13px;">
+            &#9998; Quotation Configuration &amp; Pricing Basis Master
+        </a>
     </div>
 </div>
 
@@ -72,108 +70,11 @@
     </div>
 </div>
 
-<!-- SECTION 1: Base Equipment Models Master Pricing -->
-<div class="card" id="modelsPricingSection">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-        <div>
-            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">1. Base Equipment Master Pricing (Sweeper Units)</h3>
-            <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted);">
-                Base price tiers for each complete sweeper model. Any change takes effect immediately on new quotations.
-            </p>
-        </div>
-        @if(auth()->user()->isAdmin())
-            <a href="{{ route('admin.models.create') }}" class="btn-secondary" style="font-size: 12px; padding: 6px 12px;">
-                + Add New Sweeper Model
-            </a>
-        @endif
-    </div>
-
-    <div class="table-scroll-container" style="overflow-x: auto; overflow-y: auto; -webkit-overflow-scrolling: touch;">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="min-width: 110px;">Model Code</th>
-                    <th style="min-width: 220px;">Category &amp; Description</th>
-                    <th style="text-align: right; min-width: 140px;">
-                        <div>Commercial MSRP</div>
-                        <span style="font-size: 10px; font-weight: normal; color: #64748b;">(MSRP Basis)</span>
-                    </th>
-                    <th style="text-align: right; min-width: 140px;">
-                        <div>Coop List Price</div>
-                        <span style="font-size: 10px; font-weight: normal; color: #64748b;">(Quote MSRP col)</span>
-                    </th>
-                    <th style="text-align: right; min-width: 140px;">
-                        <div>Coop Net Price</div>
-                        <span style="font-size: 10px; font-weight: normal; color: #64748b;">(Quote Unit Price col)</span>
-                    </th>
-                    <th style="text-align: center; min-width: 110px;">
-                        <div>Contract Discount</div>
-                        <span style="font-size: 10px; font-weight: normal; color: #64748b;">(Quote Discount col)</span>
-                    </th>
-                    <th style="min-width: 140px;">Chassis Options</th>
-                    <th style="text-align: right; min-width: 120px;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($models as $m)
-                    @php
-                        $p = $m->prices->first();
-                        $msrp = $p ? (float) $p->msrp : 0;
-                        $swList = $p ? (float) $p->sw_list : 0;
-                        $swNet = $p ? (float) $p->sw_net : 0;
-                        $discPct = ($swList > 0 && $swNet > 0 && $swList >= $swNet)
-                            ? round((1 - ($swNet / $swList)) * 100)
-                            : 0;
-                    @endphp
-                    <tr>
-                        <td>
-                            <strong style="font-size: 15px; color: #0f172a;">{{ $m->code }}</strong>
-                            <div style="font-size: 11px; color: #64748b;">{{ $m->is_active ? 'Active' : 'Inactive' }}</div>
-                        </td>
-                        <td>
-                            <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">{{ $m->category }}</div>
-                            <div style="font-size: 12px; color: #334155; line-height: 1.4; max-height: 38px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="{{ $m->description }}">
-                                {{ $m->description }}
-                            </div>
-                        </td>
-                        <td style="text-align: right; font-weight: 700; font-size: 14.5px; color: #0f172a;">
-                            ${{ number_format($msrp, 0) }}
-                        </td>
-                        <td style="text-align: right; font-weight: 600; color: #475569;">
-                            ${{ number_format($swList, 0) }}
-                        </td>
-                        <td style="text-align: right; font-weight: 700; font-size: 14.5px; color: #059669;">
-                            ${{ number_format($swNet, 0) }}
-                        </td>
-                        <td style="text-align: center;">
-                            @if ($discPct > 0)
-                                <span class="badge" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 12px;">
-                                    {{ $discPct }}% Off
-                                </span>
-                            @else
-                                <span style="color: #94a3b8; font-size: 12px;">0%</span>
-                            @endif
-                        </td>
-                        <td>
-                            <span style="font-size: 12.5px; color: #334155;">{{ $m->configurations->count() }} options</span>
-                        </td>
-                        <td style="text-align: right;">
-                            <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick='openModelPriceModal(@json($m), @json($p))'>
-                                &#9998; Edit Prices
-                            </button>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- SECTION 2: Enhancements & Options Master Pricing -->
-<div class="card" id="enhancementsPricingSection" style="margin-top: 24px;">
+<!-- SECTION 1: Options & Enhancements Master Pricing -->
+<div class="card" id="enhancementsPricingSection">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
         <div>
-            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">2. Options &amp; Enhancements Master Pricing</h3>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">1. Options &amp; Enhancements Master Pricing</h3>
             <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted);">
                 Pricing for brooms, lighting, water flush, stainless steel hoppers, extended warranties, and dual steering conversions.
             </p>
@@ -297,11 +198,11 @@
     </div>
 </div>
 
-<!-- SECTION 3: Freight Delivery Rates Matrix -->
+<!-- SECTION 2: Freight Delivery Rates Matrix -->
 <div class="card" id="freightPricingSection" style="margin-top: 24px;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
         <div>
-            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">3. Delivery &amp; Transport Freight Pricing Matrix</h3>
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700; color: #0f172a;">2. Delivery &amp; Transport Freight Pricing Matrix</h3>
             <p style="margin: 4px 0 0; font-size: 13px; color: var(--text-muted);">
                 Customer rate (applied on Commercial MSRP quotes) and Municipality rate (applied on Cooperative Contract quotes).
             </p>
@@ -353,83 +254,7 @@
 </div>
 
 <!-- ========================================== -->
-<!-- MODAL 1: Edit Base Model Prices with Live Calculator -->
-<!-- ========================================== -->
-<div id="modelPriceModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: white; border-radius: 10px; width: 100%; max-width: 540px; padding: 26px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-            <h3 id="modalModelTitle" style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a;">Update Model Master Price</h3>
-            <button type="button" onclick="closeModelPriceModal()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #64748b;">&times;</button>
-        </div>
-
-        <form id="modelPriceForm" method="POST">
-            @csrf
-            @method('PUT')
-
-            <div style="display: flex; flex-direction: column; gap: 14px;">
-                <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
-                    <label style="font-size: 13px; font-weight: 700; color: #0f172a; display: block; margin-bottom: 2px;">
-                        1. Commercial MSRP ($)
-                    </label>
-                    <span style="font-size: 11px; color: #64748b; display: block; margin-bottom: 6px;">
-                        Base unit price. Controls both MSRP and Unit Price on <strong>MSRP (Commercial)</strong> basis quotes (0% discount).
-                    </span>
-                    <input type="number" id="modelMsrpInput" name="msrp" class="form-control" required min="0" step="1" oninput="calculateModelPreview('msrp')">
-                </div>
-
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px;">
-                    <label style="font-size: 13px; font-weight: 700; color: #166534; display: block; margin-bottom: 2px;">
-                        2. Cooperative Contract List Price ($) &mdash; <span style="font-weight: normal;">Quote MSRP column</span>
-                    </label>
-                    <span style="font-size: 11px; color: #166534; display: block; margin-bottom: 6px;">
-                        Printed in the <strong>MSRP column</strong> on Sourcewell, H-GAC, Minnesota, and BuyBoard quotes.
-                    </span>
-                    <input type="number" id="modelSwListInput" name="sw_list" class="form-control" required min="0" step="1" oninput="calculateModelPreview('list')">
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px;">
-                        <label style="font-size: 13px; font-weight: 700; color: #1e40af; display: block; margin-bottom: 2px;">
-                            3. Contract Discount (%)
-                        </label>
-                        <span style="font-size: 11px; color: #1e40af; display: block; margin-bottom: 6px;">
-                            Printed in <strong>DISCOUNT column</strong> (e.g. 12%).
-                        </span>
-                        <input type="number" id="modelDiscountInput" name="discount_percent" class="form-control" min="0" max="100" step="0.1" placeholder="e.g. 12" oninput="calculateModelPreview('disc')">
-                    </div>
-
-                    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px;">
-                        <label style="font-size: 13px; font-weight: 700; color: #166534; display: block; margin-bottom: 2px;">
-                            4. Coop Net Unit Price ($)
-                        </label>
-                        <span style="font-size: 11px; color: #166534; display: block; margin-bottom: 6px;">
-                            Printed in <strong>UNIT PRICE column</strong>.
-                        </span>
-                        <input type="number" id="modelSwNetInput" name="sw_net" class="form-control" required min="0" step="0.01" oninput="calculateModelPreview('net')">
-                    </div>
-                </div>
-
-                <!-- Live Quote Impact Calculator Preview -->
-                <div style="background: #1e293b; color: white; border-radius: 8px; padding: 14px;">
-                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: #94a3b8; font-weight: 700; margin-bottom: 6px;">
-                        &#128065; Live Quote Preview Calculator
-                    </div>
-                    <div id="modelLivePreview" style="font-size: 13px; line-height: 1.5;">
-                        <!-- Updated dynamically via JS -->
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
-                <button type="button" class="btn-secondary" onclick="closeModelPriceModal()">Cancel</button>
-                <button type="submit" class="btn-primary" style="padding: 10px 20px;">Save &amp; Update All Quotes</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- ========================================== -->
-<!-- MODAL 2: Edit Enhancement Price with Live Calculator -->
+<!-- MODAL 1: Edit Enhancement Price with Live Calculator -->
 <!-- ========================================== -->
 <div id="enhPriceModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: white; border-radius: 10px; width: 100%; max-width: 540px; padding: 26px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
@@ -550,76 +375,6 @@
         return '$' + Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
     }
 
-    // Modal 1: Model Price
-    function openModelPriceModal(model, price) {
-        document.getElementById('modalModelTitle').textContent = `Update Master Price: ${model.code} Sweeper`;
-        document.getElementById('modelPriceForm').action = `/manager/pricing/models/${model.id}`;
-        const msrp = price ? Math.round(price.msrp) : 0;
-        const list = price ? Math.round(price.sw_list) : 0;
-        const net = price ? Number(price.sw_net) : 0;
-        const disc = (list > 0 && net >= 0 && list >= net) ? Math.round((1 - (net / list)) * 1000) / 10 : 0;
-
-        document.getElementById('modelMsrpInput').value = msrp;
-        document.getElementById('modelSwListInput').value = list;
-        document.getElementById('modelDiscountInput').value = disc > 0 ? disc : '';
-        document.getElementById('modelSwNetInput').value = net;
-        calculateModelPreview('init');
-        document.getElementById('modelPriceModal').style.display = 'flex';
-    }
-
-    function closeModelPriceModal() {
-        document.getElementById('modelPriceModal').style.display = 'none';
-    }
-
-    function calculateModelPreview(source) {
-        const msrpEl = document.getElementById('modelMsrpInput');
-        const listEl = document.getElementById('modelSwListInput');
-        const discEl = document.getElementById('modelDiscountInput');
-        const netEl = document.getElementById('modelSwNetInput');
-
-        let msrp = parseFloat(msrpEl.value) || 0;
-        let list = parseFloat(listEl.value) || 0;
-
-        if (source === 'msrp' && (!list || list === 0)) {
-            list = msrp;
-            listEl.value = Math.round(list);
-        }
-
-        if (source === 'disc' || source === 'msrp') {
-            const disc = parseFloat(discEl.value) || 0;
-            const net = list > 0 ? Math.round(list * (1 - (disc / 100)) * 100) / 100 : 0;
-            netEl.value = net > 0 ? (net % 1 === 0 ? net : net.toFixed(2)) : 0;
-        } else if (source === 'net') {
-            const net = parseFloat(netEl.value) || 0;
-            if (list > 0 && net >= 0 && list >= net) {
-                const disc = Math.round((1 - (net / list)) * 1000) / 10;
-                discEl.value = disc > 0 ? disc : 0;
-            }
-        } else if (source === 'list') {
-            const disc = parseFloat(discEl.value) || 0;
-            if (disc > 0) {
-                const net = Math.round(list * (1 - (disc / 100)) * 100) / 100;
-                netEl.value = net > 0 ? (net % 1 === 0 ? net : net.toFixed(2)) : 0;
-            } else {
-                const net = parseFloat(netEl.value) || 0;
-                if (list > 0 && net > 0 && list >= net) {
-                    discEl.value = Math.round((1 - (net / list)) * 1000) / 10;
-                }
-            }
-        }
-
-        const currentNet = parseFloat(netEl.value) || 0;
-        const currentList = parseFloat(listEl.value) || 0;
-        const currentDisc = (currentList > 0 && currentNet >= 0 && currentList >= currentNet)
-            ? Math.round((1 - (currentNet / currentList)) * 1000) / 10
-            : (parseFloat(discEl.value) || 0);
-
-        document.getElementById('modelLivePreview').innerHTML = `
-            <div>&bull; <strong>Commercial MSRP Basis:</strong> Customer sees <span style="color:#38bdf8;font-weight:700;">${fmtDollar(msrp)}</span> (0% discount)</div>
-            <div>&bull; <strong>Coop Contracts:</strong> Quote MSRP: <span style="color:#cbd5e1;">${fmtDollar(currentList)}</span> &rarr; Net Unit Price: <span style="color:#4ade80;font-weight:700;">${fmtDollar(currentNet)}</span></div>
-            <div style="margin-top:4px;">&bull; <strong>Quotation DISCOUNT Column:</strong> <span style="background:#059669;color:white;padding:2px 8px;border-radius:4px;font-weight:bold;">${currentDisc}% DISCOUNT</span></div>
-        `;
-    }
 
     // Modal 2: Enhancement Price
     function openEnhPriceModal(enh) {
@@ -713,7 +468,6 @@
     // Close modals on Escape key or backdrop click
     window.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-            closeModelPriceModal();
             closeEnhPriceModal();
             closeFreightModal();
         }

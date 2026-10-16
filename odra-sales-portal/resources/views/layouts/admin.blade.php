@@ -372,14 +372,11 @@
             <a href="{{ route('models.catalog') }}" class="nav-item" target="_blank" style="color: #6ee7b7;">
                 &#9654; Sweeper Showcase (AMG View)
             </a>
-            <a href="{{ route('admin.models.index') }}" class="nav-item {{ request()->routeIs('admin.models.*') ? 'active' : '' }}">
-                Models &amp; Master Setup
-            </a>
             <a href="{{ route('manager.pricing.index') }}" class="nav-item {{ request()->routeIs('manager.pricing.*') ? 'active' : '' }}">
                 Master Pricing Console
             </a>
-            <a href="{{ route('admin.quotation-settings.index') }}" class="nav-item {{ request()->routeIs('admin.quotation-settings.*') ? 'active' : '' }}">
-                Quotation Page &amp; Pricing Basis
+            <a href="{{ route('admin.quotation-settings.index') }}" class="nav-item {{ request()->routeIs('admin.quotation-settings.*') || request()->routeIs('manager.quotation-settings.*') ? 'active' : '' }}">
+                Quotation Configuration &amp; Pricing Basis Master
             </a>
             <a href="{{ route('admin.enhancements.index') }}" class="nav-item {{ request()->routeIs('admin.enhancements.*') ? 'active' : '' }}">
                 Enhancements &amp; Parts

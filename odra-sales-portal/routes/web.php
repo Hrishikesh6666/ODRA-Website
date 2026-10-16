@@ -138,15 +138,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Security Audit Log
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
 
-    // Quotation Page & Pricing Basis Master Settings
+    // Master Pricing shortcut in Admin
+    Route::get('/pricing', fn () => redirect()->route('manager.pricing.index'))->name('pricing.index');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Quotation Configuration & Pricing Basis Master Routes (Admin & Manager)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:admin,manager'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/quotation-settings', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'index'])->name('quotation-settings.index');
     Route::put('/quotation-settings', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'update'])->name('quotation-settings.update');
     Route::post('/quotation-settings/upload-logo', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'uploadLogo'])->name('quotation-settings.upload-logo');
     Route::post('/quotation-settings/add-configuration', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'addConfiguration'])->name('quotation-settings.add-configuration');
     Route::post('/quotation-settings/reset', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'reset'])->name('quotation-settings.reset');
     Route::post('/quotation-settings/reset-model/{model}', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'resetModel'])->name('quotation-settings.reset-model');
-    // Master Pricing shortcut in Admin
-    Route::get('/pricing', fn () => redirect()->route('manager.pricing.index'))->name('pricing.index');
 });
 
 /*
@@ -161,6 +168,7 @@ Route::middleware(['auth'])->prefix('manager')->name('manager.')->group(function
         Route::put('/pricing/models/{model}', [\App\Http\Controllers\Manager\PricingController::class, 'updateModelPrice'])->name('pricing.models.update');
         Route::put('/pricing/enhancements/{enhancement}', [\App\Http\Controllers\Manager\PricingController::class, 'updateEnhancementPrice'])->name('pricing.enhancements.update');
         Route::put('/pricing/freight/{freight}', [\App\Http\Controllers\Manager\PricingController::class, 'updateFreightPrice'])->name('pricing.freight.update');
+        Route::get('/quotation-settings', [\App\Http\Controllers\Admin\QuotationSettingsController::class, 'index'])->name('quotation-settings.index');
     });
 
     // Executive Dashboard, Sales Reports & Team Quotes (Manager ONLY - Financial Shielding)

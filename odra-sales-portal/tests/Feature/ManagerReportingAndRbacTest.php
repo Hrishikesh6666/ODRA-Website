@@ -181,4 +181,54 @@ class ManagerReportingAndRbacTest extends TestCase
             'msrp' => 259000.00,
         ]);
     }
+
+    public function test_manager_can_access_and_update_quotation_settings_master(): void
+    {
+        $manager = User::where('email', 'alex.byczynski@odrasweeper.com')->first();
+
+        // 1. Manager can access Quotation Configuration & Pricing Basis Master via manager route
+        $response = $this->actingAs($manager)->get(route('manager.quotation-settings.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Quotation Configuration & Pricing Basis Master');
+
+        // 2. Manager sidebar contains the link
+        $response->assertSee(route('manager.quotation-settings.index'));
+
+        // 3. Manager can save an update and is redirected back to manager.quotation-settings.index
+        $updateResponse = $this->actingAs($manager)->put(route('admin.quotation-settings.update'), [
+            'scope' => 'MT4H',
+            'model' => 'MT4H',
+            'chassis_configuration' => 'MT4H - Standard Commercial Truck Chassis Configuration',
+            'pricing_bases' => [
+                [
+                    'key' => 'msrp',
+                    'label' => 'MSRP (Commercial)',
+                    'msrp' => 257493.00,
+                    'discount_percent' => 0.00,
+                    'calculated_price' => 257493.00,
+                ],
+            ],
+        ]);
+
+        $updateResponse->assertRedirect(route('manager.quotation-settings.index', ['scope' => 'MT4H']));
+    }
+
+    public function test_admin_sidebar_and_pricing_console_reflect_user_specifications(): void
+    {
+        $admin = User::where('email', 'it.support@challengermfg.net')->first();
+        $manager = User::where('email', 'alex.byczynski@odrasweeper.com')->first();
+
+        // 1. Admin sidebar has removed Models & Master Setup and updated quotation settings title
+        $adminDash = $this->actingAs($admin)->get(route('admin.dashboard'));
+        $adminDash->assertStatus(200);
+        $adminDash->assertDontSee('Models & Master Setup');
+        $adminDash->assertSee('Quotation Configuration & Pricing Basis Master');
+
+        // 2. Pricing console does not contain Base Equipment Master Pricing section
+        $pricingConsole = $this->actingAs($manager)->get(route('manager.pricing.index'));
+        $pricingConsole->assertStatus(200);
+        $pricingConsole->assertDontSee('Base Equipment Master Pricing (Sweeper Units)');
+        $pricingConsole->assertSee('1. Options & Enhancements Master Pricing');
+        $pricingConsole->assertSee('2. Delivery & Transport Freight Pricing Matrix');
+    }
 }

@@ -254,8 +254,10 @@ class QuotationSettingsController extends Controller
             $redirectParams['model'] = $targetModel !== 'GLOBAL' ? $targetModel : 'MT4H';
         }
 
+        $redirectRoute = (auth()->check() && !auth()->user()->isAdmin()) ? 'manager.quotation-settings.index' : 'admin.quotation-settings.index';
+
         return redirect()
-            ->route('admin.quotation-settings.index', $redirectParams)
+            ->route($redirectRoute, $redirectParams)
             ->with('success', $msg);
     }
 
@@ -352,8 +354,10 @@ class QuotationSettingsController extends Controller
             ]);
         }
 
+        $redirectRoute = (auth()->check() && !auth()->user()->isAdmin()) ? 'manager.quotation-settings.index' : 'admin.quotation-settings.index';
+
         return redirect()
-            ->route('admin.quotation-settings.index', ['model' => $model->code])
+            ->route($redirectRoute, ['model' => $model->code])
             ->with('success', "New chassis configuration '{$cfg->label}' added successfully.");
     }
 
@@ -373,8 +377,10 @@ class QuotationSettingsController extends Controller
             notes: 'Reset Quotation Page template sections & Pricing Basis rules to defaults'
         );
 
+        $redirectRoute = (auth()->check() && !auth()->user()->isAdmin()) ? 'manager.quotation-settings.index' : 'admin.quotation-settings.index';
+
         return redirect()
-            ->route('admin.quotation-settings.index')
+            ->route($redirectRoute)
             ->with('success', 'Quotation Page global settings have been reset to factory defaults.');
     }
 
@@ -393,8 +399,10 @@ class QuotationSettingsController extends Controller
             notes: "Reverted model {$code} quotation settings to inherit from Global Defaults"
         );
 
+        $redirectRoute = (auth()->check() && !auth()->user()->isAdmin()) ? 'manager.quotation-settings.index' : 'admin.quotation-settings.index';
+
         return redirect()
-            ->route('admin.quotation-settings.index', ['scope' => $code])
+            ->route($redirectRoute, ['scope' => $code])
             ->with('success', "Model {$code} quotation settings have been reset to inherit from Global Defaults.");
     }
 }
