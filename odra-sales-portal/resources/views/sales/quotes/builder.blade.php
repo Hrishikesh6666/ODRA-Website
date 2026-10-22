@@ -551,7 +551,7 @@ table.items tr.totalRow td {
 <div class="builder-topbar">
     <div class="builder-heading">
         <h1>Quotation Q-{{ $quoteNumber }}</h1>
-        <span>Version {{ $version }} &middot; {{ $isReadonly ? 'Finalized (Historical Snapshot Frozen)' : 'Draft (Editable)' }}</span>
+        <span>Revision {{ $version }} &middot; {{ $isReadonly ? 'Finalized (Historical Snapshot Frozen)' : 'Draft (Editable)' }}</span>
     </div>
     <div class="builder-topbar-actions">
         @if(auth()->user()->isAdmin())
@@ -569,20 +569,45 @@ table.items tr.totalRow td {
             <a href="{{ route('sales.quotes.index') }}" class="btn-nav">&larr; My Quotations</a>
         @endif
 
+        @if($quote)
+            <button type="button" class="btn-nav" onclick="openRevisionHistory({{ $quote->id }})" title="View Complete Revision History">
+                &#128340; Revision History
+            </button>
+        @endif
+
         <button type="button" class="btn-nav" onclick="window.print()" title="Print Quotation">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             Print
         </button>
 
         @if ($isReadonly)
-            <button type="button" id="btnRevise" class="btn-nav">Create Revision</button>
-            <a href="{{ route('sales.quotes.pdf', $quote) }}" class="btn-nav" style="background:var(--red);color:white;border-color:var(--red);" target="_blank">Download PDF</a>
+            <button type="button" id="btnRevise" class="btn-nav" style="background:#dc2626;color:white;border-color:#dc2626;font-weight:700;">Create Revised Quotation</button>
+            <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $version]) }}" class="btn-nav" style="background:#059669;color:white;border-color:#059669;" target="_blank">Download PDF</a>
         @else
             <button type="button" id="btnSaveDraft" class="btn-nav">Save Draft</button>
             <button type="button" id="btnFinalize" class="btn-nav" style="background:var(--red);color:white;border-color:var(--red);">Finalize Quote</button>
         @endif
     </div>
 </div>
+
+@if($isReadonly)
+<div style="background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 6px; padding: 12px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">&#128274;</span>
+        <div>
+            <strong style="color: #166534; font-size: 14px;">Viewing Finalized Quotation Revision {{ $version }} (Read-Only)</strong>
+            <div style="font-size: 12.5px; color: #4b5563; margin-top: 2px;">
+                Original pricing, line items, and financial totals are permanently preserved. To modify requirements, click <strong>Create Revised Quotation</strong> to start a new editable draft.
+            </div>
+        </div>
+    </div>
+    @if($quote)
+        <button type="button" onclick="openRevisionHistory({{ $quote->id }})" class="btn-nav" style="background: white; border-color: #cbd5e1; font-size: 12px; padding: 6px 14px; white-space: nowrap;">
+            View All Revisions &rarr;
+        </button>
+    @endif
+</div>
+@endif
 
 @php
     $tplHeader = $catalog['quote_template']['header'] ?? [];

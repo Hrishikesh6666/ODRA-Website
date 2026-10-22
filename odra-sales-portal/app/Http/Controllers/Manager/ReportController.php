@@ -28,13 +28,13 @@ class ReportController extends Controller
             DB::raw('COUNT(DISTINCT quotes.id) as total_count'),
             DB::raw('SUM(quote_snapshots.total) as total_value'),
             DB::raw('AVG(quote_snapshots.total) as avg_value'),
-            DB::raw("SUM(CASE WHEN quotes.status = 'Finalized' THEN quote_snapshots.total ELSE 0 END) as finalized_value"),
-            DB::raw("SUM(CASE WHEN quotes.status = 'Draft' THEN quote_snapshots.total ELSE 0 END) as draft_value")
+            DB::raw("SUM(CASE WHEN quote_versions.status = 'Finalized' THEN quote_snapshots.total ELSE 0 END) as finalized_value"),
+            DB::raw("SUM(CASE WHEN quote_versions.status = 'Draft' THEN quote_snapshots.total ELSE 0 END) as draft_value")
         )->first();
 
         // Paginate results
         $quotes = $query->select('quotes.*')
-            ->with(['user', 'latestVersion.snapshot'])
+            ->with(['user', 'latestFinalizedVersion.snapshot', 'latestVersion.snapshot', 'versions'])
             ->orderBy('quotes.created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
@@ -78,7 +78,7 @@ class ReportController extends Controller
     {
         $query = $this->buildFilteredQuery($request)
             ->select('quotes.*')
-            ->with(['user', 'latestVersion.snapshot'])
+            ->with(['user', 'latestFinalizedVersion.snapshot', 'latestVersion.snapshot', 'versions'])
             ->orderBy('quotes.created_at', 'desc');
 
         $filename = 'ODRA_Quotations_Export_' . now()->format('Y-m-d_His') . '.csv';
@@ -111,13 +111,16 @@ class ReportController extends Controller
 
             $query->chunk(100, function ($quotes) use ($handle) {
                 foreach ($quotes as $q) {
-                    $snap = $q->latestVersion?->snapshot;
+                    $dispVer = $q->displayVersion();
+                    $snap = $dispVer?->snapshot ?? $q->latestVersion?->snapshot;
+                    $verNum = $dispVer?->version_number ?? $q->current_version;
+                    $status = $dispVer?->status ?? $q->status;
 
                     fputcsv($handle, [
                         'Q-' . $q->quote_number,
                         $q->created_at->format('Y-m-d H:i'),
-                        'v' . $q->current_version,
-                        $q->status,
+                        'v' . $verNum,
+                        $status,
                         $q->user->name,
                         $q->user->rep_code ?? '',
                         $snap?->customer_company ?? 'N/A',
@@ -146,12 +149,20 @@ class ReportController extends Controller
      */
     protected function buildFilteredQuery(Request $request)
     {
+        $targetVersionSub = DB::table('quote_versions')
+            ->select('quote_id', DB::raw("COALESCE(MAX(CASE WHEN status = 'Finalized' THEN version_number ELSE NULL END), MAX(version_number)) as target_version"))
+            ->groupBy('quote_id');
+
         $query = Quote::withoutGlobalScopes()
+            ->joinSub($targetVersionSub, 'tv', function ($join) {
+                $join->on('quotes.id', '=', 'tv.quote_id');
+            })
             ->join('quote_versions', function ($join) {
                 $join->on('quotes.id', '=', 'quote_versions.quote_id')
-                    ->whereRaw('quote_versions.version_number = quotes.current_version');
+                    ->on('quote_versions.version_number', '=', 'tv.target_version');
             })
-            ->join('quote_snapshots', 'quote_versions.id', '=', 'quote_snapshots.quote_version_id');
+            ->join('quote_snapshots', 'quote_versions.id', '=', 'quote_snapshots.quote_version_id')
+            ->whereNull('quotes.deleted_at');
 
         // Filter: Sales Representative
         if ($request->filled('rep_id')) {
@@ -170,7 +181,7 @@ class ReportController extends Controller
 
         // Filter: Status (Draft, Finalized, Revised)
         if ($request->filled('status')) {
-            $query->where('quotes.status', $request->input('status'));
+            $query->where('quote_versions.status', $request->input('status'));
         }
 
         // Filter: Pricing Basis

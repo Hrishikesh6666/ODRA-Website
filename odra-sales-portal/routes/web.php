@@ -79,6 +79,7 @@ Route::middleware(['auth'])->prefix('sales')->name('sales.')->group(function () 
     Route::get('/quotes', [QuoteController::class, 'index'])->name('quotes.index');
     Route::get('/quotes/create', [QuoteController::class, 'create'])->name('quotes.create');
     Route::get('/quotes/{quote}', [QuoteController::class, 'show'])->name('quotes.show');
+    Route::post('/quotes/{quote}/revise', [QuoteController::class, 'revise'])->name('quotes.revise');
     Route::get('/quotes/{quote}/pdf', [PdfController::class, 'download'])->name('quotes.pdf');
 });
 
@@ -93,6 +94,7 @@ Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
     Route::get('/quotes', [QuoteApiController::class, 'index'])->name('quotes.index');
     Route::post('/quotes', [QuoteApiController::class, 'store'])->name('quotes.store');
     Route::get('/quotes/{quote}', [QuoteApiController::class, 'show'])->name('quotes.show');
+    Route::get('/quotes/{quote}/revisions', [QuoteApiController::class, 'revisions'])->name('quotes.revisions');
     Route::put('/quotes/{quote}', [QuoteApiController::class, 'update'])->name('quotes.update');
     Route::post('/quotes/{quote}/finalize', [QuoteApiController::class, 'finalize'])->name('quotes.finalize');
     Route::post('/quotes/{quote}/revise', [QuoteApiController::class, 'revise'])->name('quotes.revise');

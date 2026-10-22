@@ -12,6 +12,11 @@ class QuotePolicy
      */
     public function before(User $user, string $ability): ?bool
     {
+        // Deletion must always enforce permanent preservation of finalized quotations
+        if ($ability === 'delete') {
+            return null;
+        }
+
         if ($user->isManager()) {
             return true;
         }
@@ -64,7 +69,9 @@ class QuotePolicy
      */
     public function finalize(User $user, Quote $quote): bool
     {
-        return $user->is_active && ($quote->user_id === $user->id || $user->isManager()) && $quote->status === 'Draft';
+        return $user->is_active 
+            && ($quote->user_id === $user->id || $user->isManager()) 
+            && ($quote->status === 'Draft' || $quote->versions()->where('version_number', $quote->current_version)->where('status', 'Draft')->exists());
     }
 
     /**
@@ -72,7 +79,9 @@ class QuotePolicy
      */
     public function revise(User $user, Quote $quote): bool
     {
-        return $user->is_active && ($quote->user_id === $user->id || $user->isManager()) && in_array($quote->status, ['Finalized', 'Revised']);
+        return $user->is_active 
+            && ($quote->user_id === $user->id || $user->isManager()) 
+            && ($quote->status === 'Finalized' || $quote->versions()->where('status', 'Finalized')->exists());
     }
 
     /**
@@ -86,10 +95,15 @@ class QuotePolicy
 
     /**
      * Determine whether the user can delete the quote.
+     * Permanent preservation: Quotes with any finalized revision can never be deleted.
      */
     public function delete(User $user, Quote $quote): bool
     {
         if (! $user->is_active) {
+            return false;
+        }
+
+        if ($quote->versions()->where('status', 'Finalized')->exists()) {
             return false;
         }
 

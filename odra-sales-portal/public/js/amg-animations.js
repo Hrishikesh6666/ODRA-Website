@@ -346,3 +346,150 @@ window.closeQuickQuoteModal = function() {
     document.body.style.overflow = '';
   }
 };
+
+/**
+ * Quotation Revision History Modal Handler (Async API Fetch)
+ */
+window.openRevisionHistory = async function(quoteId) {
+  const modal = document.getElementById('revisionHistoryModal');
+  if (!modal) return;
+
+  const spinner = document.getElementById('revLoadingSpinner');
+  const bodyContent = document.getElementById('revModalBodyContent');
+  const errorBox = document.getElementById('revErrorBox');
+  const tableBody = document.getElementById('revTableBody');
+  const countBadge = document.getElementById('revTotalCount');
+  const quoteBadge = document.getElementById('revModalQuoteBadge');
+  const createNewBtn = document.getElementById('revCreateNewBtn');
+
+  // Reset display
+  if (spinner) spinner.style.display = 'flex';
+  if (bodyContent) bodyContent.style.display = 'none';
+  if (errorBox) errorBox.style.display = 'none';
+  if (createNewBtn) createNewBtn.style.display = 'none';
+
+  modal.style.display = 'flex';
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const response = await fetch(`/api/quotes/${quoteId}/revisions`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server returned HTTP ${response.status} (${response.statusText})`);
+    }
+
+    const data = await response.json();
+    const revisions = data.revisions || [];
+
+    if (quoteBadge) quoteBadge.textContent = `Q-${data.quote_number || quoteId}`;
+    if (countBadge) countBadge.textContent = `${revisions.length} total revision${revisions.length === 1 ? '' : 's'}`;
+
+    if (tableBody) {
+      tableBody.innerHTML = '';
+      revisions.forEach(rev => {
+        const tr = document.createElement('tr');
+        tr.style.cssText = 'border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.15s;';
+        
+        const isCurrent = rev.is_current;
+        const isFinalized = rev.is_finalized;
+        const statusBadgeClass = isFinalized 
+          ? 'badge-status-finalized' 
+          : 'badge-status-draft';
+        const statusBadgeStyle = isFinalized
+          ? 'background: #059669; color: white;'
+          : 'background: #d97706; color: white;';
+
+        tr.innerHTML = `
+          <td style="padding: 12px 8px; font-weight: 700; color: white;">
+            Revision ${rev.version_number}
+            ${isCurrent ? '<span style="font-size: 10px; background: rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: normal;">Current</span>' : ''}
+          </td>
+          <td style="padding: 12px 8px; color: #94a3b8; font-size: 12px;">
+            ${rev.date || 'N/A'}
+          </td>
+          <td style="padding: 12px 8px;">
+            <span class="badge ${statusBadgeClass}" style="${statusBadgeStyle} padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">
+              ${rev.status}
+            </span>
+          </td>
+          <td style="padding: 12px 8px; color: #cbd5e1; font-size: 12.5px;">
+            <strong>${rev.model || 'MT4H'}</strong>
+            <span style="font-size: 11px; color: #94a3b8; margin-left: 4px;">(${rev.pricing_basis || 'MSRP'})</span>
+          </td>
+          <td style="padding: 12px 8px; text-align: right; font-weight: 700; color: ${isFinalized ? '#34d399' : '#fbbf24'}; font-size: 14px;">
+            $${Number(rev.total || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+          </td>
+          <td style="padding: 12px 8px; text-align: right;">
+            <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
+              <a href="${rev.view_url}" class="btn-table-action" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Open Revision in Builder">
+                ${isFinalized ? 'View' : 'Edit'}
+              </a>
+              <a href="${rev.print_url}" class="btn-table-action" target="_blank" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Print Revision">
+                Print
+              </a>
+              ${isFinalized && rev.has_pdf ? `
+                <a href="${rev.pdf_url}" class="btn-table-action btn-table-download" target="_blank" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Download PDF">
+                  PDF
+                </a>
+              ` : ''}
+            </div>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // Configure "Create Revised Quotation" footer button if any finalized version exists
+    if (createNewBtn && data.has_finalized) {
+      createNewBtn.style.display = 'inline-flex';
+      createNewBtn.onclick = async () => {
+        if (!confirm(`Create a new draft revision for Quotation Q-${data.quote_number}?`)) return;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        try {
+          const res = await fetch(`/api/quotes/${quoteId}/revise`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': csrfToken
+            }
+          });
+          const resData = await res.json();
+          if (!res.ok) throw new Error(resData.error || 'Failed to create revision');
+          window.location.href = `/sales/quotes/${quoteId}`;
+        } catch (e) {
+          alert('Error: ' + e.message);
+        }
+      };
+    }
+
+    if (spinner) spinner.style.display = 'none';
+    if (bodyContent) bodyContent.style.display = 'block';
+
+  } catch (err) {
+    console.error('Revision history error:', err);
+    if (spinner) spinner.style.display = 'none';
+    if (errorBox) {
+      errorBox.style.display = 'block';
+      errorBox.innerHTML = `
+        <div style="font-weight:700;margin-bottom:6px;color:#f87171;">Unable to load revision history</div>
+        <div style="color:#cbd5e1;font-size:12.5px;">${err.message || 'An error occurred while retrieving revision history.'}</div>
+      `;
+    }
+  }
+};
+
+window.closeRevisionHistory = function() {
+  const modal = document.getElementById('revisionHistoryModal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+};

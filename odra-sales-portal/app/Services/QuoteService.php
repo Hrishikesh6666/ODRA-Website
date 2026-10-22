@@ -166,16 +166,28 @@ class QuoteService
     /**
      * Create a new revision of a finalized quote.
      */
-    public function createRevision(Quote $quote, User $user): Quote
+    public function createRevision(Quote $quote, User $user, ?int $sourceVersionNumber = null): Quote
     {
-        return DB::transaction(function () use ($quote, $user) {
-            $latestVersion = $quote->versions()->orderByDesc('version_number')->firstOrFail();
-            $newVersionNumber = $latestVersion->version_number + 1;
+        return DB::transaction(function () use ($quote, $user, $sourceVersionNumber) {
+            // Find the source version to clone from (explicitly requested, or latest finalized, or latest)
+            $sourceVersion = $sourceVersionNumber
+                ? $quote->versions()->where('version_number', $sourceVersionNumber)->firstOrFail()
+                : ($quote->latestFinalizedVersion ?? $quote->versions()->orderByDesc('version_number')->firstOrFail());
 
-            // Mark previous version as Revised if it was Finalized
-            if ($latestVersion->status === 'Finalized') {
-                $latestVersion->update(['status' => 'Revised']);
+            // Check if there is already an open draft version for this quote
+            $existingDraft = $quote->versions()->where('status', 'Draft')->orderByDesc('version_number')->first();
+            if ($existingDraft) {
+                $quote->update([
+                    'current_version' => $existingDraft->version_number,
+                    'status' => 'Draft',
+                ]);
+                return $quote->load(['versions.snapshot']);
             }
+
+            $maxVersionNumber = (int) $quote->versions()->max('version_number');
+            $newVersionNumber = $maxVersionNumber + 1;
+
+            // Preserve all previous finalized versions permanently (never overwrite status to 'Revised')
 
             $newVersion = QuoteVersion::create([
                 'quote_id' => $quote->id,
@@ -189,14 +201,20 @@ class QuoteService
             ]);
 
             // Clone previous snapshot data
-            $prevSnapshot = $latestVersion->snapshot;
+            $prevSnapshot = $sourceVersion->snapshot;
             if ($prevSnapshot) {
                 $snapshotData = $prevSnapshot->toArray();
-                unset($snapshotData['id'], $snapshotData['created_at'], $snapshotData['updated_at'], $snapshotData['pdf_path'], $snapshotData['pdf_generated_at']);
+                unset(
+                    $snapshotData['id'],
+                    $snapshotData['created_at'],
+                    $snapshotData['updated_at'],
+                    $snapshotData['pdf_path'],
+                    $snapshotData['pdf_generated_at']
+                );
                 $snapshotData['quote_version_id'] = $newVersion->id;
-                
+
                 // Update date in full_state to today
-                if (isset($snapshotData['full_state']['date'])) {
+                if (isset($snapshotData['full_state']) && is_array($snapshotData['full_state'])) {
                     $snapshotData['full_state']['date'] = now()->format('Y-m-d');
                 }
 
@@ -207,12 +225,67 @@ class QuoteService
                 action: 'QUOTE_REVISION_CREATED',
                 entityType: 'Quote',
                 entityId: $quote->id,
-                notes: "New revision v{$newVersionNumber} created from v{$latestVersion->version_number}",
+                notes: "New revision v{$newVersionNumber} created from v{$sourceVersion->version_number}",
                 userId: $user->id
             );
 
             return $quote->load(['versions.snapshot']);
         });
+    }
+
+    /**
+     * Query the latest finalized revision for each quotation group.
+     * Guaranteed cross-database compatibility (SQLite, PostgreSQL, MySQL).
+     */
+    public function latestFinalizedVersionsQuery()
+    {
+        $latestFinalizedSub = DB::table('quote_versions')
+            ->select('quote_id', DB::raw('MAX(version_number) as max_version'))
+            ->where('status', 'Finalized')
+            ->groupBy('quote_id');
+
+        return QuoteVersion::query()
+            ->joinSub($latestFinalizedSub, 'lf', function ($join) {
+                $join->on('quote_versions.quote_id', '=', 'lf.quote_id')
+                    ->on('quote_versions.version_number', '=', 'lf.max_version');
+            })
+            ->join('quote_snapshots', 'quote_versions.id', '=', 'quote_snapshots.quote_version_id')
+            ->join('quotes', 'quote_versions.quote_id', '=', 'quotes.id')
+            ->whereNull('quotes.deleted_at');
+    }
+
+    /**
+     * Calculate core financial metrics with revision deduplication.
+     */
+    public function getQuotationSummary(): array
+    {
+        $totalQuotesCount = Quote::withoutGlobalScopes()->count();
+
+        // 1. Latest Finalized Quotations (each quotation group counted once at highest finalized revision)
+        $latestFinalizedQuery = $this->latestFinalizedVersionsQuery();
+        $finalizedQuotesCount = (int) (clone $latestFinalizedQuery)->count();
+        $finalizedValue = (float) (clone $latestFinalizedQuery)->sum('quote_snapshots.total');
+
+        // 2. Open Draft Pipeline (quotation groups that have an active draft and no finalized versions)
+        $unfinalizedQuoteIds = Quote::withoutGlobalScopes()
+            ->whereDoesntHave('versions', fn ($q) => $q->where('status', 'Finalized'))
+            ->pluck('id');
+
+        $draftQuotesCount = count($unfinalizedQuoteIds);
+        $draftValue = (float) QuoteSnapshot::whereHas('quoteVersion', function ($qv) use ($unfinalizedQuoteIds) {
+            $qv->whereIn('quote_id', $unfinalizedQuoteIds)->where('status', 'Draft');
+        })->sum('total');
+
+        $averageQuoteValue = $finalizedQuotesCount > 0 ? ($finalizedValue / $finalizedQuotesCount) : 0;
+
+        return [
+            'totalQuotesCount' => $totalQuotesCount,
+            'finalizedQuotesCount' => $finalizedQuotesCount,
+            'finalizedValue' => $finalizedValue,
+            'draftQuotesCount' => $draftQuotesCount,
+            'draftValue' => $draftValue,
+            'averageQuoteValue' => $averageQuoteValue,
+        ];
     }
 
     /**

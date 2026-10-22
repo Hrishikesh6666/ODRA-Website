@@ -46,4 +46,35 @@ class Quote extends Model
     {
         return $this->hasOne(QuoteVersion::class)->latestOfMany('version_number');
     }
+
+    public function latestFinalizedVersion()
+    {
+        return $this->hasOne(QuoteVersion::class)
+            ->ofMany(['version_number' => 'max'], function ($query) {
+                $query->where('status', 'Finalized');
+            });
+    }
+
+    public function latestDraftVersion()
+    {
+        return $this->hasOne(QuoteVersion::class)
+            ->ofMany(['version_number' => 'max'], function ($query) {
+                $query->where('status', 'Draft');
+            });
+    }
+
+    public function displayVersion(): ?QuoteVersion
+    {
+        return $this->latestFinalizedVersion ?? $this->latestVersion;
+    }
+
+    public function displaySnapshot(): ?QuoteSnapshot
+    {
+        return $this->displayVersion()?->snapshot;
+    }
+
+    public function hasFinalizedVersion(): bool
+    {
+        return $this->versions()->where('status', 'Finalized')->exists();
+    }
 }

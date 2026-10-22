@@ -20,13 +20,19 @@ class PdfController extends Controller
     {
         $this->authorize('downloadPdf', $quote);
 
-        $version = $quote->latestVersion;
+        $requestedVersion = request()->query('version');
+        if ($requestedVersion) {
+            $version = $quote->versions()->where('version_number', (int) $requestedVersion)->firstOrFail();
+        } else {
+            $version = $quote->latestFinalizedVersion ?? $quote->latestVersion;
+        }
+
         $snapshot = $version?->snapshot;
 
         $storagePath = "private/{$snapshot?->pdf_path}";
 
         if (! $snapshot || ! $snapshot->pdf_path || ! Storage::disk('local')->exists($storagePath)) {
-            abort(404, 'Quotation PDF has not been generated yet. Please open the Quote Builder and finalize the quotation.');
+            abort(404, "Quotation PDF for Revision {$version->version_number} has not been generated yet. Please open the Quote Builder and finalize the quotation.");
         }
 
         $content = Storage::disk('local')->get($storagePath);
@@ -56,10 +62,10 @@ class PdfController extends Controller
             action: 'PDF_DOWNLOADED',
             entityType: 'Quote',
             entityId: $quote->id,
-            notes: "Downloaded PDF for Q-{$quote->quote_number} v{$quote->current_version}"
+            notes: "Downloaded PDF for Q-{$quote->quote_number} v{$version->version_number}"
         );
 
-        $filename = "ODRA_Quotation_{$quote->quote_number}.pdf";
+        $filename = "ODRA_Quotation_{$quote->quote_number}_v{$version->version_number}.pdf";
         $disposition = request()->has('inline') ? 'inline' : 'attachment';
 
         return response($content, 200, [

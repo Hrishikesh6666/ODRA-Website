@@ -43,11 +43,17 @@
                 <tbody>
                     @foreach ($quotes as $q)
                         @php
-                            $snap = $q->latestVersion?->snapshot;
-                            $stClass = $q->status === 'Finalized' ? 'badge-active' : ($q->status === 'Draft' ? 'badge-draft' : 'badge-inactive');
+                            $dispVer = $q->displayVersion();
+                            $snap = $dispVer?->snapshot ?? $q->latestVersion?->snapshot;
+                            $versionNum = $dispVer?->version_number ?? $q->current_version;
+                            $versionStatus = $dispVer?->status ?? $q->status;
+                            $stClass = $versionStatus === 'Finalized' ? 'badge-active' : ($versionStatus === 'Draft' ? 'badge-draft' : 'badge-inactive');
                         @endphp
                         <tr>
-                            <td><strong>Q-{{ $q->quote_number }}</strong></td>
+                            <td>
+                                <strong>Q-{{ $q->quote_number }}</strong>
+                                <span class="badge" style="font-size: 10px; padding: 2px 5px; background: #f1f5f9; color: #475569; margin-left: 4px;">Rev {{ $versionNum }}</span>
+                            </td>
                             <td>{{ $q->created_at->format('M d, Y') }}</td>
                             <td>
                                 <strong>{{ $q->user->name }}</strong>
@@ -56,16 +62,17 @@
                             <td>{{ $snap?->customer_company ?? 'Draft Deal' }}</td>
                             <td><code>{{ $snap?->model_code ?? 'MT4H' }}</code></td>
                             <td><span style="font-size: 12px; color: #475569;">{{ $snap?->pricing_basis ?? 'MSRP' }}</span></td>
-                            <td><span class="badge {{ $stClass }}">{{ $q->status }}</span></td>
+                            <td><span class="badge {{ $stClass }}">{{ $versionStatus }}</span></td>
                             <td style="text-align: right; font-weight: 700; color: #0f172a;">
                                 ${{ number_format($snap?->total ?? 0, 2) }}
                             </td>
                             <td style="text-align: right;">
                                 <div style="display: inline-flex; gap: 4px; justify-content: flex-end;">
-                                    <button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" onclick="inspectQuote({{ $q->id }})" title="Quick Inspect Quote Details">Inspect</button>
-                                    <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" target="_blank" title="Print Quotation">Print</a>
-                                    @if ($q->status === 'Finalized')
-                                        <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; background: #ecfdf5; color: #065f46; border-color: #a7f3d0; text-decoration: none;" target="_blank" download="ODRA_Quotation_{{ $q->quote_number }}.pdf" title="Download Finalized PDF">Download</a>
+                                    <button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" onclick="openRevisionHistory({{ $q->id }})" title="View Revision History">History</button>
+                                    <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" title="Inspect Quotation">Inspect</a>
+                                    <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum]) }}?print=1" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" target="_blank" title="Print Quotation">Print</a>
+                                    @if ($versionStatus === 'Finalized')
+                                        <a href="{{ route('sales.quotes.pdf', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; background: #ecfdf5; color: #065f46; border-color: #a7f3d0; text-decoration: none;" target="_blank" download="ODRA_Quotation_{{ $q->quote_number }}_Rev{{ $versionNum }}.pdf" title="Download Finalized PDF">Download</a>
                                     @else
                                         <a href="{{ route('sales.quotes.show', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" title="Open in Quote Builder">Open</a>
                                     @endif

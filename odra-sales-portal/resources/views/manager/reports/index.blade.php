@@ -211,17 +211,23 @@
                         <th>Pricing Basis</th>
                         <th>Status</th>
                         <th style="text-align: right;">Total Amount</th>
-                        <th style="text-align: right; width: 120px;">Actions</th>
+                        <th style="text-align: right; width: 160px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($quotes as $q)
                         @php
-                            $snap = $q->latestVersion?->snapshot;
-                            $stClass = $q->status === 'Finalized' ? 'badge-active' : ($q->status === 'Draft' ? 'badge-draft' : 'badge-inactive');
+                            $dispVer = $q->displayVersion();
+                            $snap = $dispVer?->snapshot ?? $q->latestVersion?->snapshot;
+                            $versionNum = $dispVer?->version_number ?? $q->current_version;
+                            $versionStatus = $dispVer?->status ?? $q->status;
+                            $stClass = $versionStatus === 'Finalized' ? 'badge-active' : ($versionStatus === 'Draft' ? 'badge-draft' : 'badge-inactive');
                         @endphp
                         <tr>
-                            <td><strong>Q-{{ $q->quote_number }}</strong></td>
+                            <td>
+                                <strong>Q-{{ $q->quote_number }}</strong>
+                                <span class="badge" style="font-size: 10px; padding: 2px 5px; background: #f1f5f9; color: #475569; margin-left: 3px;">Rev {{ $versionNum }}</span>
+                            </td>
                             <td>{{ $q->created_at->format('M d, Y') }}</td>
                             <td>
                                 <strong>{{ $q->user->name }}</strong>
@@ -231,15 +237,18 @@
                             <td>{{ $snap?->rep_territory ?? '&mdash;' }}</td>
                             <td><code>{{ $snap?->model_code ?? 'MT4H' }}</code></td>
                             <td><span style="font-size: 12px; color: #475569;">{{ $snap?->pricing_basis ?? 'MSRP' }}</span></td>
-                            <td><span class="badge {{ $stClass }}">{{ $q->status }}</span></td>
+                            <td><span class="badge {{ $stClass }}">{{ $versionStatus }}</span></td>
                             <td style="text-align: right; font-weight: 700; color: #0f172a;">
                                 ${{ number_format($snap?->total ?? 0, 2) }}
                             </td>
                             <td style="text-align: right;">
-                                <a href="{{ route('sales.quotes.show', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Inspect</a>
-                                @if ($q->status === 'Finalized')
-                                    <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">PDF</a>
-                                @endif
+                                <div style="display: inline-flex; gap: 4px; justify-content: flex-end;">
+                                    <button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" onclick="openRevisionHistory({{ $q->id }})" title="View Revision History">History</button>
+                                    <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Inspect</a>
+                                    @if ($versionStatus === 'Finalized')
+                                        <a href="{{ route('sales.quotes.pdf', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">PDF</a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @endforeach

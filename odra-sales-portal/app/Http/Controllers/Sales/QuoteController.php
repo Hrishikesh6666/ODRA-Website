@@ -28,7 +28,7 @@ class QuoteController extends Controller
     {
         $this->authorize('viewAny', Quote::class);
 
-        $query = Quote::with(['latestVersion.snapshot', 'user'])
+        $query = Quote::with(['latestFinalizedVersion.snapshot', 'latestVersion.snapshot', 'versions', 'user'])
             ->latest('updated_at');
 
         if ($request->filled('search')) {
@@ -43,7 +43,17 @@ class QuoteController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $status = $request->input('status');
+            if ($status === 'Finalized') {
+                $query->where(function ($q) {
+                    $q->where('status', 'Finalized')
+                      ->orWhereHas('versions', fn ($qv) => $qv->where('status', 'Finalized'));
+                });
+            } elseif ($status === 'Draft') {
+                $query->where('status', 'Draft');
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         $quotes = $query->paginate(15)->withQueryString();
@@ -145,13 +155,19 @@ class QuoteController extends Controller
     /**
      * Open the Quote Builder for an existing quotation.
      */
-    public function show(Quote $quote): View
+    public function show(Quote $quote, Request $request): View
     {
         $this->authorize('view', $quote);
 
-        $version = $quote->latestVersion;
+        $requestedVersion = $request->query('version');
+        if ($requestedVersion) {
+            $version = $quote->versions()->where('version_number', (int) $requestedVersion)->firstOrFail();
+        } else {
+            $version = $quote->versions()->where('version_number', $quote->current_version)->first() ?? $quote->latestVersion;
+        }
+
         $snapshot = $version?->snapshot;
-        $isReadonly = $version?->isFinalized() ?? false;
+        $isReadonly = $version?->isFinalized() || ($version && $version->version_number < $quote->current_version);
         $catalog = $this->catalogService->getCatalogPayload();
         $user = Auth::user();
 
@@ -257,13 +273,29 @@ class QuoteController extends Controller
         return view('sales.quotes.builder', [
             'quote' => $quote,
             'quoteNumber' => $quote->quote_number,
-            'version' => $quote->current_version,
+            'version' => $version?->version_number ?? $quote->current_version,
+            'currentVersion' => $quote->current_version,
+            'viewingVersion' => $version,
             'isReadonly' => $isReadonly,
             'catalog' => $catalog,
             'user' => $user,
             'salesReps' => $salesReps,
             'initialState' => $state,
         ]);
+    }
+
+    /**
+     * Create a new draft revision from a finalized quotation.
+     */
+    public function revise(Quote $quote, Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $this->authorize('revise', $quote);
+
+        $sourceVersion = $request->input('version');
+        $this->quoteService->createRevision($quote, Auth::user(), $sourceVersion ? (int) $sourceVersion : null);
+
+        return redirect()->route('sales.quotes.show', $quote)
+            ->with('success', 'New editable draft revision created. Requirements, equipment, and pricing can now be modified.');
     }
 }
 

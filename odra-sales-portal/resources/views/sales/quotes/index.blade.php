@@ -182,12 +182,16 @@
             <tbody>
                 @foreach ($quotes as $quote)
                     @php
-                        $snapshot = $quote->latestVersion?->snapshot;
-                        $statusClass = match($quote->status) {
+                        $dispVer = $quote->displayVersion();
+                        $snapshot = $dispVer?->snapshot ?? $quote->latestVersion?->snapshot;
+                        $verNum = $dispVer?->version_number ?? $quote->current_version;
+                        $verStatus = $dispVer?->status ?? $quote->status;
+                        $statusClass = match($verStatus) {
                             'Finalized' => 'badge-finalized',
                             'Revised' => 'badge-revised',
                             default => 'badge-draft',
                         };
+                        $hasFinalized = $quote->hasFinalizedVersion();
                     @endphp
                     <tr>
                         <td><strong>Q-{{ $quote->quote_number }}</strong></td>
@@ -204,25 +208,42 @@
                             @endif
                         </td>
                         <td>{{ $snapshot?->model_code ?? 'MT4H' }}</td>
-                        <td>v{{ $quote->current_version }}</td>
-                        <td><span class="badge {{ $statusClass }}">{{ $quote->status }}</span></td>
+                        <td><span class="badge" style="font-size: 11px; padding: 2px 6px; background: #f1f5f9; color: #475569;">Rev {{ $verNum }}</span></td>
+                        <td><span class="badge {{ $statusClass }}">{{ $verStatus }}</span></td>
                         <td><strong>${{ number_format($snapshot?->total ?? 0, 0) }}</strong></td>
                         <td>{{ $quote->updated_at->format('M d, Y') }}</td>
                         <td>
                             <div class="actions-cell">
+                                <button type="button" class="btn-action" onclick="openRevisionHistory({{ $quote->id }})" title="View Revision History">
+                                    History
+                                </button>
                                 <button type="button" class="btn-action" onclick="inspectQuote({{ $quote->id }})" title="Quick Inspect Quote Details">
                                     Inspect
                                 </button>
-                                <a href="{{ route('sales.quotes.show', $quote) }}?print=1" class="btn-action" target="_blank" title="Print Quotation">
+                                <a href="{{ route('sales.quotes.show', ['quote' => $quote, 'version' => $verNum]) }}?print=1" class="btn-action" target="_blank" title="Print Quotation">
                                     Print
                                 </a>
-                                @if ($quote->status === 'Finalized')
-                                    <a href="{{ route('sales.quotes.pdf', $quote) }}" class="btn-action btn-pdf" target="_blank" download="ODRA_Quotation_{{ $quote->quote_number }}.pdf" title="Download Finalized PDF">
+                                @if ($hasFinalized)
+                                    <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $verNum]) }}" class="btn-action btn-pdf" target="_blank" download="ODRA_Quotation_{{ $quote->quote_number }}_Rev{{ $verNum }}.pdf" title="Download Finalized PDF">
                                         Download
                                     </a>
+                                    @if ($verStatus === 'Finalized')
+                                        <form action="{{ route('sales.quotes.revise', $quote) }}" method="POST" style="display:inline;" onsubmit="return confirm('Create a new draft revision from this quotation?');">
+                                            @csrf
+                                            <input type="hidden" name="version" value="{{ $verNum }}">
+                                            <button type="submit" class="btn-action" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;cursor:pointer;" title="Create Revised Quotation">
+                                                + Revise
+                                            </button>
+                                        </form>
+                                    @endif
+                                    @if ($quote->status === 'Draft' && $quote->current_version > $verNum)
+                                        <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" title="Continue Editing Active Draft">
+                                            Edit Draft
+                                        </a>
+                                    @endif
                                 @else
                                     <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action" title="Open and Edit Draft Quotation">
-                                        Open
+                                        Open Draft
                                     </a>
                                 @endif
                             </div>

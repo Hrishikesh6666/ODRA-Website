@@ -18,10 +18,17 @@ class QuoteController extends Controller
         $search = $request->query('search');
 
         $query = Quote::withoutGlobalScopes()
-            ->with(['user', 'latestVersion.snapshot'])
+            ->with(['user', 'latestFinalizedVersion.snapshot', 'latestVersion.snapshot', 'versions'])
             ->orderBy('created_at', 'desc');
 
-        if ($status) {
+        if ($status === 'Finalized') {
+            $query->where(function ($q) {
+                $q->where('status', 'Finalized')
+                  ->orWhereHas('versions', fn ($qv) => $qv->where('status', 'Finalized'));
+            });
+        } elseif ($status === 'Draft') {
+            $query->where('status', 'Draft');
+        } elseif ($status) {
             $query->where('status', $status);
         }
 

@@ -193,11 +193,54 @@ class QuoteApiController extends Controller
     {
         $this->authorize('revise', $quote);
 
-        $revision = $this->quoteService->createRevision($quote, $request->user());
+        $sourceVersion = $request->input('version');
+        $revision = $this->quoteService->createRevision($quote, $request->user(), $sourceVersion ? (int) $sourceVersion : null);
 
         return response()->json([
             'message' => "New draft revision v{$revision->current_version} created for Q-{$quote->quote_number}.",
             'quote' => $revision,
+        ]);
+    }
+
+    /**
+     * Retrieve complete revision history for a quotation.
+     */
+    public function revisions(Quote $quote): JsonResponse
+    {
+        $this->authorize('view', $quote);
+
+        $revisions = $quote->versions()
+            ->with('snapshot')
+            ->orderBy('version_number', 'desc')
+            ->get()
+            ->map(function ($v) use ($quote) {
+                $snap = $v->snapshot;
+                return [
+                    'version_number' => $v->version_number,
+                    'status' => $v->status,
+                    'is_finalized' => $v->isFinalized(),
+                    'is_current' => ($v->version_number == $quote->current_version),
+                    'total' => (float) ($snap?->total ?? 0),
+                    'customer' => $snap?->customer_company ?? '',
+                    'model' => $snap?->model_code ?? '',
+                    'pricing_basis' => $snap?->pricing_basis ?? '',
+                    'date' => $v->finalized_at
+                        ? $v->finalized_at->format('M d, Y h:i A')
+                        : ($v->created_at ? $v->created_at->format('M d, Y h:i A') : ''),
+                    'has_pdf' => ! empty($snap?->pdf_path),
+                    'view_url' => route('sales.quotes.show', ['quote' => $quote, 'version' => $v->version_number]),
+                    'print_url' => route('sales.quotes.show', ['quote' => $quote, 'version' => $v->version_number]) . '?print=1',
+                    'pdf_url' => route('sales.quotes.pdf', ['quote' => $quote, 'version' => $v->version_number]),
+                ];
+            });
+
+        return response()->json([
+            'quote_id' => $quote->id,
+            'quote_number' => $quote->quote_number,
+            'current_version' => $quote->current_version,
+            'status' => $quote->status,
+            'has_finalized' => $quote->hasFinalizedVersion(),
+            'revisions' => $revisions,
         ]);
     }
 

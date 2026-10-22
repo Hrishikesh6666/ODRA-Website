@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Quote;
+use App\Policies\QuotePolicy;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Quote::class, QuotePolicy::class);
+
         Paginator::defaultView('vendor.pagination.custom');
 
         // Force HTTPS in production or behind Render reverse proxy

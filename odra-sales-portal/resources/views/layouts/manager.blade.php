@@ -388,6 +388,7 @@
     </div>
 
     @include('partials.quote-inspect-modal')
+    @include('partials.revision-history-modal')
 
     <script src="{{ asset('js/amg-animations.js') }}"></script>
     @stack('scripts')

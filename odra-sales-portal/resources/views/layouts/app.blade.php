@@ -219,6 +219,7 @@
     </main>
 
     @include('partials.quote-inspect-modal')
+    @include('partials.revision-history-modal')
 
     <div id="toast" class="toast"></div>
 
