@@ -213,11 +213,14 @@ class QuoteService
                 );
                 $snapshotData['quote_version_id'] = $newVersion->id;
                 $snapshotData['enhancement_pricing_mode'] = $prevSnapshot->enhancement_pricing_mode ?? 'itemized';
+                $originalOwnerName = $quote->user?->name ?: ($prevSnapshot->sales_rep_name ?: 'Sales Representative');
+                $snapshotData['sales_rep_name'] = $originalOwnerName;
 
-                // Update date in full_state to today and preserve pricing mode
+                // Update date in full_state to today, preserve pricing mode and creator identity
                 if (isset($snapshotData['full_state']) && is_array($snapshotData['full_state'])) {
                     $snapshotData['full_state']['date'] = now()->format('Y-m-d');
                     $snapshotData['full_state']['enhancementPricingMode'] = $snapshotData['enhancement_pricing_mode'];
+                    $snapshotData['full_state']['salesRep'] = $originalOwnerName;
                 }
 
                 QuoteSnapshot::create($snapshotData);
@@ -349,12 +352,19 @@ class QuoteService
         }
         $state['enhancementPricingMode'] = $enhancementPricingMode;
 
-        // Authoritative sales rep name: if authenticated user is not an admin, lock strictly to the logged-in user
-        if (auth()->check() && !auth()->user()->isAdmin()) {
+        // Authoritative sales rep name:
+        // Existing quotations MUST preserve the original creator's identity permanently.
+        // Opening, viewing, saving, or submitting forms cannot replace the creator's identity.
+        if ($version->quote && $version->quote->user) {
+            $repName = $version->quote->user->name;
+        } elseif (!empty($data['sales_rep_name'])) {
+            $repName = $data['sales_rep_name'];
+        } elseif (auth()->check() && !auth()->user()->isAdmin()) {
             $repName = auth()->user()->name;
         } else {
-            $repName = $state['salesRep'] ?? $data['sales_rep_name'] ?? auth()->user()?->name ?? $version->quote->user?->name ?? '';
+            $repName = $state['salesRep'] ?? $data['sales_rep_name'] ?? auth()->user()?->name ?? 'Sales Representative';
         }
+        $state['salesRep'] = $repName;
 
         // 1. Authoritative Model & Pricing Lookup
         $model = SweeperModel::where('code', $modelCode)->first();

@@ -551,7 +551,7 @@ table.items tr.totalRow td {
 <div class="builder-topbar">
     <div class="builder-heading">
         <h1>Quotation Q-{{ $quoteNumber }}</h1>
-        <span>Revision {{ $version }} &middot; {{ $isReadonly ? 'Finalized (Historical Snapshot Frozen)' : 'Draft (Editable)' }}</span>
+        <span>Revision {{ $version }} &middot; {{ $isManagerViewingOther ? (($viewingVersion?->isFinalized() ?? false) ? 'Finalized (Manager Read-Only)' : 'Draft (Manager Read-Only)') : ($isReadonly ? 'Finalized (Historical Snapshot Frozen)' : 'Draft (Editable)') }}</span>
     </div>
     <div class="builder-topbar-actions">
         @if(auth()->user()->isAdmin())
@@ -580,17 +580,42 @@ table.items tr.totalRow td {
             Print
         </button>
 
-        @if ($isReadonly)
-            <button type="button" id="btnRevise" class="btn-nav" style="background:#dc2626;color:white;border-color:#dc2626;font-weight:700;">Create Revised Quotation</button>
+        @if ($isManagerViewingOther)
+            @if (($viewingVersion?->isFinalized() ?? false) || $quote?->status === 'Finalized')
+                <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $version]) }}" class="btn-nav" style="background:#059669;color:white;border-color:#059669;" target="_blank">Download PDF</a>
+            @endif
+        @elseif ($isReadonly)
+            @if ($canRevise ?? true)
+                <button type="button" id="btnRevise" class="btn-nav" style="background:#dc2626;color:white;border-color:#dc2626;font-weight:700;">Create Revised Quotation</button>
+            @endif
             <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $version]) }}" class="btn-nav" style="background:#059669;color:white;border-color:#059669;" target="_blank">Download PDF</a>
         @else
-            <button type="button" id="btnSaveDraft" class="btn-nav">Save Draft</button>
-            <button type="button" id="btnFinalize" class="btn-nav" style="background:var(--red);color:white;border-color:var(--red);">Finalize Quote</button>
+            @if ($canModify ?? true)
+                <button type="button" id="btnSaveDraft" class="btn-nav">Save Draft</button>
+                <button type="button" id="btnFinalize" class="btn-nav" style="background:var(--red);color:white;border-color:var(--red);">Finalize Quote</button>
+            @endif
         @endif
     </div>
 </div>
 
-@if($isReadonly)
+@if($isManagerViewingOther)
+<div style="background: #f8fafc; border-left: 4px solid #64748b; border-radius: 6px; padding: 12px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">&#128274;</span>
+        <div>
+            <strong style="color: #0f172a; font-size: 14px;">Viewing Quotation Revision {{ $version }} &middot; Created by {{ $quoteOwnerName }} (Read-Only)</strong>
+            <div style="font-size: 12.5px; color: #475569; margin-top: 2px;">
+                This quotation belongs to <strong>{{ $quoteOwnerName }}</strong>. As a manager, you have commercial inspection, printing, and PDF download permissions. Modification controls and revision creation are reserved for the quotation creator.
+            </div>
+        </div>
+    </div>
+    @if($quote)
+        <button type="button" onclick="openRevisionHistory({{ $quote->id }})" class="btn-nav" style="background: white; border-color: #cbd5e1; font-size: 12px; padding: 6px 14px; white-space: nowrap;">
+            View All Revisions &rarr;
+        </button>
+    @endif
+</div>
+@elseif($isReadonly)
 <div style="background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 6px; padding: 12px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
     <div style="display: flex; align-items: center; gap: 10px;">
         <span style="font-size: 20px;">&#128274;</span>
@@ -689,7 +714,7 @@ table.items tr.totalRow td {
     <div class="row2">
       <div>
         <label>Sales Rep</label>
-        @if($user && $user->isAdmin())
+        @if(!$quote && $user && $user->isAdmin())
           <select id="salesRep" {{ $isReadonly ? 'disabled' : '' }}>
             <option value="">&mdash; Select &mdash;</option>
             @foreach($salesReps as $rep)
@@ -699,8 +724,8 @@ table.items tr.totalRow td {
           </select>
         @else
           <div style="position: relative; display: flex; align-items: center;">
-            <input type="text" id="salesRep" value="{{ $initialState['salesRep'] ?: ($user ? $user->name : '') }}" readonly style="background: #f1f5f9 !important; color: #1e293b !important; font-weight: 600 !important; cursor: not-allowed !important; border: 1px solid #cbd5e1 !important; padding-right: 32px !important;" title="Assigned to your logged-in Sales Representative account">
-            <span style="position: absolute; right: 10px; font-size: 13px; color: #64748b; pointer-events: none;" title="Locked to current logged-in user">&#128274;</span>
+            <input type="text" id="salesRep" value="{{ $initialState['salesRep'] ?: ($quoteOwnerName ?? ($user ? $user->name : '')) }}" readonly style="background: #f1f5f9 !important; color: #1e293b !important; font-weight: 600 !important; cursor: not-allowed !important; border: 1px solid #cbd5e1 !important; padding-right: 32px !important;" title="Quotation creator: {{ $initialState['salesRep'] ?: ($quoteOwnerName ?? ($user ? $user->name : '')) }}">
+            <span style="position: absolute; right: 10px; font-size: 13px; color: #64748b; pointer-events: none;" title="Original Quotation Creator">&#128274;</span>
           </div>
         @endif
       </div>
@@ -804,6 +829,7 @@ const CURRENT_QUOTE_ID = @json($quote?->id);
 const SALES_REPS = @json($salesReps);
 const IS_ADMIN = @json($user ? $user->isAdmin() : false);
 const CURRENT_USER_NAME = @json($user ? $user->name : '');
+const QUOTE_OWNER_NAME = @json($quoteOwnerName ?? ($quote?->user?->name ?: ''));
 
 let ITEMS = CATALOG.items || [];
 let CHASSIS = CATALOG.chassis || [];
@@ -1120,9 +1146,14 @@ if (INITIAL_STATE && typeof INITIAL_STATE === 'object') {
   Object.assign(state, INITIAL_STATE);
 }
 
-// For non-admin Sales Reps, lock salesRep strictly to the logged-in user
-if (!IS_ADMIN && CURRENT_USER_NAME) {
-  state.salesRep = CURRENT_USER_NAME;
+// For new quotations created by non-admins, default salesRep to the logged-in user.
+// Existing quotations MUST retain their original creator identity permanently.
+if (!CURRENT_QUOTE_ID) {
+  if (!IS_ADMIN && CURRENT_USER_NAME) {
+    state.salesRep = CURRENT_USER_NAME;
+  }
+} else {
+  state.salesRep = QUOTE_OWNER_NAME || state.salesRep || (INITIAL_STATE && INITIAL_STATE.salesRep) || '';
 }
 
 // Normalize state.basis to canonical key
@@ -2156,8 +2187,8 @@ function initForm() {
         render();
       });
     } else {
-      // Locked input field for Sales Representative: strictly fixed to current user
-      salesRepEl.value = (!IS_ADMIN && CURRENT_USER_NAME) ? CURRENT_USER_NAME : (state.salesRep || '');
+      // Locked input field for Sales Representative: strictly fixed to quotation creator
+      salesRepEl.value = CURRENT_QUOTE_ID ? (QUOTE_OWNER_NAME || state.salesRep) : ((!IS_ADMIN && CURRENT_USER_NAME) ? CURRENT_USER_NAME : (state.salesRep || ''));
       state.salesRep = salesRepEl.value;
     }
   }
@@ -2264,8 +2295,10 @@ async function saveQuote(isFinalize = false) {
     return;
   }
 
-  if (!IS_ADMIN && CURRENT_USER_NAME) {
+  if (!CURRENT_QUOTE_ID && !IS_ADMIN && CURRENT_USER_NAME) {
     state.salesRep = CURRENT_USER_NAME;
+  } else if (CURRENT_QUOTE_ID) {
+    state.salesRep = QUOTE_OWNER_NAME || state.salesRep;
   }
 
   const snap = calculateSnapshotData();

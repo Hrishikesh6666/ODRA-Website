@@ -124,6 +124,10 @@ class QuoteController extends Controller
             'quoteNumber' => $nextQuoteNumber,
             'version' => 1,
             'isReadonly' => false,
+            'isManagerViewingOther' => false,
+            'canRevise' => false,
+            'canModify' => true,
+            'quoteOwnerName' => $user->name,
             'catalog' => $catalog,
             'user' => $user,
             'salesReps' => $salesReps,
@@ -168,9 +172,20 @@ class QuoteController extends Controller
         }
 
         $snapshot = $version?->snapshot;
-        $isReadonly = $version?->isFinalized() || ($version && $version->version_number < $quote->current_version);
-        $catalog = $this->catalogService->getCatalogPayload();
         $user = Auth::user();
+
+        // Quotation ownership and permissions
+        $isOwner = ($user && $quote->user_id === $user->id);
+        $isManagerViewingOther = ($user && $user->isManager() && ! $isOwner);
+        $canRevise = $user ? $user->can('revise', $quote) : false;
+        $canModify = $user ? $user->can('update', $quote) : false;
+
+        // Managers viewing someone else's quote are strictly read-only
+        $isReadonly = $version?->isFinalized() 
+            || ($version && $version->version_number < $quote->current_version)
+            || $isManagerViewingOther;
+
+        $catalog = $this->catalogService->getCatalogPayload();
 
         $salesReps = \App\Models\User::whereHas('role', function ($q) {
             $q->whereIn('slug', ['sales', 'manager']);
@@ -208,7 +223,9 @@ class QuoteController extends Controller
 
         $savedState = is_array($snapshot?->full_state) ? $snapshot->full_state : [];
 
-        $lockedRepName = (! $user->isAdmin()) ? $user->name : ($snapshot?->sales_rep_name ?: $quote->user->name);
+        // Original quotation creator is permanently fixed to the quote's owner
+        $quoteOwnerName = $quote->user?->name ?: ($snapshot?->sales_rep_name ?: 'Sales Representative');
+        $lockedRepName = $quoteOwnerName;
 
         $destState = $savedState['destState'] ?? '';
         $destCity = $savedState['destCity'] ?? '';
@@ -252,6 +269,7 @@ class QuoteController extends Controller
         ];
 
         $state = array_merge($defaultState, $savedState);
+        $state['salesRep'] = $quoteOwnerName;
         $state['enhancementPricingMode'] = $state['enhancementPricingMode'] ?? $snapshot?->enhancement_pricing_mode ?? 'itemized';
 
         // Guarantee enh is always an array of 13 rows
@@ -280,6 +298,10 @@ class QuoteController extends Controller
             'currentVersion' => $quote->current_version,
             'viewingVersion' => $version,
             'isReadonly' => $isReadonly,
+            'isManagerViewingOther' => $isManagerViewingOther,
+            'canRevise' => $canRevise,
+            'canModify' => $canModify,
+            'quoteOwnerName' => $quoteOwnerName,
             'catalog' => $catalog,
             'user' => $user,
             'salesReps' => $salesReps,

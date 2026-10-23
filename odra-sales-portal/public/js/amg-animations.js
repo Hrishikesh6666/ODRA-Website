@@ -296,7 +296,7 @@ window.inspectQuote = async function(quoteId) {
     const viewBtn = document.getElementById('modalQuoteViewBtn');
     if (viewBtn) {
       viewBtn.href = data.view_url || `/sales/quotes/${quoteId}`;
-      viewBtn.innerHTML = data.status === 'Finalized' 
+      viewBtn.innerHTML = (data.status === 'Finalized' || data.can_edit === false) 
         ? '<span>View Quotation &rarr;</span>' 
         : '<span>Continue Editing Draft &rarr;</span>';
     }
@@ -437,7 +437,7 @@ window.openRevisionHistory = async function(quoteId) {
           <td style="padding: 12px 8px; text-align: right;">
             <div style="display: inline-flex; gap: 6px; justify-content: flex-end; align-items: center;">
               <a href="${rev.view_url}" class="btn-rev-action btn-rev-view" style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #ffffff; background: #2563eb; border: 1px solid #1d4ed8; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Open Revision in Builder">
-                ${isFinalized ? 'View' : 'Edit'}
+                ${(isFinalized || data.can_edit === false) ? 'View' : 'Edit'}
               </a>
               <a href="${rev.print_url}" class="btn-rev-action btn-rev-print" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #0f172a; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Print Revision">
                 Print
@@ -454,8 +454,8 @@ window.openRevisionHistory = async function(quoteId) {
       });
     }
 
-    // Configure "Create Revised Quotation" footer button if any finalized version exists
-    if (createNewBtn && data.has_finalized) {
+    // Configure "Create Revised Quotation" footer button if any finalized version exists and user is authorized
+    if (createNewBtn && data.has_finalized && data.can_revise !== false) {
       createNewBtn.style.display = 'inline-flex';
       createNewBtn.onclick = async () => {
         if (!confirm(`Create a new draft revision for Quotation Q-${data.quote_number}?`)) return;

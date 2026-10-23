@@ -104,21 +104,31 @@ class QuoteApiController extends Controller
 
         $version = $quote->latestVersion;
         $snapshot = $version?->snapshot;
+        $user = auth()->user();
+        $isOwner = ($user && $quote->user_id === $user->id);
+        $isManagerViewingOther = ($user && $user->isManager() && ! $isOwner);
+        $isReadonly = ($version?->isFinalized() ?? false) || $isManagerViewingOther;
+        $canEdit = $user ? $user->can('update', $quote) : false;
+        $canRevise = $user ? $user->can('revise', $quote) : false;
+        $quoteOwnerName = $quote->user?->name ?: ($snapshot?->sales_rep_name ?: 'Sales Representative');
+
+        $stateData = $snapshot?->full_state ?? [];
+        $stateData['quoteSeq'] = $quote->quote_number;
+        $stateData['salesRep'] = $quoteOwnerName;
 
         return response()->json([
             'id' => $quote->id,
             'quote_number' => $quote->quote_number,
             'version' => $quote->current_version,
             'status' => $quote->status,
-            'is_readonly' => $version?->isFinalized() ?? false,
-            'owner_name' => $quote->user?->name ?? 'Sales Representative',
+            'is_readonly' => $isReadonly,
+            'can_edit' => $canEdit,
+            'can_revise' => $canRevise,
+            'owner_name' => $quoteOwnerName,
             'created_at' => $quote->created_at ? $quote->created_at->format('M d, Y h:i A') : null,
             'updated_at' => $quote->updated_at ? $quote->updated_at->format('M d, Y h:i A') : null,
             'finalized_at' => $version?->finalized_at ? $version->finalized_at->format('M d, Y h:i A') : null,
-            'state' => $snapshot?->full_state ?? [
-                'quoteSeq' => $quote->quote_number,
-                'salesRep' => $quote->user?->name ?? 'Sales Representative',
-            ],
+            'state' => $stateData,
             'snapshot' => $snapshot,
             'view_url' => route('sales.quotes.show', $quote),
             'print_url' => route('sales.quotes.show', $quote) . '?print=1',
@@ -237,12 +247,18 @@ class QuoteApiController extends Controller
                 ];
             });
 
+        $user = auth()->user();
+        $canRevise = $user ? $user->can('revise', $quote) : false;
+        $canEdit = $user ? $user->can('update', $quote) : false;
+
         return response()->json([
             'quote_id' => $quote->id,
             'quote_number' => $quote->quote_number,
             'current_version' => $quote->current_version,
             'status' => $quote->status,
             'has_finalized' => $quote->hasFinalizedVersion(),
+            'can_revise' => $canRevise,
+            'can_edit' => $canEdit,
             'revisions' => $revisions,
         ]);
     }
