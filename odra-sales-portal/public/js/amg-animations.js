@@ -435,15 +435,15 @@ window.openRevisionHistory = async function(quoteId) {
             $${Number(rev.total || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
           </td>
           <td style="padding: 12px 8px; text-align: right;">
-            <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
-              <a href="${rev.view_url}" class="btn-table-action" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Open Revision in Builder">
+            <div style="display: inline-flex; gap: 6px; justify-content: flex-end; align-items: center;">
+              <a href="${rev.view_url}" class="btn-rev-action btn-rev-view" style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #ffffff; background: #2563eb; border: 1px solid #1d4ed8; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Open Revision in Builder">
                 ${isFinalized ? 'View' : 'Edit'}
               </a>
-              <a href="${rev.print_url}" class="btn-table-action" target="_blank" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Print Revision">
+              <a href="${rev.print_url}" class="btn-rev-action btn-rev-print" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #0f172a; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Print Revision">
                 Print
               </a>
               ${isFinalized && rev.has_pdf ? `
-                <a href="${rev.pdf_url}" class="btn-table-action btn-table-download" target="_blank" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Download PDF">
+                <a href="${rev.pdf_url}" class="btn-rev-action btn-rev-pdf" target="_blank" download style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #ffffff; background: #059669; border: 1px solid #047857; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Download PDF">
                   PDF
                 </a>
               ` : ''}

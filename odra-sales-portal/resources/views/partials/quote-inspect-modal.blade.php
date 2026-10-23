@@ -1,4 +1,61 @@
 <!-- Quick Quote Inspection Modal Dialog -->
+<style>
+.btn-modal-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    padding: 8px 18px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+    line-height: 1.4 !important;
+    box-sizing: border-box !important;
+}
+.btn-modal-close {
+    background: #334155 !important;
+    color: #f8fafc !important;
+    border: 1px solid #475569 !important;
+}
+.btn-modal-close:hover {
+    background: #475569 !important;
+    color: #ffffff !important;
+}
+.btn-modal-print {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+.btn-modal-print:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+.btn-modal-download {
+    background: #059669 !important;
+    color: #ffffff !important;
+    border: 1px solid #059669 !important;
+}
+.btn-modal-download:hover {
+    background: #047857 !important;
+    border-color: #047857 !important;
+    color: #ffffff !important;
+}
+.btn-modal-primary {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border: 1px solid #dc2626 !important;
+    font-weight: 700 !important;
+}
+.btn-modal-primary:hover {
+    background: #b91c1c !important;
+    border-color: #b91c1c !important;
+    color: #ffffff !important;
+}
+</style>
 <div class="amg-drawer-backdrop" id="quickQuoteModal" onclick="if(event.target===this) closeQuickQuoteModal()">
     <div class="amg-drawer-card">
         <!-- Header -->
@@ -74,18 +131,20 @@
         </div>
 
         <!-- Footer Actions -->
-        <div style="padding: 16px 24px; border-top: 1px solid #334155; background: #111827; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
-            <button type="button" class="btn-table-action" onclick="closeQuickQuoteModal()">Close</button>
-            <a id="modalQuotePrintBtn" href="#" class="btn-table-action" target="_blank" style="background:#f1f5f9;color:#0f172a;border-color:#cbd5e1;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <div style="padding: 16px 24px; border-top: 1px solid #334155; background: #111827; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn-modal-action btn-modal-close" onclick="closeQuickQuoteModal()" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; background: #334155; color: #f8fafc; border: 1px solid #475569;">
+                Close
+            </button>
+            <a id="modalQuotePrintBtn" href="#" class="btn-modal-action btn-modal-print" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 <span>Print</span>
             </a>
-            <a id="modalQuotePdfBtn" href="#" class="btn-table-action btn-table-download" target="_blank" style="display:none;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <a id="modalQuotePdfBtn" href="#" class="btn-modal-action btn-modal-download" target="_blank" style="display: none; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; background: #059669; color: #ffffff; border: 1px solid #059669;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 <span>Download PDF</span>
             </a>
-            <a id="modalQuoteViewBtn" href="#" class="btn-table-action btn-table-primary">
-                <span>Open in Quote Builder &rarr;</span>
+            <a id="modalQuoteViewBtn" href="#" class="btn-modal-action btn-modal-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; background: #dc2626; color: #ffffff; border: 1px solid #dc2626;">
+                <span>View Quotation &rarr;</span>
             </a>
         </div>
     </div>

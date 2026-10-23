@@ -1,4 +1,50 @@
 <!-- Quotation Revision History Modal Dialog -->
+<style>
+.btn-rev-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 5px 12px !important;
+    border-radius: 5px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    line-height: 1.3 !important;
+    box-sizing: border-box !important;
+}
+.btn-rev-view {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #1d4ed8 !important;
+}
+.btn-rev-view:hover {
+    background: #1d4ed8 !important;
+    color: #ffffff !important;
+}
+.btn-rev-print {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+.btn-rev-print:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+}
+.btn-rev-pdf {
+    background: #059669 !important;
+    color: #ffffff !important;
+    border: 1px solid #047857 !important;
+}
+.btn-rev-pdf:hover {
+    background: #047857 !important;
+    border-color: #047857 !important;
+    color: #ffffff !important;
+}
+</style>
 <div class="amg-drawer-backdrop" id="revisionHistoryModal" style="display:none;" onclick="if(event.target===this) closeRevisionHistory()">
     <div class="amg-drawer-card" style="max-width: 820px; width: 95%;">
         <!-- Header -->
@@ -51,12 +97,12 @@
         <!-- Footer Actions -->
         <div style="padding: 16px 24px; border-top: 1px solid #334155; background: #111827; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
             <div>
-                <button type="button" id="revCreateNewBtn" class="btn-table-action" style="display:none; background: #dc2626; color: white; border-color: #dc2626; font-weight: 700; cursor: pointer;">
+                <button type="button" id="revCreateNewBtn" class="btn-modal-action btn-modal-primary" style="display:none; background: #dc2626; color: white; border: 1px solid #dc2626; font-weight: 700; cursor: pointer; padding: 8px 18px; border-radius: 6px; font-size: 13px;">
                     + Create Revised Quotation
                 </button>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn-table-action" onclick="closeRevisionHistory()">Close</button>
+                <button type="button" class="btn-modal-action btn-modal-close" onclick="closeRevisionHistory()" style="background: #334155; color: #f8fafc; border: 1px solid #475569; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">Close</button>
             </div>
         </div>
     </div>
