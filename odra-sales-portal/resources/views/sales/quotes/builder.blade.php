@@ -1868,6 +1868,14 @@ function renderPreview() {
   const cols = anyDisc ? 6 : 5;
   const discTh = anyDisc ? '<th class="num">DISCOUNT (%)</th>' : '';
 
+  const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
+  const addrLine1 = esc(TEMPLATE_HEADER.address_line_1 || '705 South 48th Street, Grand Forks, ND 58201');
+  const addrLine2 = esc(TEMPLATE_HEADER.address_line_2 || 't: 844-888-6372 • e: info@odrasweeper.com • odrasweeper.com');
+  const quoteTitle = esc(TEMPLATE_HEADER.quote_title || 'QUOTATION');
+  const sectionHeading = esc(TEMPLATE_HEADER.section_heading || 'Including Enhancements');
+  const freightRowLabel = esc(TEMPLATE_HEADER.freight_row_label || 'Sweeper Transport / Freight') + (state.destCity && !(state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up') ? ` &mdash; ${esc(state.destCity)}, ${esc(state.destState)}` : '');
+  const totalRowLabel = esc(TEMPLATE_HEADER.total_row_label || 'TOTAL (USD)');
+
   const chassisRowHtml = chassisRawPrice > 0 ? `
     <tr class="chassisRow">
       <td class="descCol"><b>Chassis Option:</b> ${esc(shortChassisLabel(state.chassis))}</td>
@@ -1879,45 +1887,24 @@ function renderPreview() {
     </tr>
   ` : '';
 
-  const baseRowHtml = isBundled ? `
+  const baseDescHtml = esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>');
+  const baseRowHtml = `
     <tr class="baseRow">
-      <td class="descCol">
-        ${enhRowData.length > 0
-          ? `<strong>${esc(state.model)} Sweeper &mdash; including selected enhancements</strong><br><span style="font-size:11.5px;color:#475569;font-weight:normal;">${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}</span>`
-          : `${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}`}
-      </td>
+      <td class="descCol">${baseDescHtml}</td>
       <td class="num">${state.baseQty}</td>
-      <td class="num">${fmtMSRP(packageListUnit)}</td>
-      ${anyDisc ? `<td class="num">${packageDisc > 0 ? pctFmt(packageDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
-      <td class="num">${fmt(packageUnit)}</td>
-      <td class="num">${fmt(packageExt)}</td>
-    </tr>
-  ` : `
-    <tr class="baseRow">
-      <td class="descCol">${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}</td>
-      <td class="num">${state.baseQty}</td>
-      <td class="num">${fmtMSRP(displayBaseList)}</td>
-      ${anyDisc ? `<td class="num">${baseDisc > 0 ? pctFmt(baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
-      <td class="num">${fmt(baseUnit)}</td>
-      <td class="num">${fmt(baseExt)}</td>
+      <td class="num">${fmtMSRP(isBundled ? packageListUnit : displayBaseList)}</td>
+      ${anyDisc ? `<td class="num">${(isBundled ? packageDisc : baseDisc) > 0 ? pctFmt(isBundled ? packageDisc : baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
+      <td class="num">${fmt(isBundled ? packageUnit : baseUnit)}</td>
+      <td class="num">${fmt(isBundled ? packageExt : baseExt)}</td>
     </tr>
   `;
 
   const sectionRowHtml = isBundled
-    ? `<tr class="sectionRow"><td colspan="${cols}">Included Features</td></tr>`
+    ? ''
     : `<tr class="sectionRow"><td colspan="${cols}">${sectionHeading}</td></tr>`;
 
   const enhRowsHtml = isBundled
-    ? (enhRowData.length > 0
-        ? enhRowData.map(r => `
-          <tr>
-            <td class="descCol">${esc(r.desc)}</td>
-            <td class="num">${r.qty}</td>
-            <td colspan="${cols - 2}" style="text-align:right;color:#64748b;font-style:italic;font-size:11.5px;padding-right:12px;">Included in Machine Price</td>
-          </tr>
-        `).join('')
-        : `<tr><td colspan="${cols}" style="color:#999;font-style:italic;">Standard factory build (no additional optional enhancements selected)</td></tr>`
-      )
+    ? ''
     : (enhRowData.length > 0
         ? enhRowData.map(r => `
           <tr>
@@ -1955,14 +1942,6 @@ function renderPreview() {
   const toBlockHtml = toLines.length 
     ? `<span class="toLines">${toLines.map(l => `<div>${l}</div>`).join('')}</span>`
     : ' &mdash;';
-
-  const exwFobLabel = TEMPLATE_HEADER.exw_fob || 'EXW, Factory pick-up';
-  const addrLine1 = esc(TEMPLATE_HEADER.address_line_1 || '705 South 48th Street, Grand Forks, ND 58201');
-  const addrLine2 = esc(TEMPLATE_HEADER.address_line_2 || 't: 844-888-6372 • e: info@odrasweeper.com • odrasweeper.com');
-  const quoteTitle = esc(TEMPLATE_HEADER.quote_title || 'QUOTATION');
-  const sectionHeading = esc(TEMPLATE_HEADER.section_heading || 'Including Enhancements');
-  const freightRowLabel = esc(TEMPLATE_HEADER.freight_row_label || 'Sweeper Transport / Freight') + (state.destCity && !(state.fob === exwFobLabel || state.fob === 'EXW, Factory pick-up') ? ` &mdash; ${esc(state.destCity)}, ${esc(state.destState)}` : '');
-  const totalRowLabel = esc(TEMPLATE_HEADER.total_row_label || 'TOTAL (USD)');
 
   p.innerHTML = `
     <div class="docHeaderTop">
@@ -2030,7 +2009,7 @@ function renderPreview() {
         ${baseRowHtml}
         ${chassisRowHtml}
         ${sectionRowHtml}
-        ${enhRowsHtml || `<tr><td colspan="${cols}" style="color:#999;font-style:italic;">No enhancements selected</td></tr>`}
+        ${enhRowsHtml}
         ${coopRowHtml}
         <tr class="subtotalRow">
           <td colspan="${cols - 1}" class="num">${esc(subtotalLabel)}</td>

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Enhancement;
 use App\Models\FreightRule;
 use App\Models\ModelPrice;
-use App\Models\PricingBasis;
 use App\Models\Quote;
 use App\Models\QuoteItem;
 use App\Models\QuoteSnapshot;
@@ -79,18 +78,24 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         ]);
     }
 
+    protected function uniqueQuoteNumber(): string
+    {
+        return (string) rand(100000, 999999);
+    }
+
     /**
      * Test 1: New quotations default to Itemized display mode.
      */
     public function test_default_enhancement_pricing_mode_is_itemized(): void
     {
         $this->actingAs($this->carlos);
+        $qNum = $this->uniqueQuoteNumber();
 
         $payload = [
-            'quote_number' => '4001',
+            'quote_number' => $qNum,
             'customer' => 'City of San Antonio',
             'state' => [
-                'quoteSeq' => '4001',
+                'quoteSeq' => $qNum,
                 'toCompany' => 'City of San Antonio',
                 'model' => 'MT4H',
                 'basis' => 'MSRP (Commercial)',
@@ -104,7 +109,7 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         $response = $this->postJson('/api/quotes', $payload);
         $response->assertStatus(201);
 
-        $quote = Quote::where('quote_number', '4001')->firstOrFail();
+        $quote = Quote::where('quote_number', $qNum)->firstOrFail();
         $snapshot = $quote->latestVersion->snapshot;
 
         $this->assertEquals('itemized', $snapshot->enhancement_pricing_mode);
@@ -119,13 +124,14 @@ class EnhancementPricingDisplayToggleTest extends TestCase
     public function test_bundled_mode_persistence_in_snapshot_and_full_state(): void
     {
         $this->actingAs($this->carlos);
+        $qNum = $this->uniqueQuoteNumber();
 
         $payload = [
-            'quote_number' => '4002',
+            'quote_number' => $qNum,
             'customer' => 'Bexar County Public Works',
             'enhancement_pricing_mode' => 'bundled',
             'state' => [
-                'quoteSeq' => '4002',
+                'quoteSeq' => $qNum,
                 'toCompany' => 'Bexar County Public Works',
                 'model' => 'MT4H',
                 'basis' => 'MSRP (Commercial)',
@@ -142,7 +148,7 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         $response = $this->postJson('/api/quotes', $payload);
         $response->assertStatus(201);
 
-        $quote = Quote::where('quote_number', '4002')->firstOrFail();
+        $quote = Quote::where('quote_number', $qNum)->firstOrFail();
         $snapshot = $quote->latestVersion->snapshot;
 
         $this->assertEquals('bundled', $snapshot->enhancement_pricing_mode);
@@ -157,6 +163,7 @@ class EnhancementPricingDisplayToggleTest extends TestCase
     public function test_internal_itemized_breakdown_preserved_when_bundled(): void
     {
         $this->actingAs($this->carlos);
+        $qNum = $this->uniqueQuoteNumber();
 
         // Ensure enhancement exists
         Enhancement::firstOrCreate(['description' => 'Rear Mounted LED Light Bar'], [
@@ -169,11 +176,11 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         ]);
 
         $payload = [
-            'quote_number' => '4003',
+            'quote_number' => $qNum,
             'customer' => 'Texas Highway Services',
             'enhancement_pricing_mode' => 'bundled',
             'state' => [
-                'quoteSeq' => '4003',
+                'quoteSeq' => $qNum,
                 'toCompany' => 'Texas Highway Services',
                 'model' => 'MT4H',
                 'basis' => 'MSRP (Commercial)',
@@ -191,7 +198,7 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         $draftRes = $this->postJson('/api/quotes', $payload);
         $draftRes->assertStatus(201);
 
-        $quote = Quote::where('quote_number', '4003')->firstOrFail();
+        $quote = Quote::where('quote_number', $qNum)->firstOrFail();
 
         // 2. Finalize quote
         $finalizeRes = $this->postJson("/api/quotes/{$quote->id}/finalize", $payload);
@@ -230,6 +237,7 @@ class EnhancementPricingDisplayToggleTest extends TestCase
     public function test_pricing_invariance_between_modes(): void
     {
         $this->actingAs($this->carlos);
+        $qNum = $this->uniqueQuoteNumber();
 
         Enhancement::firstOrCreate(['description' => 'Elevator System Flush'], [
             'sweeper_model_id' => SweeperModel::where('code', 'MT4H')->first()->id,
@@ -243,7 +251,7 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         $basePayload = [
             'customer' => 'Invariance Testing Co',
             'state' => [
-                'quoteSeq' => '4004',
+                'quoteSeq' => $qNum,
                 'toCompany' => 'Invariance Testing Co',
                 'model' => 'MT4H',
                 'basis' => 'MSRP (Commercial)',
@@ -258,13 +266,13 @@ class EnhancementPricingDisplayToggleTest extends TestCase
 
         // 1. Create as Itemized
         $itemizedPayload = $basePayload;
-        $itemizedPayload['quote_number'] = '4004';
+        $itemizedPayload['quote_number'] = $qNum;
         $itemizedPayload['enhancement_pricing_mode'] = 'itemized';
         $itemizedPayload['state']['enhancementPricingMode'] = 'itemized';
 
         $resItemized = $this->postJson('/api/quotes', $itemizedPayload);
         $resItemized->assertStatus(201);
-        $quote = Quote::where('quote_number', '4004')->firstOrFail();
+        $quote = Quote::where('quote_number', $qNum)->firstOrFail();
 
         $subtotal1 = (float) $quote->latestVersion->snapshot->subtotal;
         $total1 = (float) $quote->latestVersion->snapshot->total;
@@ -293,14 +301,15 @@ class EnhancementPricingDisplayToggleTest extends TestCase
     public function test_revisions_inherit_enhancement_pricing_mode(): void
     {
         $this->actingAs($this->carlos);
+        $qNum = $this->uniqueQuoteNumber();
 
         // 1. Create and finalize a quote in bundled mode
         $payload = [
-            'quote_number' => '4005',
+            'quote_number' => $qNum,
             'customer' => 'Inheritance Test LLC',
             'enhancement_pricing_mode' => 'bundled',
             'state' => [
-                'quoteSeq' => '4005',
+                'quoteSeq' => $qNum,
                 'toCompany' => 'Inheritance Test LLC',
                 'model' => 'MT4H',
                 'basis' => 'MSRP (Commercial)',
@@ -313,7 +322,7 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         ];
 
         $this->postJson('/api/quotes', $payload);
-        $quote = Quote::where('quote_number', '4005')->firstOrFail();
+        $quote = Quote::where('quote_number', $qNum)->firstOrFail();
         $this->postJson("/api/quotes/{$quote->id}/finalize", $payload);
 
         $rev1 = $quote->versions()->where('version_number', 1)->firstOrFail();
@@ -366,10 +375,11 @@ class EnhancementPricingDisplayToggleTest extends TestCase
     public function test_api_show_returns_enhancement_pricing_mode(): void
     {
         $this->actingAs($this->carlos);
+        $qNum = $this->uniqueQuoteNumber();
 
         $quote = Quote::create([
             'user_id' => $this->carlos->id,
-            'quote_number' => '4007',
+            'quote_number' => $qNum,
             'current_version' => 1,
             'status' => 'Draft',
         ]);
@@ -400,5 +410,32 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         $response = $this->getJson("/api/quotes/{$quote->id}");
         $response->assertStatus(200);
         $response->assertJsonPath('snapshot.enhancement_pricing_mode', 'bundled');
+    }
+
+    /**
+     * Test 8: Script does not have sectionHeading temporal dead zone reference errors, and bundled mode suppresses enhancement details.
+     */
+    public function test_builder_view_renders_cleanly_without_reference_errors(): void
+    {
+        $this->actingAs($this->carlos);
+
+        $response = $this->get('/sales/quotes/create');
+        $response->assertStatus(200);
+
+        $content = $response->getContent();
+
+        // Ensure no syntax or reference errors
+        $this->assertStringNotContainsString("Cannot access 'sectionHeading' before initialization", $content);
+
+        // Ensure sectionHeading is declared before sectionRowHtml in the JS bundle
+        $posSectionHeading = strpos($content, 'const sectionHeading =');
+        $posSectionRowHtml = strpos($content, 'const sectionRowHtml =');
+        $this->assertNotFalse($posSectionHeading);
+        $this->assertNotFalse($posSectionRowHtml);
+        $this->assertLessThan($posSectionRowHtml, $posSectionHeading, 'sectionHeading must be declared before sectionRowHtml');
+
+        // Ensure bundled mode removes "including selected enhancements" and "Included in Machine Price"
+        $this->assertStringNotContainsString('including selected enhancements', $content);
+        $this->assertStringNotContainsString('Included in Machine Price', $content);
     }
 }
