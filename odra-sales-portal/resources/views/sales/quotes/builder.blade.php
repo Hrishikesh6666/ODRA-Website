@@ -1886,12 +1886,13 @@ function renderPreview() {
   const isBundled = (state.enhancementPricingMode === 'bundled');
 
   // When bundled into machine price:
-  // Base machine net selling amount + all selected enhancements net selling amounts combined into package price
+  // Base machine net selling amount + all selected enhancements net selling amounts combined into package price.
+  // The contract discount percentage must remain identical between Itemized and Bundled modes.
   const packageUnit = baseUnit + (state.baseQty > 0 ? (enhExtTotal / state.baseQty) : enhExtTotal);
   const packageExt = baseExt + enhExtTotal;
   const packageListUnit = displayBaseList + (state.baseQty > 0 ? (enhListTotal / state.baseQty) : enhListTotal);
   const packageListExt = packageListUnit * state.baseQty;
-  const packageDisc = packageListExt > 0 ? (1 - (packageExt / packageListExt)) : 0;
+  const packageDisc = baseDisc;
 
   const anyDisc = isBundled
     ? (Math.abs(packageDisc) >= 0.0005 || chassisDiscPct > 0)
@@ -1924,7 +1925,7 @@ function renderPreview() {
       <td class="descCol">${baseDescHtml}</td>
       <td class="num">${state.baseQty}</td>
       <td class="num">${fmtMSRP(isBundled ? packageListUnit : displayBaseList)}</td>
-      ${anyDisc ? `<td class="num">${(isBundled ? packageDisc : baseDisc) > 0 ? pctFmt(isBundled ? packageDisc : baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
+      ${anyDisc ? `<td class="num">${baseDisc > 0 ? pctFmt(baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
       <td class="num">${fmt(isBundled ? packageUnit : baseUnit)}</td>
       <td class="num">${fmt(isBundled ? packageExt : baseExt)}</td>
     </tr>

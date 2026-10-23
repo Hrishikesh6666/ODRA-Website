@@ -438,4 +438,21 @@ class EnhancementPricingDisplayToggleTest extends TestCase
         $this->assertStringNotContainsString('including selected enhancements', $content);
         $this->assertStringNotContainsString('Included in Machine Price', $content);
     }
+
+    /**
+     * Test 9: Bundled mode preserves the contract discount percentage (does not dilute to blended rate).
+     */
+    public function test_bundled_mode_preserves_contract_discount_percentage(): void
+    {
+        $this->actingAs($this->carlos);
+
+        $response = $this->get('/sales/quotes/create');
+        $response->assertStatus(200);
+
+        $content = $response->getContent();
+
+        // Ensure packageDisc matches baseDisc directly rather than calculating a diluted rate
+        $this->assertStringContainsString('const packageDisc = baseDisc;', $content);
+        $this->assertStringNotContainsString('const packageDisc = packageListExt > 0 ? (1 - (packageExt / packageListExt)) : 0;', $content);
+    }
 }
