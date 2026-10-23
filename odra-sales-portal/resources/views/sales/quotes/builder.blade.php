@@ -727,6 +727,16 @@ table.items tr.totalRow td {
     <div id="discountWarning" style="display:none;color:#b3261e;font-size:11px;margin-top:4px;">Maximum limit allowed is ${{ number_format($maxShowDiscount) }}.</div>
 
     <h2 class="sec">Enhancements <span class="smallnote">(pick up to 13 options)</span></h2>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 14px;margin:10px 0 14px 0;">
+      <label for="enhancementPricingMode" style="font-weight:700;color:#1e293b;display:block;margin-bottom:6px;">Enhancement Price Display</label>
+      <select id="enhancementPricingMode" style="width:100%;padding:8px 10px;border-radius:5px;border:1px solid #cbd5e1;font-size:13px;font-weight:600;background:white;" {{ $isReadonly ? 'disabled' : '' }}>
+        <option value="itemized" {{ ($initialState['enhancementPricingMode'] ?? 'itemized') === 'itemized' ? 'selected' : '' }}>Itemized</option>
+        <option value="bundled" {{ ($initialState['enhancementPricingMode'] ?? 'itemized') === 'bundled' ? 'selected' : '' }}>Bundled into Machine Price</option>
+      </select>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">
+        Choose whether enhancement prices appear individually or are bundled into the machine package price.
+      </div>
+    </div>
     <div id="enhList"></div>
 
     <h2 class="sec">Freight &amp; Delivery Destination</h2>
@@ -1101,6 +1111,7 @@ let state = {
   destCity: '',
   repTerritory: '',
   quoteSeq: '3001',
+  enhancementPricingMode: 'itemized',
   enh: Array.from({length: 13}, () => ({desc: '', qty: 1}))
 };
 
@@ -1827,6 +1838,7 @@ function renderPreview() {
   const chassisExtPrice = chassisUnitPrice * state.baseQty;
 
   let enhExtTotal = 0;
+  let enhListTotal = 0;
   const enhRowData = [];
   state.enh.forEach(row => {
     if (!row.desc) return;
@@ -1835,11 +1847,24 @@ function renderPreview() {
     const p = priceForItem(item);
     const ext = row.qty * p.unit;
     enhExtTotal += ext;
+    enhListTotal += (row.qty * (p.list || p.msrp || p.unit));
     const disc = p.discountPercent > 0 ? (p.discountPercent / 100) : (p.list ? 1 - (p.unit / p.list) : 0);
     enhRowData.push({ desc: item.desc, qty: row.qty, list: p.list, unit: p.unit, ext, disc });
   });
 
-  const anyDisc = Math.abs(baseDisc) >= 0.0005 || chassisDiscPct > 0 || enhRowData.some(r => Math.abs(r.disc) >= 0.0005);
+  const isBundled = (state.enhancementPricingMode === 'bundled');
+
+  // When bundled into machine price:
+  // Base machine net selling amount + all selected enhancements net selling amounts combined into package price
+  const packageUnit = baseUnit + (state.baseQty > 0 ? (enhExtTotal / state.baseQty) : enhExtTotal);
+  const packageExt = baseExt + enhExtTotal;
+  const packageListUnit = displayBaseList + (state.baseQty > 0 ? (enhListTotal / state.baseQty) : enhListTotal);
+  const packageListExt = packageListUnit * state.baseQty;
+  const packageDisc = packageListExt > 0 ? (1 - (packageExt / packageListExt)) : 0;
+
+  const anyDisc = isBundled
+    ? (Math.abs(packageDisc) >= 0.0005 || chassisDiscPct > 0)
+    : (Math.abs(baseDisc) >= 0.0005 || chassisDiscPct > 0 || enhRowData.some(r => Math.abs(r.disc) >= 0.0005));
   const cols = anyDisc ? 6 : 5;
   const discTh = anyDisc ? '<th class="num">DISCOUNT (%)</th>' : '';
 
@@ -1854,16 +1879,58 @@ function renderPreview() {
     </tr>
   ` : '';
 
-  const enhRowsHtml = enhRowData.map(r => `
-    <tr>
-      <td class="descCol">${esc(r.desc)}</td>
-      <td class="num">${r.qty}</td>
-      <td class="num">${fmtMSRP(r.list)}</td>
-      ${anyDisc ? `<td class="num">${r.disc > 0 ? pctFmt(r.disc) : '<span style="color:#888;">—</span>'}</td>` : ''}
-      <td class="num">${fmt(r.unit)}</td>
-      <td class="num">${fmt(r.ext)}</td>
+  const baseRowHtml = isBundled ? `
+    <tr class="baseRow">
+      <td class="descCol">
+        ${enhRowData.length > 0
+          ? `<strong>${esc(state.model)} Sweeper &mdash; including selected enhancements</strong><br><span style="font-size:11.5px;color:#475569;font-weight:normal;">${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}</span>`
+          : `${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}`}
+      </td>
+      <td class="num">${state.baseQty}</td>
+      <td class="num">${fmtMSRP(packageListUnit)}</td>
+      ${anyDisc ? `<td class="num">${packageDisc > 0 ? pctFmt(packageDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
+      <td class="num">${fmt(packageUnit)}</td>
+      <td class="num">${fmt(packageExt)}</td>
     </tr>
-  `).join('');
+  ` : `
+    <tr class="baseRow">
+      <td class="descCol">${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}</td>
+      <td class="num">${state.baseQty}</td>
+      <td class="num">${fmtMSRP(displayBaseList)}</td>
+      ${anyDisc ? `<td class="num">${baseDisc > 0 ? pctFmt(baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
+      <td class="num">${fmt(baseUnit)}</td>
+      <td class="num">${fmt(baseExt)}</td>
+    </tr>
+  `;
+
+  const sectionRowHtml = isBundled
+    ? `<tr class="sectionRow"><td colspan="${cols}">Included Features</td></tr>`
+    : `<tr class="sectionRow"><td colspan="${cols}">${sectionHeading}</td></tr>`;
+
+  const enhRowsHtml = isBundled
+    ? (enhRowData.length > 0
+        ? enhRowData.map(r => `
+          <tr>
+            <td class="descCol">${esc(r.desc)}</td>
+            <td class="num">${r.qty}</td>
+            <td colspan="${cols - 2}" style="text-align:right;color:#64748b;font-style:italic;font-size:11.5px;padding-right:12px;">Included in Machine Price</td>
+          </tr>
+        `).join('')
+        : `<tr><td colspan="${cols}" style="color:#999;font-style:italic;">Standard factory build (no additional optional enhancements selected)</td></tr>`
+      )
+    : (enhRowData.length > 0
+        ? enhRowData.map(r => `
+          <tr>
+            <td class="descCol">${esc(r.desc)}</td>
+            <td class="num">${r.qty}</td>
+            <td class="num">${fmtMSRP(r.list)}</td>
+            ${anyDisc ? `<td class="num">${r.disc > 0 ? pctFmt(r.disc) : '<span style="color:#888;">—</span>'}</td>` : ''}
+            <td class="num">${fmt(r.unit)}</td>
+            <td class="num">${fmt(r.ext)}</td>
+          </tr>
+        `).join('')
+        : `<tr><td colspan="${cols}" style="color:#999;font-style:italic;">No enhancements selected</td></tr>`
+      );
 
   const freight = Number(state.freight) || 0;
   const subtotal = baseExt + chassisExtPrice + enhExtTotal;
@@ -1960,18 +2027,9 @@ function renderPreview() {
         </tr>
       </thead>
       <tbody>
-        <tr class="baseRow">
-          <td class="descCol">${esc(dynamicBaseDesc(base, state.chassis, state.model, state.basis)).replace(/\n/g, '<br>')}</td>
-          <td class="num">${state.baseQty}</td>
-          <td class="num">${fmtMSRP(displayBaseList)}</td>
-          ${anyDisc ? `<td class="num">${baseDisc > 0 ? pctFmt(baseDisc) : '<span style="color:#888;">—</span>'}</td>` : ''}
-          <td class="num">${fmt(baseUnit)}</td>
-          <td class="num">${fmt(baseExt)}</td>
-        </tr>
+        ${baseRowHtml}
         ${chassisRowHtml}
-        <tr class="sectionRow">
-          <td colspan="${cols}">${sectionHeading}</td>
-        </tr>
+        ${sectionRowHtml}
         ${enhRowsHtml || `<tr><td colspan="${cols}" style="color:#999;font-style:italic;">No enhancements selected</td></tr>`}
         ${coopRowHtml}
         <tr class="subtotalRow">
@@ -2153,6 +2211,17 @@ function initForm() {
   bindSimple('baseQty', 'baseQty', v => Math.max(1, parseInt(v) || 1));
   bindSimple('baseShowDiscount', 'baseShowDiscount', v => Math.max(0, parseFloat(v) || 0));
 
+  const enhPricingEl = document.getElementById('enhancementPricingMode');
+  if (enhPricingEl) {
+    if (state.enhancementPricingMode) {
+      enhPricingEl.value = state.enhancementPricingMode;
+    }
+    enhPricingEl.addEventListener('change', e => {
+      state.enhancementPricingMode = e.target.value;
+      render();
+    });
+  }
+
   const fobEl = document.getElementById('fob');
   if (fobEl) {
     if (state.fob && !Array.from(fobEl.options).some(o => o.value === state.fob)) {
@@ -2170,7 +2239,7 @@ function initForm() {
   }
 
   // Pre-fill input values from state
-  const inputsToSync = ['po', 'acct', 'toCompany', 'toContact', 'toAddr1', 'toAddr2', 'baseQty', 'baseShowDiscount'];
+  const inputsToSync = ['po', 'acct', 'toCompany', 'toContact', 'toAddr1', 'toAddr2', 'baseQty', 'baseShowDiscount', 'enhancementPricingMode'];
   inputsToSync.forEach(id => {
     const el = document.getElementById(id);
     if (el && state[id] !== undefined) {
@@ -2226,6 +2295,7 @@ async function saveQuote(isFinalize = false) {
     quote_number: state.quoteSeq,
     customer: state.toCompany,
     model_description: dynamicBaseDesc(base, state.chassis, state.model, state.basis),
+    enhancement_pricing_mode: state.enhancementPricingMode || 'itemized',
     base_msrp: snap.base_msrp,
     base_list_price: snap.base_list_price,
     base_unit_price: snap.base_unit_price,

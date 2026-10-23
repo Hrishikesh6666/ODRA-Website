@@ -147,6 +147,7 @@ class QuoteController extends Controller
                 'freight' => $initialFreight,
                 'baseShowDiscount' => 0,
                 'repTerritory' => $initialTerritory,
+                'enhancementPricingMode' => 'itemized',
                 'enh' => array_fill(0, 13, ['desc' => '', 'qty' => 1]),
             ],
         ]);
@@ -244,12 +245,14 @@ class QuoteController extends Controller
             'freight' => $snapshot?->freight_amount ? (float) $snapshot->freight_amount : 0,
             'baseShowDiscount' => $snapshot?->show_discount_amount ? (float) $snapshot->show_discount_amount : 0,
             'repTerritory' => $snapshot?->rep_territory ?: '',
+            'enhancementPricingMode' => $snapshot?->enhancement_pricing_mode ?: 'itemized',
             'enh' => !empty($snapshot?->enhancements_snapshot) && is_array($snapshot->enhancements_snapshot)
                 ? $snapshot->enhancements_snapshot
                 : array_fill(0, 13, ['desc' => '', 'qty' => 1]),
         ];
 
         $state = array_merge($defaultState, $savedState);
+        $state['enhancementPricingMode'] = $state['enhancementPricingMode'] ?? $snapshot?->enhancement_pricing_mode ?? 'itemized';
 
         // Guarantee enh is always an array of 13 rows
         if (empty($state['enh']) || !is_array($state['enh'])) {

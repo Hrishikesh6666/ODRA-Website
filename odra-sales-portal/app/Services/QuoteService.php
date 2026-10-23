@@ -212,10 +212,12 @@ class QuoteService
                     $snapshotData['pdf_generated_at']
                 );
                 $snapshotData['quote_version_id'] = $newVersion->id;
+                $snapshotData['enhancement_pricing_mode'] = $prevSnapshot->enhancement_pricing_mode ?? 'itemized';
 
-                // Update date in full_state to today
+                // Update date in full_state to today and preserve pricing mode
                 if (isset($snapshotData['full_state']) && is_array($snapshotData['full_state'])) {
                     $snapshotData['full_state']['date'] = now()->format('Y-m-d');
+                    $snapshotData['full_state']['enhancementPricingMode'] = $snapshotData['enhancement_pricing_mode'];
                 }
 
                 QuoteSnapshot::create($snapshotData);
@@ -341,6 +343,11 @@ class QuoteService
         $basisName = $state['basis'] ?? $data['pricing_basis'] ?? 'MSRP (Commercial)';
         $fobTerms = $state['fob'] ?? $data['fob_terms'] ?? 'Transport, estimate only noted in quote';
         $baseQty = max(1, (int) ($state['baseQty'] ?? $data['base_qty'] ?? 1));
+        $enhancementPricingMode = $state['enhancementPricingMode'] ?? $data['enhancement_pricing_mode'] ?? 'itemized';
+        if (! in_array($enhancementPricingMode, ['itemized', 'bundled'])) {
+            $enhancementPricingMode = 'itemized';
+        }
+        $state['enhancementPricingMode'] = $enhancementPricingMode;
 
         // Authoritative sales rep name: if authenticated user is not an admin, lock strictly to the logged-in user
         if (auth()->check() && !auth()->user()->isAdmin()) {
@@ -529,6 +536,7 @@ class QuoteService
                 'model_description' => $data['model_description'] ?? ($model ? $model->description : ''),
                 'chassis_configuration' => $chassisLabel,
                 'pricing_basis' => $basisName,
+                'enhancement_pricing_mode' => $enhancementPricingMode,
                 'sales_rep_name' => $repName ?: 'Sales Representative',
                 'rep_territory' => $repTerritory,
                 'po_number' => $state['po'] ?? null,

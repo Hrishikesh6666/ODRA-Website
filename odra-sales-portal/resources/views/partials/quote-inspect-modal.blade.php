@@ -36,9 +36,12 @@
             <!-- Equipment Card -->
             <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
                 <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px;">Configured Equipment &amp; Pricing Contract</div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                     <div style="font-size: 16px; font-weight: 700; color: white;" id="modalQuoteModel">ODRA MT4H Sweeper</div>
-                    <span id="modalQuoteBasis" style="background: rgba(255,255,255,0.1); color: #38bdf8; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Commercial</span>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <span id="modalQuotePricingMode" style="background: rgba(99,102,241,0.2); color: #a5b4fc; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Itemized</span>
+                        <span id="modalQuoteBasis" style="background: rgba(255,255,255,0.1); color: #38bdf8; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Commercial</span>
+                    </div>
                 </div>
                 <div style="color: #cbd5e1; margin-top: 4px;" id="modalQuoteChassis">Isuzu NRR Cabover 19,500 GVWR - Left Dump</div>
             </div>

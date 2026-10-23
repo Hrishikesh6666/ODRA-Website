@@ -19,6 +19,7 @@ class QuoteSnapshot extends Model
         'model_description',
         'chassis_configuration',
         'pricing_basis',
+        'enhancement_pricing_mode',
         'sales_rep_name',
         'rep_territory',
         'po_number',
@@ -58,5 +59,15 @@ class QuoteSnapshot extends Model
     public function quoteVersion()
     {
         return $this->belongsTo(QuoteVersion::class);
+    }
+
+    public function isBundled(): bool
+    {
+        return ($this->enhancement_pricing_mode ?? 'itemized') === 'bundled';
+    }
+
+    public function isItemized(): bool
+    {
+        return ! $this->isBundled();
     }
 }

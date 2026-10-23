@@ -235,6 +235,15 @@ window.inspectQuote = async function(quoteId) {
     const basisEl = document.getElementById('modalQuoteBasis');
     if (basisEl) basisEl.textContent = snap.pricing_basis || 'MSRP (Commercial)';
 
+    const modeEl = document.getElementById('modalQuotePricingMode');
+    if (modeEl) {
+      const isBundled = (snap.enhancement_pricing_mode === 'bundled');
+      modeEl.textContent = isBundled ? 'Bundled Price' : 'Itemized';
+      modeEl.style.background = isBundled ? 'rgba(16,185,129,0.2)' : 'rgba(99,102,241,0.2)';
+      modeEl.style.color = isBundled ? '#6ee7b7' : '#a5b4fc';
+      modeEl.title = isBundled ? 'Customer sees bundled machine package price' : 'Customer sees individual itemized enhancement prices';
+    }
+
     const chassisEl = document.getElementById('modalQuoteChassis');
     if (chassisEl) chassisEl.textContent = snap.chassis_configuration || 'Standard Chassis Configuration';
 

@@ -82,6 +82,7 @@ class QuoteApiController extends Controller
             'subtotal' => ['nullable', 'numeric'],
             'total' => ['nullable', 'numeric'],
             'quote_code' => ['nullable', 'string'],
+            'enhancement_pricing_mode' => ['nullable', 'string', 'in:itemized,bundled'],
             'enhancements' => ['nullable', 'array'],
             'state' => ['required', 'array'],
         ]);
@@ -142,6 +143,7 @@ class QuoteApiController extends Controller
             'subtotal' => ['nullable', 'numeric'],
             'total' => ['nullable', 'numeric'],
             'quote_code' => ['nullable', 'string'],
+            'enhancement_pricing_mode' => ['nullable', 'string', 'in:itemized,bundled'],
             'enhancements' => ['nullable', 'array'],
             'state' => ['required', 'array'],
         ]);
@@ -174,6 +176,7 @@ class QuoteApiController extends Controller
             'subtotal' => ['nullable', 'numeric'],
             'total' => ['nullable', 'numeric'],
             'quote_code' => ['nullable', 'string'],
+            'enhancement_pricing_mode' => ['nullable', 'string', 'in:itemized,bundled'],
             'enhancements' => ['nullable', 'array'],
             'state' => ['required', 'array'],
         ]);
