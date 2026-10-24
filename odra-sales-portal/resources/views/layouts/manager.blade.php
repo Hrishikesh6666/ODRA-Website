@@ -390,7 +390,7 @@
     @include('partials.quote-inspect-modal')
     @include('partials.revision-history-modal')
 
-    <script src="{{ asset('js/amg-animations.js') }}"></script>
+    <script src="{{ asset('js/amg-animations.js') }}?v={{ file_exists(public_path('js/amg-animations.js')) ? filemtime(public_path('js/amg-animations.js')) : '1.2' }}"></script>
     @stack('scripts')
 </body>
 </html>

@@ -752,6 +752,12 @@
                                 </td>
                                 <td style="text-align:right;">
                                     <div style="display:inline-flex;gap:6px;align-items:center;">
+                                        {{-- 0. Revision History button --}}
+                                        <button type="button" class="btn-table-action" onclick="openRevisionHistory({{ $q->id }})" title="View Complete Revision History" style="background:#f8fafc;color:#334155;border-color:#cbd5e1;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline><path d="M4.93 4.93 3 7"></path></svg>
+                                            <span>History</span>
+                                        </button>
+
                                         {{-- 1. Inspect button (works for both Draft & Finalized) --}}
                                         <button type="button" class="btn-table-action" onclick="inspectQuote({{ $q->id }})" title="Inspect Quotation Details">
                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>

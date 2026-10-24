@@ -354,7 +354,7 @@ class QuotationRevisionsAndDashboardTest extends TestCase
     {
         $quote = Quote::create([
             'user_id' => $this->carlos->id,
-            'quote_number' => '3001',
+            'quote_number' => (string) rand(100000, 999999),
             'current_version' => 2,
             'status' => 'Finalized',
         ]);

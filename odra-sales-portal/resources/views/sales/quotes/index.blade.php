@@ -220,7 +220,7 @@
                                 <button type="button" class="btn-action" onclick="inspectQuote({{ $quote->id }})" title="Quick Inspect Quote Details">
                                     Inspect
                                 </button>
-                                <a href="{{ route('sales.quotes.show', ['quote' => $quote, 'version' => $verNum]) }}?print=1" class="btn-action" target="_blank" title="Print Quotation">
+                                <a href="{{ route('sales.quotes.show', ['quote' => $quote, 'version' => $verNum, 'print' => 1]) }}" class="btn-action" target="_blank" title="Print Quotation">
                                     Print
                                 </a>
                                 @if ($hasFinalized)
