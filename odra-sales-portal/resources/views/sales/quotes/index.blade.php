@@ -220,28 +220,26 @@
                                 <button type="button" class="btn-action" onclick="inspectQuote({{ $quote->id }})" title="Quick Inspect Quote Details">
                                     Inspect
                                 </button>
-                                <a href="{{ route('sales.quotes.show', ['quote' => $quote, 'version' => $verNum, 'print' => 1]) }}" class="btn-action" target="_blank" title="Print Quotation">
-                                    Print
-                                </a>
-                                @if ($hasFinalized)
+                                @if ($verStatus === 'Finalized')
+                                    <a href="{{ route('sales.quotes.show', ['quote' => $quote, 'version' => $verNum, 'print' => 1]) }}" class="btn-action" target="_blank" title="Print Quotation">
+                                        Print
+                                    </a>
                                     <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $verNum]) }}" class="btn-action btn-pdf" target="_blank" download="ODRA_Quotation_{{ $quote->quote_number }}_Rev{{ $verNum }}.pdf" title="Download Finalized PDF">
                                         Download
                                     </a>
-                                    @if ($verStatus === 'Finalized')
-                                        <form action="{{ route('sales.quotes.revise', $quote) }}" method="POST" style="display:inline;" onsubmit="return confirm('Create a new draft revision from this quotation?');">
-                                            @csrf
-                                            <input type="hidden" name="version" value="{{ $verNum }}">
-                                            <button type="submit" class="btn-action" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;cursor:pointer;" title="Create Revised Quotation">
-                                                + Revise
-                                            </button>
-                                        </form>
-                                    @endif
-                                    @if ($quote->status === 'Draft' && $quote->current_version > $verNum)
-                                        <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" title="Continue Editing Active Draft">
-                                            Edit Draft
-                                        </a>
-                                    @endif
-                                @else
+                                    <form action="{{ route('sales.quotes.revise', $quote) }}" method="POST" style="display:inline;" onsubmit="return confirm('Create a new draft revision from this quotation?');">
+                                        @csrf
+                                        <input type="hidden" name="version" value="{{ $verNum }}">
+                                        <button type="submit" class="btn-action" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;cursor:pointer;" title="Create Revised Quotation">
+                                            + Revise
+                                        </button>
+                                    </form>
+                                @endif
+                                @if ($quote->status === 'Draft' && $quote->current_version > $verNum)
+                                    <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action" style="background:#fef3c7;color:#92400e;border-color:#fde68a;" title="Continue Editing Active Draft">
+                                        Edit Draft
+                                    </a>
+                                @elseif ($verStatus !== 'Finalized')
                                     <a href="{{ route('sales.quotes.show', $quote) }}" class="btn-action" title="Open and Edit Draft Quotation">
                                         Open Draft
                                     </a>

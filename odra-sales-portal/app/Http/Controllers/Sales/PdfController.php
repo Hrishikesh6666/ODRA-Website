@@ -31,7 +31,7 @@ class PdfController extends Controller
 
         $storagePath = "private/{$snapshot?->pdf_path}";
 
-        if (! $snapshot || ! $snapshot->pdf_path || ! Storage::disk('local')->exists($storagePath)) {
+        if (! $version?->isFinalized() || ! $snapshot || ! $snapshot->pdf_path || ! Storage::disk('local')->exists($storagePath)) {
             abort(404, "Quotation PDF for Revision {$version->version_number} has not been generated yet. Please open the Quote Builder and finalize the quotation.");
         }
 

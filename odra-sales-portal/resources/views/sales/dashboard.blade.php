@@ -764,14 +764,12 @@
                                             <span>Inspect</span>
                                         </button>
 
-                                        {{-- 2. Print button --}}
-                                        <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-table-action" target="_blank" title="Print Quotation" style="background:#f8fafc;color:#0f172a;border-color:#cbd5e1;">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                                            <span>Print</span>
-                                        </a>
-
-                                        {{-- 3. Status-based button: Download for Finalized, Open for Draft --}}
+                                        {{-- 2. Status-based buttons: Print & Download for Finalized, Open for Draft --}}
                                         @if ($q->status === 'Finalized')
+                                            <a href="{{ route('sales.quotes.show', $q) }}?print=1" class="btn-table-action" target="_blank" title="Print Quotation" style="background:#f8fafc;color:#0f172a;border-color:#cbd5e1;">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                                <span>Print</span>
+                                            </a>
                                             <a href="{{ route('sales.quotes.pdf', $q) }}" class="btn-table-action btn-table-download" title="Download Finalized PDF" download="ODRA_Quotation_{{ $q->quote_number }}.pdf">
                                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                                 <span>Download</span>

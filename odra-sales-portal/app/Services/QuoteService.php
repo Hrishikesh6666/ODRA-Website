@@ -391,7 +391,8 @@ class QuoteService
         }
 
         // 2. Extra Discount Validation and Deduction
-        $showDiscount = max(0, (float) ($state['baseShowDiscount'] ?? $data['show_discount_amount'] ?? 0));
+        // Extra discount is ONLY allowed for MSRP (Commercial) pricing basis. For cooperative contracts, force 0.00.
+        $showDiscount = $isCoop ? 0.00 : max(0, (float) ($state['baseShowDiscount'] ?? $data['show_discount_amount'] ?? 0));
         if ($showDiscount > 20000.00) {
             throw new Exception("Extra discount cannot exceed the maximum permitted cap of $20,000.00 (entered: $" . number_format($showDiscount, 2) . ").");
         }

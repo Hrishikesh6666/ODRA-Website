@@ -320,8 +320,8 @@
                                 <div style="display: inline-flex; gap: 4px; justify-content: flex-end;">
                                     <button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" onclick="openRevisionHistory({{ $q->id }})" title="View Revision History">History</button>
                                     <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;">Inspect</a>
-                                    <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum, 'print' => 1]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">Print</a>
                                     @if ($versionStatus === 'Finalized')
+                                        <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum, 'print' => 1]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">Print</a>
                                         <a href="{{ route('sales.quotes.pdf', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" target="_blank">PDF</a>
                                     @endif
                                 </div>

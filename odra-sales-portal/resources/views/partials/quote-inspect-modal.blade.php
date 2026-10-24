@@ -135,7 +135,7 @@
             <button type="button" class="btn-modal-action btn-modal-close" onclick="closeQuickQuoteModal()" style="display: inline-flex; align-items: center; justify-content: center; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; background: #334155; color: #f8fafc; border: 1px solid #475569;">
                 Close
             </button>
-            <a id="modalQuotePrintBtn" href="#" class="btn-modal-action btn-modal-print" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;">
+            <a id="modalQuotePrintBtn" href="#" class="btn-modal-action btn-modal-print" target="_blank" style="display: none; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 <span>Print</span>
             </a>

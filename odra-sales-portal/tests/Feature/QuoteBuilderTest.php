@@ -342,11 +342,27 @@ class QuoteBuilderTest extends TestCase
             ],
         ]);
 
-        $response = $this->actingAs($user)->get('/sales/dashboard');
-        $response->assertStatus(200);
-        $response->assertSee('?print=1');
-        $response->assertSee('Print');
-        $response->assertSee('modalQuotePrintBtn');
+        // When quotation is a draft, Print link is NOT shown in table actions
+        $draftResponse = $this->actingAs($user)->get('/sales/dashboard');
+        $draftResponse->assertStatus(200);
+        $draftResponse->assertDontSee("sales/quotes/{$quote->id}?print=1");
+
+        // When quotation is finalized, Print link IS shown in table actions
+        $quoteService->finalizeQuote($quote, [
+            'customer' => 'Miami Public Works Dept',
+            'state' => [
+                'quoteSeq' => '3016',
+                'toCompany' => 'Miami Public Works Dept',
+                'model' => 'MT4H',
+                'salesRep' => 'John Wells',
+            ],
+        ]);
+
+        $finalResponse = $this->actingAs($user)->get('/sales/dashboard');
+        $finalResponse->assertStatus(200);
+        $finalResponse->assertSee('?print=1');
+        $finalResponse->assertSee('Print');
+        $finalResponse->assertSee('modalQuotePrintBtn');
     }
 
     public function test_admin_can_create_new_model_and_edit_all_quotation_sections_and_pricing_bases(): void

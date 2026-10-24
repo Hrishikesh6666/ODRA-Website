@@ -575,20 +575,24 @@ table.items tr.totalRow td {
             </button>
         @endif
 
-        <button type="button" class="btn-nav" onclick="window.print()" title="Print Quotation">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-            Print
-        </button>
+        @php
+            $isQuoteFinalized = ($viewingVersion?->isFinalized() ?? false) || ($quote && $quote->status === 'Finalized' && (!$viewingVersion || $viewingVersion->status === 'Finalized'));
+        @endphp
+
+        @if ($isQuoteFinalized)
+            <button type="button" class="btn-nav" onclick="window.print()" title="Print Quotation">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Print
+            </button>
+            <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $version]) }}" class="btn-nav" style="background:#059669;color:white;border-color:#059669;" target="_blank">Download PDF</a>
+        @endif
 
         @if ($isManagerViewingOther)
-            @if (($viewingVersion?->isFinalized() ?? false) || $quote?->status === 'Finalized')
-                <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $version]) }}" class="btn-nav" style="background:#059669;color:white;border-color:#059669;" target="_blank">Download PDF</a>
-            @endif
+            {{-- Manager viewing other rep's quote: Read-only controls --}}
         @elseif ($isReadonly)
             @if ($canRevise ?? true)
                 <button type="button" id="btnRevise" class="btn-nav" style="background:#dc2626;color:white;border-color:#dc2626;font-weight:700;">Create Revised Quotation</button>
             @endif
-            <a href="{{ route('sales.quotes.pdf', ['quote' => $quote, 'version' => $version]) }}" class="btn-nav" style="background:#059669;color:white;border-color:#059669;" target="_blank">Download PDF</a>
         @else
             @if ($canModify ?? true)
                 <button type="button" id="btnSaveDraft" class="btn-nav">Save Draft</button>
@@ -747,9 +751,11 @@ table.items tr.totalRow td {
     <h2 class="sec">Base Unit Qty</h2>
     <input type="number" id="baseQty" value="1" min="1" {{ $isReadonly ? 'disabled' : '' }}>
 
-    <label style="margin-top:10px;display:block;">Show Extra Discount On Quote (USD) <span class="smallnote">optional &mdash; max ${{ number_format($maxShowDiscount) }}</span></label>
-    <input type="number" id="baseShowDiscount" value="0" min="0" max="{{ $maxShowDiscount }}" {{ $isReadonly ? 'disabled' : '' }}>
-    <div id="discountWarning" style="display:none;color:#b3261e;font-size:11px;margin-top:4px;">Maximum limit allowed is ${{ number_format($maxShowDiscount) }}.</div>
+    <div id="extraDiscountWrapper">
+      <label style="margin-top:10px;display:block;">Show Extra Discount On Quote (USD) <span class="smallnote">optional &mdash; max ${{ number_format($maxShowDiscount) }}</span></label>
+      <input type="number" id="baseShowDiscount" value="0" min="0" max="{{ $maxShowDiscount }}" {{ $isReadonly ? 'disabled' : '' }}>
+      <div id="discountWarning" style="display:none;color:#b3261e;font-size:11px;margin-top:4px;">Maximum limit allowed is ${{ number_format($maxShowDiscount) }}.</div>
+    </div>
 
     <h2 class="sec">Enhancements <span class="smallnote">(pick up to 13 options)</span></h2>
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 14px;margin:10px 0 14px 0;">
@@ -1107,6 +1113,35 @@ function resolveBasis(basisVal, modelCode) {
       caption: '',
       useMunicipalityFreight: false
     };
+}
+
+function isMsrpBasis(basisVal) {
+  const info = resolveBasis(basisVal || (typeof state !== 'undefined' ? state.basis : null));
+  if (!info) return false;
+  if (info.isCoop || info.priceTier === 'sw_net') return false;
+  const key = String(info.key || info.label || info.name || '').toLowerCase();
+  const slug = String(info.slug || '').toLowerCase();
+  return slug === 'msrp' || key.includes('msrp');
+}
+
+function updateExtraDiscountVisibility() {
+  if (typeof state === 'undefined') return;
+  const isMsrp = isMsrpBasis(state.basis);
+  const wrapper = document.getElementById('extraDiscountWrapper');
+  const inputEl = document.getElementById('baseShowDiscount');
+  const warnEl = document.getElementById('discountWarning');
+  if (wrapper) {
+    wrapper.style.display = isMsrp ? 'block' : 'none';
+  }
+  if (!isMsrp) {
+    state.baseShowDiscount = 0;
+    if (inputEl) {
+      inputEl.value = 0;
+    }
+    if (warnEl) {
+      warnEl.style.display = 'none';
+    }
+  }
 }
 
 const SR_CODES = Object.assign({
@@ -1759,8 +1794,9 @@ function calculateSnapshotData() {
   const base = baseItem(state.model);
   const bp = priceForItem(base);
   const baseQty = Number(state.baseQty) || 1;
-  const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
-  const rawDiscount = Number(state.baseShowDiscount) || 0;
+  const isMsrp = isMsrpBasis(state.basis);
+  const maxDisc = isMsrp ? (Number(TEMPLATE_HEADER.max_show_discount) || 20000) : 0;
+  const rawDiscount = isMsrp ? (Number(state.baseShowDiscount) || 0) : 0;
   const showDiscount = Math.min(maxDisc, Math.max(0, rawDiscount));
 
   // Base MSRP / List is the TRUE price - never artificially inflated
@@ -1843,13 +1879,14 @@ function renderPreview() {
 
   const base = baseItem(state.model);
   const bp = priceForItem(base);
-  const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
-  const rawDiscount = Number(state.baseShowDiscount) || 0;
+  const isMsrp = isMsrpBasis(state.basis);
+  const maxDisc = isMsrp ? (Number(TEMPLATE_HEADER.max_show_discount) || 20000) : 0;
+  const rawDiscount = isMsrp ? (Number(state.baseShowDiscount) || 0) : 0;
   const showDiscount = Math.min(maxDisc, Math.max(0, rawDiscount));
   const discWarnEl = document.getElementById('discountWarning');
   if (discWarnEl) {
-    discWarnEl.style.display = rawDiscount > maxDisc ? 'block' : 'none';
-    if (rawDiscount > maxDisc) {
+    discWarnEl.style.display = (isMsrp && rawDiscount > maxDisc) ? 'block' : 'none';
+    if (isMsrp && rawDiscount > maxDisc) {
       discWarnEl.textContent = `Maximum limit allowed is $${maxDisc.toLocaleString()}. You entered $${rawDiscount.toLocaleString()}.`;
     }
   }
@@ -2074,6 +2111,7 @@ function renderPreview() {
 }
 
 function render() {
+  updateExtraDiscountVisibility();
   populateChassis();
   applyRepFreight();
   buildEnhRows();
@@ -2163,6 +2201,7 @@ function initForm() {
     populatePricingBases();
     basisEl.addEventListener('change', e => {
       state.basis = e.target.value;
+      updateExtraDiscountVisibility();
       applyRepFreight();
       render();
     });
@@ -2261,12 +2300,14 @@ function initForm() {
   populateDestStateDropdown();
   render();
 
-  // Automatic Print if URL contains ?print=1
+  // Automatic Print if URL contains ?print=1 and quotation is finalized
+  @if ($isQuoteFinalized)
   if (urlParams.get('print') === '1') {
     setTimeout(() => {
       window.print();
     }, 600);
   }
+  @endif
 }
 
 // API Interactions for Save Draft & Finalize Quote
@@ -2284,6 +2325,9 @@ async function saveQuote(isFinalize = false) {
     return;
   }
 
+  if (!isMsrpBasis(state.basis)) {
+    state.baseShowDiscount = 0;
+  }
   const rawDiscount = Number(state.baseShowDiscount) || 0;
   const maxDisc = Number(TEMPLATE_HEADER.max_show_discount) || 20000;
   if (rawDiscount > maxDisc) {

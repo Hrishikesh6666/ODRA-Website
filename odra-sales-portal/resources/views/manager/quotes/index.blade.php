@@ -70,8 +70,8 @@
                                 <div style="display: inline-flex; gap: 4px; justify-content: flex-end;">
                                     <button type="button" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; cursor: pointer;" onclick="openRevisionHistory({{ $q->id }})" title="View Revision History">History</button>
                                     <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" title="Inspect Quotation">Inspect</a>
-                                    <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum, 'print' => 1]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" target="_blank" title="Print Quotation">Print</a>
                                     @if ($versionStatus === 'Finalized')
+                                        <a href="{{ route('sales.quotes.show', ['quote' => $q, 'version' => $versionNum, 'print' => 1]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" target="_blank" title="Print Quotation">Print</a>
                                         <a href="{{ route('sales.quotes.pdf', ['quote' => $q, 'version' => $versionNum]) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; background: #ecfdf5; color: #065f46; border-color: #a7f3d0; text-decoration: none;" target="_blank" download="ODRA_Quotation_{{ $q->quote_number }}_Rev{{ $versionNum }}.pdf" title="Download Finalized PDF">Download</a>
                                     @else
                                         <a href="{{ route('sales.quotes.show', $q) }}" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; text-decoration: none;" title="Open in Quote Builder">Open</a>

@@ -303,7 +303,12 @@ window.inspectQuote = async function(quoteId) {
 
     const printBtn = document.getElementById('modalQuotePrintBtn');
     if (printBtn) {
-      printBtn.href = data.print_url || `/sales/quotes/${quoteId}?print=1`;
+      if (data.status === 'Finalized' && data.print_url) {
+        printBtn.href = data.print_url;
+        printBtn.style.display = 'inline-flex';
+      } else {
+        printBtn.style.display = 'none';
+      }
     }
 
     const pdfBtn = document.getElementById('modalQuotePdfBtn');
@@ -439,10 +444,12 @@ window.openRevisionHistory = async function(quoteId) {
               <a href="${rev.view_url}" class="btn-rev-action btn-rev-view" style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #ffffff; background: #2563eb; border: 1px solid #1d4ed8; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Open Revision in Builder">
                 ${(isFinalized || data.can_edit === false) ? 'View' : 'Edit'}
               </a>
-              <a href="${rev.print_url}" class="btn-rev-action btn-rev-print" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #0f172a; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Print Revision">
-                Print
-              </a>
-              ${isFinalized && rev.has_pdf ? `
+              ${isFinalized && rev.print_url ? `
+                <a href="${rev.print_url}" class="btn-rev-action btn-rev-print" target="_blank" style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #0f172a; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Print Revision">
+                  Print
+                </a>
+              ` : ''}
+              ${isFinalized && rev.has_pdf && rev.pdf_url ? `
                 <a href="${rev.pdf_url}" class="btn-rev-action btn-rev-pdf" target="_blank" download style="display: inline-flex; align-items: center; justify-content: center; padding: 5px 12px; font-size: 11.5px; font-weight: 700; color: #ffffff; background: #059669; border: 1px solid #047857; border-radius: 5px; text-decoration: none; cursor: pointer;" title="Download PDF">
                   PDF
                 </a>

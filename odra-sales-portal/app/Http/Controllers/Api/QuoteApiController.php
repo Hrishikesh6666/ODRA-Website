@@ -131,8 +131,8 @@ class QuoteApiController extends Controller
             'state' => $stateData,
             'snapshot' => $snapshot,
             'view_url' => route('sales.quotes.show', $quote),
-            'print_url' => route('sales.quotes.show', $quote) . '?print=1',
-            'pdf_url' => route('sales.quotes.pdf', $quote),
+            'print_url' => ($quote->status === 'Finalized') ? (route('sales.quotes.show', $quote) . '?print=1') : null,
+            'pdf_url' => ($quote->status === 'Finalized') ? route('sales.quotes.pdf', $quote) : null,
             'can_download' => ($quote->status === 'Finalized'),
         ]);
     }
@@ -242,8 +242,8 @@ class QuoteApiController extends Controller
                         : ($v->created_at ? $v->created_at->format('M d, Y h:i A') : ''),
                     'has_pdf' => ! empty($snap?->pdf_path),
                     'view_url' => route('sales.quotes.show', ['quote' => $quote, 'version' => $v->version_number]),
-                    'print_url' => route('sales.quotes.show', ['quote' => $quote, 'version' => $v->version_number, 'print' => 1]),
-                    'pdf_url' => route('sales.quotes.pdf', ['quote' => $quote, 'version' => $v->version_number]),
+                    'print_url' => $v->isFinalized() ? route('sales.quotes.show', ['quote' => $quote, 'version' => $v->version_number, 'print' => 1]) : null,
+                    'pdf_url' => $v->isFinalized() ? route('sales.quotes.pdf', ['quote' => $quote, 'version' => $v->version_number]) : null,
                 ];
             });
 
