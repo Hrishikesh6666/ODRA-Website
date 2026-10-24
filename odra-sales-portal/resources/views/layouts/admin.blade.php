@@ -29,35 +29,46 @@
             display: flex;
             min-height: 100vh;
         }
-        /* Sidebar */
+        /* Sidebar Isolation from portal.css */
+        #adminSidebar.sidebar,
         .sidebar {
             width: 260px;
+            min-width: 260px;
+            max-width: 260px;
             background: var(--nav);
             color: white;
-            display: flex;
-            flex-direction: column;
+            display: flex !important;
+            flex-direction: column !important;
             flex-shrink: 0;
             position: sticky;
             top: 0;
             height: 100vh;
             height: 100dvh;
+            padding: 0 !important; /* Hard override of portal.css padding: 27px 17px */
+            margin: 0 !important;
+            inset: auto !important;
+            box-sizing: border-box;
             z-index: 50;
             transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
         }
         .sidebar-brand {
-            padding: 20px;
+            padding: 18px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            min-height: 73px;
+            min-height: 72px;
+            margin: 0 !important;
+            width: 100% !important;
+            box-sizing: border-box;
         }
         .sidebar-brand-inner {
             display: flex;
             align-items: center;
             gap: 12px;
             min-width: 0;
+            flex: 1;
         }
         .sidebar-brand img {
             height: 32px;
@@ -72,11 +83,12 @@
         }
         .sidebar-brand-text {
             font-weight: 700;
-            font-size: 15px;
+            font-size: 14.5px;
+            line-height: 1.25;
             letter-spacing: -0.2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            color: #ffffff;
+            white-space: normal; /* Full brand text wrap, never clipped to ODRA A... */
+            word-break: normal;
         }
         .sidebar-close-btn {
             display: none;
@@ -90,6 +102,7 @@
             color: #cbd5e1;
             cursor: pointer;
             padding: 0;
+            flex-shrink: 0;
             transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
         }
         .sidebar-close-btn:hover {
@@ -105,9 +118,11 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 4px;
+            margin: 0 !important;
+            box-sizing: border-box;
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
         }
@@ -133,6 +148,7 @@
             padding: 14px 14px 6px 14px;
             font-weight: 700;
             user-select: none;
+            display: block !important;
         }
         .nav-item {
             display: flex;
@@ -142,10 +158,13 @@
             color: #94a3b8;
             text-decoration: none;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13.5px;
+            line-height: 1.4; /* Generous line-height so multiline text never collides */
             font-weight: 500;
             position: relative;
-            overflow: hidden;
+            box-sizing: border-box;
+            white-space: normal;
+            word-break: normal;
             transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                         color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
                         box-shadow 0.2s ease,
@@ -640,30 +659,37 @@
                 opacity: 1;
                 pointer-events: auto;
             }
+            #adminSidebar.sidebar,
             .sidebar {
                 position: fixed !important;
-                top: 0;
-                left: 0;
-                bottom: 0;
+                top: 0 !important;
+                left: 0 !important;
+                bottom: 0 !important;
                 width: 290px !important;
+                min-width: 0 !important;
                 max-width: 86vw !important;
                 height: 100vh !important;
                 height: 100dvh !important;
+                padding: 0 !important;
+                margin: 0 !important;
                 z-index: 9999 !important;
                 transform: translateX(-100%);
                 transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
                 box-shadow: none;
                 display: flex !important;
                 flex-direction: column !important;
-                background: var(--nav);
+                background: var(--nav) !important;
                 overflow: hidden;
             }
+            #adminSidebar.sidebar.mobile-open,
             .sidebar.mobile-open {
-                transform: translateX(0);
-                box-shadow: 12px 0 32px rgba(0, 0, 0, 0.5);
+                transform: translateX(0) !important;
+                box-shadow: 12px 0 32px rgba(0, 0, 0, 0.5) !important;
             }
             .sidebar-brand {
-                padding: 16px 18px;
+                padding: 16px 18px !important;
+                width: 100% !important;
+                margin: 0 !important;
             }
             .sidebar-close-btn {
                 display: inline-flex !important;
@@ -675,20 +701,25 @@
                 white-space: normal !important;
                 padding: 14px 12px !important;
                 gap: 4px !important;
+                margin: 0 !important;
                 -webkit-overflow-scrolling: touch;
+            }
+            .sidebar-nav .nav-category {
+                display: block !important;
             }
             .nav-item {
                 min-height: 44px; /* Accessible 44px touch target */
                 padding: 11px 14px;
                 font-size: 13.5px;
-                white-space: normal;
-                word-break: break-word;
-                line-height: 1.35;
+                white-space: normal !important;
+                word-break: normal !important;
+                line-height: 1.4;
             }
             .nav-sub-link {
                 min-height: 42px; /* Touch friendly submenu targets */
                 padding: 10px 12px;
                 font-size: 13px;
+                line-height: 1.4;
             }
             .submenu-toggle-btn {
                 width: 40px;
@@ -696,7 +727,9 @@
             }
             .sidebar-footer {
                 display: flex !important;
-                padding: 14px 16px;
+                padding: 14px 16px !important;
+                margin-top: auto !important;
+                width: 100% !important;
             }
             .topbar {
                 padding: 12px 16px;
